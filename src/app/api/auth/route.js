@@ -1,5 +1,5 @@
 const { NextResponse } = require("next/server");
-const { prisma } = require("@/lib/prisma");
+const { prisma } = require("../../lib/prisma");
 
 exports.GET = async function (req) {
   const { searchParams } = new URL(req.url);

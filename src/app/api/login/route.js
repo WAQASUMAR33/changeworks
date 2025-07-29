@@ -1,5 +1,5 @@
 const { NextResponse } = require("next/server");
-const { prisma } = require("@/lib/prisma");
+const { prisma } = require("../../lib/prisma");
 const { compare } = require("bcryptjs");
 const { z } = require("zod");
 
