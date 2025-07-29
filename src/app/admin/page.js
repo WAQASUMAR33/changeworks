@@ -1,7 +1,7 @@
 'use client';
-import Sidebar from '../publisher/components/sidebar';
-import Header from '../publisher/components/header';
-import OverviewCards from '../publisher/components/overviewCards';
+import Sidebar from '../admin/components/sidebar';
+import Header from '../admin/components/header';
+import OverviewCards from '../admin/components/overviewCards';
 
 export default function PublisherDashboard() {
     return (
