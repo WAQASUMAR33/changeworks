@@ -10,9 +10,15 @@
     "postinstall": "npx prisma generate"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@heroicons/react": "^2.2.0",
+    "@mui/icons-material": "^7.2.0",
+    "@mui/material": "^7.2.0",
     "@prisma/client": "^6.11.1",
     "bcryptjs": "^3.0.2",
     "framer-motion": "^12.23.11",
+    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.533.0",
     "next": "15.3.5",
     "nodemailer": "^7.0.5",

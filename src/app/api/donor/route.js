@@ -89,3 +89,29 @@ export async function POST(request) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+
+
+// GET: Fetch all donors
+export async function GET() {
+  try {
+    const donors = await prisma.donor.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        city: true,
+        address: true,
+        imageUrl: true,
+        status: true,
+        created_at: true,
+        updated_at: true,
+      },
+    });
+    return NextResponse.json(donors, { status: 200 });
+  } catch (error) {
+    console.error('Error fetching donors:', error);
+    return NextResponse.json({ error: 'Failed to fetch donors' }, { status: 500 });
+  }
+}

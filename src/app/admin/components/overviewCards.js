@@ -2,10 +2,10 @@
 import { motion } from 'framer-motion';
 
 const stats = [
-    { title: 'Approved & cleared balance', value: '12,304' },
-    { title: 'Approved & uncleared balance', value: '932' },
-    { title: 'Cleared + uncleared balance', value: '$3,420.50' },
-    { title: 'tracked but not approved', value: '45' },
+    { title: 'Total Donor\'s', value: '01' },
+    { title: 'Today Donations', value: '$100' },
+    { title: 'Organizations', value: '01' },
+    { title: 'Donation Gifts', value: '05' },
 ];
 
 export default function OverviewCards() {

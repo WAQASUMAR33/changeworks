@@ -13,7 +13,7 @@ export default function Header() {
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
-        if (user) setUserName(`${user.firstName} ${user.lastName || ''}`);
+        if (user) setUserName(`${user.name}`);
     }, []);
 
     useEffect(() => {
@@ -87,7 +87,7 @@ export default function Header() {
                 <div className="relative" ref={profileRef}>
                     <button onClick={() => setShowProfile(!showProfile)}>
                         <Image
-                            src="/avatar.jpg"
+                            src="/imgs/changeworks.jpg"
                             alt="Avatar"
                             width={35}
                             height={35}
@@ -108,10 +108,8 @@ export default function Header() {
                                 </div>
                                 <ul className="text-sm text-gray-600 divide-y divide-gray-100">
                                     <li className="px-4 py-3 hover:bg-gray-100 cursor-pointer flex items-center gap-2"><User size={16} /> Profile</li>
-                                    <li className="px-4 py-3 hover:bg-gray-100 cursor-pointer flex items-center gap-2"><MessageSquare size={16} /> Messages</li>
-                                    <li className="px-4 py-3 hover:bg-gray-100 cursor-pointer flex items-center gap-2"><CreditCard size={16} /> Pricing</li>
-                                    <li className="px-4 py-3 hover:bg-gray-100 cursor-pointer flex items-center gap-2"><HelpCircle size={16} /> Help</li>
-                                    <li
+
+                                     <li
                                         onClick={handleLogout}
                                         className="px-4 py-3 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
                                     >

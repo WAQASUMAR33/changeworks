@@ -15,10 +15,10 @@ export default function LoginPage() {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setErrorMsg('');
+   const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg('');
 
         try {
             const res = await fetch('/api/login', {
@@ -30,58 +30,37 @@ export default function LoginPage() {
             const data = await res.json();
 
             if (!res.ok) {
-                setErrorMsg(data.message || 'Login failed');
-                setLoading(false);
+                setErrorMsg(data.error || 'Login failed');
                 return;
             }
 
+            // Save token and user info
             localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
 
-            const role = data.user?.role?.toLowerCase();
-            if (role === 'admin') {
+            // Redirect based on role
+            if (data.user.role === 'ADMIN') {
                 router.push('/admin');
-            } else if (role === 'publisher') {
-                router.push('/publisher');
-            } else if (role === 'advertiser') {
-                router.push('/advertiser');
+            } else if (data.user.role === 'DONOR') {
+                router.push('/admin');
             } else {
-                setErrorMsg('Unknown user role');
+                router.push('/admin');
             }
 
         } catch (err) {
-            console.error(err);
+            console.error('Login error:', err);
             setErrorMsg('Something went wrong');
         } finally {
             setLoading(false);
         }
     };
 
+
     return (
         <div className="min-h-screen flex flex-col md:flex-row">
             {/* Left Side */}
-            <div className="w-full md:w-1/2 bg-[#7e7efd] flex flex-col justify-center items-center p-6 md:p-10 text-center">
-                <Image
-                    src="/imgs/logo.png"
-                    alt="HVM Logo"
-                    width={120}
-                    height={120}
-                    className="mb-4"
-                />
-                <h2 className="text-lg md:text-xl font-semibold mb-4 text-black">
-                    Login in to HVM with
-                </h2>
-                <div className="flex space-x-4 mb-4 md:mb-6">
-                    <button className="bg-white p-3 rounded-full shadow-md">
-                        <Image src="/imgs/google.webp" alt="Google" width={24} height={24} />
-                    </button>
-                    <button className="bg-white p-3 rounded-full shadow-md">
-                        <Image src="/imgs/facebook.png" alt="Facebook" width={24} height={24} />
-                    </button>
-                    <button className="bg-white p-3 rounded-full shadow-md">
-                        <Image src="/imgs/x.png" alt="X" width={24} height={24} />
-                    </button>
-                </div>
-                <p className="text-sm mb-4 text-black">Or</p>
+            <div className="w-full md:w-1/2 bg-[#302E56] flex flex-col justify-center items-center p-6 md:p-10 text-center">
+             
                 <Image
                     src="/imgs/changeworks.jpg"
                     alt="Illustration"
@@ -144,10 +123,10 @@ export default function LoginPage() {
                                 Forget Password?
                             </a>
                         </div>
-lucide-react
+
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 text-white py-2 rounded-md font-semibold hover:bg-blue-700 transition"
+                            className="w-full bg-[#302E56] text-white py-2 rounded-md font-semibold hover:bg-blue-700 transition"
                             disabled={loading}
                         >
                             {loading ? 'Logging in...' : 'Login'}
