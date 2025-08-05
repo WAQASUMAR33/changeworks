@@ -50,10 +50,7 @@ export async function POST(request) {
       message: "Login successful",
       token,
       user: {
-        id: donor.id,
-        name: donor.name,
-        email: donor.email,
-        role: "DONOR",
+       donor
       },
     });
   } catch (error) {
