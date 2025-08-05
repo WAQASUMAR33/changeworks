@@ -44,11 +44,7 @@ export async function POST(req) {
 
     return NextResponse.json({
       message: "Organization registered successfully",
-      organization: {
-        id: organization.id,
-        name: organization.name,
-        email: organization.email,
-      },
+      organization
     }, { status: 201 });
 
   } catch (error) {
