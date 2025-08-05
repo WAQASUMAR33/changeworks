@@ -49,9 +49,7 @@ export async function POST(request) {
     return NextResponse.json({
       message: "Login successful",
       token,
-      user: {
-       donor
-      },
+      donor
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
