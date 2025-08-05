@@ -66,7 +66,7 @@ export async function POST(request) {
       },
     });
 
-    const verificationUrl = `${process.env.NEXTAUTH_URL}/api/verify-donor?token=${token}`;
+    const verificationUrl = `https://changeworks-seven.vercel.app/api/verify-donor?token=${token}`;
 
     await transport.sendMail({
       to: email,
