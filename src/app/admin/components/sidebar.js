@@ -39,7 +39,7 @@ const Sidebar = () => {
       path: '',
       subItems: [
         { name: 'List Donors', path: '/admin/donor-accounts' },
-        { name: 'Transactions', path: '/admin/donor-accounts' },
+        { name: 'Transactions', path: '/admin/transactions_page' },
       ],
     },
     {
@@ -48,7 +48,7 @@ const Sidebar = () => {
       path: '',
       subItems: [
         { name: 'List Organizations', path: '/admin/organization' },
-        { name: 'Transactions', path: '/admin' },
+        { name: 'Transactions', path: '/admin/transactions_page' },
       ],
     },
     {
