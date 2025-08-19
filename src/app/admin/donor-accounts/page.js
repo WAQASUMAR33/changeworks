@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   Box,
   Typography,
@@ -289,6 +290,8 @@ export default function DonorManagementPage() {
   };
 
   return (
+    
+    <motion.div>
     <Box sx={{ p: 3, bgcolor: '#FFF', minHeight: '100vh' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1a3c34' }}>
@@ -579,5 +582,6 @@ export default function DonorManagementPage() {
         </DialogActions>
       </Dialog>
     </Box>
+    </motion.div>
   );
 }

@@ -2,26 +2,21 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 
 import {
-  UserIcon,
   Settings,
   ArrowRightLeft,
-  GiftIcon,
   LogOut,
-  KeyIcon,
-  BarChartIcon,
   CircleUserRound,
-  MessageSquareWarning,
   ChevronDown,
   ChevronRight,
   LayoutDashboard,
-Gift,
-Users,
-ClipboardPlus,
+  Gift,
+  Users,
+  ClipboardPlus,
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -37,14 +32,7 @@ const Sidebar = () => {
   };
 
   const menuItems = [
-
-     {
-      name: 'Dashboard',
-      icon: LayoutDashboard,
-      path: '/admin',
-     
-    },
-
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
     {
       name: 'Donors',
       icon: Gift,
@@ -58,50 +46,32 @@ const Sidebar = () => {
       name: 'Organizations',
       icon: Users,
       path: '',
-       subItems: [
+      subItems: [
         { name: 'List Organizations', path: '/admin/organization' },
         { name: 'Transactions', path: '/admin' },
       ],
     },
-
     {
       name: 'Organizations Trnx',
       icon: ArrowRightLeft,
       path: '',
-       subItems: [
+      subItems: [
         { name: 'List Organizations', path: '/admin' },
         { name: 'Transactions', path: '/admin' },
       ],
     },
-
-
     {
       name: 'Settings',
       icon: Settings,
       path: '',
-       subItems: [
-        { name: 'List Organizations', path: '/admin' },
-        { name: 'Transactions', path: '/admin' },
+      subItems: [
+        { name: 'General', path: '/admin/settings' },
+        { name: 'Preferences', path: '/admin' },
       ],
     },
-   
-    {
-      name: 'Profile',
-      icon: CircleUserRound,
-      path: '/profile',
-       subItems: []
-    },
-    {
-      name: 'Reports',
-      icon: ClipboardPlus,
-      path: '/reports',
-       subItems: [],
-    },
-    {
-      name: 'Logout',
-      icon: LogOut,
-      path: '/login',
-    },
+    { name: 'Profile', icon: CircleUserRound, path: '/profile' },
+    { name: 'Reports', icon: ClipboardPlus, path: '/reports' },
+    { name: 'Logout', icon: LogOut, path: '/login' },
   ];
 
   return (
@@ -116,12 +86,12 @@ const Sidebar = () => {
         {/* Logo */}
         <div className="flex items-center justify-center h-20 border-b border-gray-800">
           <Image src="/images/logo.png" alt="Logo" width={40} height={40} />
-          {isHovered && <span className="ml-2 text-xl font-bold">Logo</span>}
+          {isHovered && <span className="ml-2 text-lg font-bold">Logo</span>}
         </div>
 
         {/* Menu Items */}
         <nav className="flex-1 mt-4">
-          <ul className="space-y-1">
+          <ul className="space-y-1 text-xs"> {/* font 2px smaller */}
             {menuItems.map((item) => {
               const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
               const hasSub = item.subItems && item.subItems.length > 0;
@@ -129,46 +99,62 @@ const Sidebar = () => {
 
               return (
                 <li key={item.name}>
-                  <div
+                  {/* Main menu item */}
+                  <motion.div
                     onClick={() => hasSub && toggleSubmenu(item.name)}
-                    className={`flex items-center px-4 py-3 cursor-pointer hover:bg-gray-700 transition duration-200 ${
+                    whileHover={{ scale: 1.02, backgroundColor: 'rgba(55,65,81,0.8)' }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`flex items-center px-4 py-3 cursor-pointer rounded-md transition duration-200 ${
                       isActive ? 'bg-gray-800 font-semibold' : ''
                     }`}
                   >
                     <item.icon className="w-5 h-5" />
                     {isHovered && (
-                      <>
-                        <span className="ml-3 flex-1">{item.name}</span>
+                      <div className="flex items-center justify-between flex-1 ml-3">
+                        <span>{item.name}</span>
                         {hasSub &&
                           (isSubmenuOpen ? (
                             <ChevronDown className="w-4 h-4" />
                           ) : (
                             <ChevronRight className="w-4 h-4" />
                           ))}
-                      </>
+                      </div>
                     )}
-                  </div>
+                  </motion.div>
 
-                  {/* Submenu */}
-                  {hasSub && isSubmenuOpen && isHovered && (
-                    <ul className="pl-12 pr-4 pb-1 space-y-1">
-                      {item.subItems.map((sub) => {
-                        const isSubActive = pathname === sub.path;
-                        return (
-                          <li key={sub.name}>
-                            <Link
-                              href={sub.path}
-                              className={`block py-1 text-sm hover:text-white transition ${
-                                isSubActive ? 'text-white font-medium' : 'text-gray-300'
-                              }`}
+                  {/* Submenu with AnimatePresence */}
+                  <AnimatePresence>
+                    {hasSub && isSubmenuOpen && isHovered && (
+                      <motion.ul
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="pl-12 pr-4 pb-1 space-y-1"
+                      >
+                        {item.subItems.map((sub) => {
+                          const isSubActive = pathname === sub.path;
+                          return (
+                            <motion.li
+                              key={sub.name}
+                              initial={{ x: -10, opacity: 0 }}
+                              animate={{ x: 0, opacity: 1 }}
+                              transition={{ duration: 0.2 }}
                             >
-                              {sub.name}
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
+                              <Link
+                                href={sub.path}
+                                className={`block py-1 text-xs hover:text-white transition ${
+                                  isSubActive ? 'text-white font-medium' : 'text-gray-400'
+                                }`}
+                              >
+                                {sub.name}
+                              </Link>
+                            </motion.li>
+                          );
+                        })}
+                      </motion.ul>
+                    )}
+                  </AnimatePresence>
                 </li>
               );
             })}
