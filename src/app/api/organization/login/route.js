@@ -40,7 +40,7 @@ export async function POST(request) {
     }
 
     // Check organization status
-    if (organization.status !== "true") {
+    if (organization.status !== true) {
       return NextResponse.json({ error: "Organization account is inactive" }, { status: 403 });
     }
 
