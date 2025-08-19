@@ -8,9 +8,11 @@ datasource db {
 }
 
 enum Role {
-  ADMIN
-  MANAGER
   SUPERADMIN
+  MANAGER
+  ADMIN
+  DONOR
+  ORGANIZATION
 }
 
 model User {
