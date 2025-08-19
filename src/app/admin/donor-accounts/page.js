@@ -1,17 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
   Box,
-  Typography,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Select,
   MenuItem,
@@ -22,13 +13,16 @@ import {
   FormControl,
   InputLabel,
   Alert,
-  Paper,
+  Button,
   IconButton,
   CircularProgress,
   FormControlLabel,
   Checkbox,
+  TablePagination,
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Close as CloseIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import { Close as CloseIcon } from '@mui/icons-material';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Eye, Edit, Trash2, Package, Plus } from 'lucide-react';
 
 // Helper function to format dates consistently
 const formatDate = (dateString) => {
@@ -76,6 +70,7 @@ const uploadImageToServer = async (base64Image) => {
 export default function DonorManagementPage() {
   const [donors, setDonors] = useState([]);
   const [filteredDonors, setFilteredDonors] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('view'); // 'view', 'add', 'edit', 'delete'
@@ -93,16 +88,19 @@ export default function DonorManagementPage() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [error, setError] = useState('');
+  // Pagination states
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   // Filter states
   const [filterName, setFilterName] = useState('');
   const [filterEmail, setFilterEmail] = useState('');
   const [filterCity, setFilterCity] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
-  // Fetch donors on mount
+  // Fetch donors on mount and when page/rowsPerPage change
   useEffect(() => {
     fetchDonors();
-  }, []);
+  }, [page, rowsPerPage]);
 
   // Apply filters
   useEffect(() => {
@@ -118,21 +116,36 @@ export default function DonorManagementPage() {
 
   const fetchDonors = async () => {
     try {
-      const response = await fetch('/api/donor');
+      const response = await fetch(`/api/donor?page=${page + 1}&limit=${rowsPerPage}`);
       const data = await response.json();
       console.log('API Response:', data); // Debug log to inspect response
       if (!response.ok) {
         throw new Error(data.error || `HTTP ${response.status}: Failed to fetch donors`);
       }
-      if (!Array.isArray(data)) {
+
+      // Handle different response formats
+      let donorsData = [];
+      let totalCountData = 0;
+      if (Array.isArray(data)) {
+        // Case 1: API returns a direct array of donors
+        donorsData = data;
+        totalCountData = data.length; // Fallback totalCount
+      } else if (data.donors && Array.isArray(data.donors)) {
+        // Case 2: API returns an object with donors array
+        donorsData = data.donors;
+        totalCountData = data.totalCount || data.donors.length;
+      } else {
         console.error('Unexpected response format:', data);
-        throw new Error('Expected donors data to be an array');
+        throw new Error('Expected donors data to be an array or an object with a donors array');
       }
-      setDonors(data);
+
+      setDonors(donorsData);
+      setTotalCount(totalCountData);
       setLoading(false);
     } catch (err) {
       setError(`Failed to load donors: ${err.message}`);
-      setDonors([]); // Fallback to empty array
+      setDonors([]);
+      setTotalCount(0);
       setLoading(false);
       console.error('Fetch error:', err);
     }
@@ -265,6 +278,7 @@ export default function DonorManagementPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || `HTTP ${response.status}: Operation failed`);
 
+      setPage(0); // Reset to first page after modification
       await fetchDonors();
       handleModalClose();
     } catch (err) {
@@ -272,51 +286,72 @@ export default function DonorManagementPage() {
     }
   };
 
+  // Pagination handlers
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   // Filter handlers
-  const handleFilterNameChange = (e) => {
-    setFilterName(e.target.value);
+  const handleFilterNameChange = (e) => setFilterName(e.target.value);
+  const handleFilterEmailChange = (e) => setFilterEmail(e.target.value);
+  const handleFilterCityChange = (e) => setFilterCity(e.target.value);
+  const handleFilterStatusChange = (e) => setFilterStatus(e.target.value);
+
+  // Animation variants
+  const tableRowVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
   };
 
-  const handleFilterEmailChange = (e) => {
-    setFilterEmail(e.target.value);
+  const filterVariants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: { opacity: 1, y: 0 },
   };
 
-  const handleFilterCityChange = (e) => {
-    setFilterCity(e.target.value);
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: { opacity: 1, scale: 1 },
+    exit: { opacity: 0, scale: 0.8 },
   };
 
-  const handleFilterStatusChange = (e) => {
-    setFilterStatus(e.target.value);
+  // Permission flags (simplified for donors)
+  const hasAnyActionPermission = true; // Adjust based on your auth logic
+  const canEdit = true;
+  const canDelete = true;
+  const canCreate = true;
+
+  const getStatusText = (status) => {
+    return status ? 'Active' : 'Inactive';
   };
 
   return (
-    
-    <motion.div>
     <Box sx={{ p: 3, bgcolor: '#FFF', minHeight: '100vh' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1a3c34' }}>
-          Donor Management
-        </Typography>
-        <Button
-          variant="contained"
-          color="success"
-          startIcon={<AddIcon />}
-          onClick={() => handleModalOpen('add')}
-          sx={{ borderRadius: '20px', textTransform: 'none', boxShadow: '0 4px 10px rgba(0, 128, 0, 0.2)' }}
-        >
-          Add Donor
-        </Button>
-      </Box>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-gray-900">Donor Management</h2>
+       
+      </div>
 
       {/* Filters */}
-      <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+      <motion.div
+        variants={filterVariants}
+        initial="hidden"
+        animate="visible"
+        transition={{ duration: 0.5 }}
+        className="mb-6 flex gap-4 flex-wrap"
+      >
         <TextField
           label="Filter by Name"
           value={filterName}
           onChange={handleFilterNameChange}
           variant="outlined"
           size="small"
-          sx={{ minWidth: 200 }}
+          className="min-w-[200px]"
         />
         <TextField
           label="Filter by Email"
@@ -324,7 +359,7 @@ export default function DonorManagementPage() {
           onChange={handleFilterEmailChange}
           variant="outlined"
           size="small"
-          sx={{ minWidth: 200 }}
+          className="min-w-[200px]"
         />
         <TextField
           label="Filter by City"
@@ -332,9 +367,9 @@ export default function DonorManagementPage() {
           onChange={handleFilterCityChange}
           variant="outlined"
           size="small"
-          sx={{ minWidth: 200 }}
+          className="min-w-[200px]"
         />
-        <FormControl sx={{ minWidth: 200 }} size="small">
+        <FormControl className="min-w-[200px]" size="small">
           <InputLabel>Filter by Status</InputLabel>
           <Select
             value={filterStatus}
@@ -346,10 +381,10 @@ export default function DonorManagementPage() {
             <MenuItem value="false">Inactive</MenuItem>
           </Select>
         </FormControl>
-      </Box>
+      </motion.div>
 
       {error && (
-        <Box sx={{ mb: 3 }}>
+        <div className="mb-6">
           <Alert
             severity="error"
             action={
@@ -360,228 +395,343 @@ export default function DonorManagementPage() {
           >
             {error}
           </Alert>
-        </Box>
+        </div>
       )}
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+        <div className="flex justify-center p-6">
           <CircularProgress />
-        </Box>
-      ) : filteredDonors.length === 0 ? (
-        <Typography>No donors found.</Typography>
+        </div>
       ) : (
-        <TableContainer component={Paper} sx={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)', borderRadius: '0px' }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: '#302E56' }}>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Email</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Phone</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>City</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Address</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Image</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Created At</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredDonors.map((donor) => (
-                <TableRow key={donor.id} sx={{ '&:hover': { bgcolor: '#f0f0f0' } }}>
-                  <TableCell>{donor.name}</TableCell>
-                  <TableCell>{donor.email}</TableCell>
-                  <TableCell>{donor.phone || 'N/A'}</TableCell>
-                  <TableCell>{donor.city || 'N/A'}</TableCell>
-                  <TableCell>{donor.address || 'N/A'}</TableCell>
-                  <TableCell>
-                    {donor.imageUrl ? (
-                      <img
-                        src={donor.imageUrl}
-                        alt={donor.name}
-                        style={{ height: '40px', width: '40px', objectFit: 'cover', borderRadius: '4px' }}
-                      />
-                    ) : (
-                      'No image'
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      style={{
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: 'bold',
-                        backgroundColor: donor.status ? '#e6f4ea' : '#fdeded',
-                        color: donor.status ? '#2e7d32' : '#d32f2f',
-                      }}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Phone
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    City
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Address
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Image
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Created At
+                  </th>
+                  {hasAnyActionPermission && (
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                <AnimatePresence>
+                  {filteredDonors.map((donor, index) => (
+                    <motion.tr
+                      key={donor.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="hover:bg-gray-50 transition-colors"
                     >
-                      {donor.status ? 'Active' : 'Inactive'}
-                    </span>
-                  </TableCell>
-                  <TableCell>{formatDate(donor.created_at)}</TableCell>
-                  <TableCell sx={{ textAlign: 'center' }}>
-                    <IconButton color="primary" onClick={() => handleModalOpen('view', donor)}>
-                      <VisibilityIcon />
-                    </IconButton>
-                    <IconButton color="primary" onClick={() => handleModalOpen('edit', donor)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton color="error" onClick={() => handleModalOpen('delete', donor)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          {donor.imageUrl && (
+                            <img
+                              src={donor.imageUrl}
+                              alt={donor.name}
+                              className="w-10 h-10 rounded-lg object-cover mr-3"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{donor.name}</div>
+                            <div className="text-sm text-gray-500">{donor.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{donor.email}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{donor.phone || 'N/A'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{donor.city || 'N/A'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{donor.address || 'N/A'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">
+                          {donor.imageUrl ? (
+                            <img
+                              src={donor.imageUrl}
+                              alt={donor.name}
+                              className="w-10 h-10 rounded-lg object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            'No Image'
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            donor.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {getStatusText(donor.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{formatDate(donor.created_at)}</div>
+                      </td>
+                      {hasAnyActionPermission && (
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleModalOpen('view', donor)}
+                              className="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            {canEdit && (
+                              <button
+                                onClick={() => handleModalOpen('edit', donor)}
+                                className="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                            )}
+                            {canDelete && (
+                              <button
+                                onClick={() => handleModalOpen('delete', donor)}
+                                className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </div>
+
+          {filteredDonors.length === 0 && (
+            <div className="text-center py-12">
+              <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No donors found</h3>
+              <p className="text-gray-500 mb-4">Get started by creating your first donor.</p>
+              {canCreate && (
+                <button
+                  onClick={() => handleModalOpen('add')}
+                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add New Donor
+                </button>
+              )}
+            </div>
+          )}
+
+          {filteredDonors.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={totalCount}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              className="border-t border-gray-200"
+            />
+          )}
+        </div>
       )}
 
       {/* Modal */}
-      <Dialog open={modalOpen} onClose={handleModalClose} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ bgcolor: '#1a3c34', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {modalMode === 'add' ? 'Add Donor' : modalMode === 'edit' ? 'Edit Donor' : modalMode === 'view' ? 'View Donor' : 'Delete Donor'}
-          <IconButton onClick={handleModalClose} sx={{ color: 'white' }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          {modalMode !== 'delete' ? (
-            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-              <TextField
-                label="Name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                fullWidth
-                margin="normal"
-                required
-                disabled={modalMode === 'view'}
-              />
-              <TextField
-                label="Email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                fullWidth
-                margin="normal"
-                required
-                disabled={modalMode === 'view'}
-              />
-              {modalMode === 'add' && (
-                <TextField
-                  label="Password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  fullWidth
-                  margin="normal"
-                  required
-                />
-              )}
-              <TextField
-                label="Phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                fullWidth
-                margin="normal"
-                disabled={modalMode === 'view'}
-              />
-              <TextField
-                label="City"
-                name="city"
-                value={formData.city}
-                onChange={handleInputChange}
-                fullWidth
-                margin="normal"
-                disabled={modalMode === 'view'}
-              />
-              <TextField
-                label="Address"
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                fullWidth
-                margin="normal"
-                multiline
-                rows={2}
-                disabled={modalMode === 'view'}
-              />
-              {modalMode !== 'view' && (
-                <TextField
-                  type="file"
-                  label="Donor Image"
-                  InputLabelProps={{ shrink: true }}
-                  name="image"
-                  onChange={handleImageChange}
-                  fullWidth
-                  margin="normal"
-                  inputProps={{ accept: 'image/*' }}
-                />
-              )}
-              {(imagePreview || formData.imageUrl) && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" color="textSecondary">
-                    Image Preview:
-                  </Typography>
-                  <img
-                    src={imagePreview || formData.imageUrl}
-                    alt="Donor preview"
-                    style={{ height: '80px', width: '80px', objectFit: 'cover', borderRadius: '4px' }}
-                  />
-                </Box>
-              )}
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    name="status"
-                    checked={formData.status}
+      <AnimatePresence>
+        {modalOpen && (
+          <Dialog
+            open={modalOpen}
+            onClose={handleModalClose}
+            maxWidth="sm"
+            fullWidth
+            component={motion.div}
+            variants={modalVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            transition={{ duration: 0.3 }}
+          >
+            <DialogTitle sx={{ bgcolor: '#1a3c34', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {modalMode === 'add' ? 'Add Donor' : modalMode === 'edit' ? 'Edit Donor' : modalMode === 'view' ? 'View Donor' : 'Delete Donor'}
+              <IconButton onClick={handleModalClose} sx={{ color: 'white' }}>
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent>
+              {modalMode !== 'delete' ? (
+                <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+                  <TextField
+                    label="Name"
+                    name="name"
+                    value={formData.name}
                     onChange={handleInputChange}
-                    color="success"
+                    fullWidth
+                    margin="normal"
+                    required
                     disabled={modalMode === 'view'}
                   />
-                }
-                label="Active"
-                sx={{ mt: 2 }}
-              />
-              {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
-            </Box>
-          ) : (
-            <Typography>
-              Are you sure you want to delete donor <strong>{selectedDonor?.name}</strong>?
-            </Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleModalClose} color="inherit">
-            Cancel
-          </Button>
-          {modalMode === 'view' ? null : modalMode !== 'delete' ? (
-            <Button
-              type="submit"
-              variant="contained"
-              color="success"
-              onClick={handleSubmit}
-              sx={{ borderRadius: '20px', textTransform: 'none' }}
-            >
-              {modalMode === 'add' ? 'Add' : 'Update'}
-            </Button>
-          ) : (
-            <Button
-              variant="contained"
-              color="error"
-              onClick={handleSubmit}
-              sx={{ borderRadius: '20px', textTransform: 'none' }}
-            >
-              Delete
-            </Button>
-          )}
-        </DialogActions>
-      </Dialog>
+                  <TextField
+                    label="Email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    fullWidth
+                    margin="normal"
+                    required
+                    disabled={modalMode === 'view'}
+                  />
+                  {modalMode === 'add' && (
+                    <TextField
+                      label="Password"
+                      name="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      fullWidth
+                      margin="normal"
+                      required
+                    />
+                  )}
+                  <TextField
+                    label="Phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    fullWidth
+                    margin="normal"
+                    disabled={modalMode === 'view'}
+                  />
+                  <TextField
+                    label="City"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    fullWidth
+                    margin="normal"
+                    disabled={modalMode === 'view'}
+                  />
+                  <TextField
+                    label="Address"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    fullWidth
+                    margin="normal"
+                    multiline
+                    rows={2}
+                    disabled={modalMode === 'view'}
+                  />
+                  {modalMode !== 'view' && (
+                    <TextField
+                      type="file"
+                      label="Donor Image"
+                      InputLabelProps={{ shrink: true }}
+                      name="image"
+                      onChange={handleImageChange}
+                      fullWidth
+                      margin="normal"
+                      inputProps={{ accept: 'image/*' }}
+                    />
+                  )}
+                  {(imagePreview || formData.imageUrl) && (
+                    <Box sx={{ mt: 2 }}>
+                      <span className="text-sm text-gray-500">Image Preview:</span>
+                      <img
+                        src={imagePreview || formData.imageUrl}
+                        alt="Donor preview"
+                        className="h-20 w-20 object-cover rounded-lg mt-2"
+                      />
+                    </Box>
+                  )}
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        name="status"
+                        checked={formData.status}
+                        onChange={handleInputChange}
+                        color="success"
+                        disabled={modalMode === 'view'}
+                      />
+                    }
+                    label="Active"
+                    sx={{ mt: 2 }}
+                  />
+                  {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+                </Box>
+              ) : (
+                <span className="text-gray-900">
+                  Are you sure you want to delete donor <strong>{selectedDonor?.name}</strong>?
+                </span>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleModalClose} color="inherit">
+                Cancel
+              </Button>
+              {modalMode === 'view' ? null : modalMode !== 'delete' ? (
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="success"
+                  onClick={handleSubmit}
+                  sx={{ borderRadius: '20px', textTransform: 'none' }}
+                >
+                  {modalMode === 'add' ? 'Add' : 'Update'}
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleSubmit}
+                  sx={{ borderRadius: '20px', textTransform: 'none' }}
+                >
+                  Delete
+                </Button>
+              )}
+            </DialogActions>
+          </Dialog>
+        )}
+      </AnimatePresence>
     </Box>
-    </motion.div>
   );
 }

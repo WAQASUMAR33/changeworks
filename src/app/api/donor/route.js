@@ -13,12 +13,13 @@ const donorSchema = z.object({
   city: z.string().optional(),
   address: z.string().optional(),
   imageUrl: z.string().optional(),
+  organization_id: z.number().int().positive("Organization ID is required"),
 });
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { name, email, password, phone, city, address, imageUrl } = donorSchema.parse(body);
+    const { name, email, password, phone, city, address, imageUrl, organization_id } = donorSchema.parse(body);
 
     // Check for existing donor
     const existingDonor = await prisma.donor.findUnique({ where: { email } });
@@ -26,11 +27,17 @@ export async function POST(request) {
       return NextResponse.json({ error: "Donor already exists" }, { status: 400 });
     }
 
+    // Verify organization exists
+    const organization = await prisma.organization.findUnique({ where: { id: organization_id } });
+    if (!organization) {
+      return NextResponse.json({ error: "Invalid organization ID" }, { status: 400 });
+    }
+
     // Hash password
     const hashedPassword = await hash(password, 10);
 
     // Create donor
-    await prisma.donor.create({
+    const donor = await prisma.donor.create({
       data: {
         name,
         email,
@@ -40,7 +47,9 @@ export async function POST(request) {
         address,
         imageUrl,
         status: true,
+        organization: { connect: { id: organization_id } },
       },
+      include: { organization: true },
     });
 
     // Generate verification token
@@ -48,12 +57,12 @@ export async function POST(request) {
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     // Store token in DonorVerificationToken
-   await prisma.DonorVerificationToken.create({
-    data: {
+    await prisma.DonorVerificationToken.create({
+      data: {
         identifier: email,
         token,
         expires,
-    },
+      },
     });
 
     // Send email
@@ -77,7 +86,7 @@ export async function POST(request) {
     });
 
     return NextResponse.json(
-      { message: "Donor registered. Please check your email to verify your account." },
+      { message: "Donor registered. Please check your email to verify your account.", donor },
       { status: 201 }
     );
   } catch (error) {
@@ -90,26 +99,42 @@ export async function POST(request) {
   }
 }
 
-
-
-// GET: Fetch all donors
-export async function GET() {
+// GET: Fetch all donors with pagination
+export async function GET(request) {
   try {
-    const donors = await prisma.donor.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        city: true,
-        address: true,
-        imageUrl: true,
-        status: true,
-        created_at: true,
-        updated_at: true,
-      },
-    });
-    return NextResponse.json(donors, { status: 200 });
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const skip = (page - 1) * limit;
+
+    const [donors, totalCount] = await Promise.all([
+      prisma.donor.findMany({
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          city: true,
+          address: true,
+          imageUrl: true,
+          status: true,
+          created_at: true,
+          updated_at: true,
+          organization_id: true,
+          organization: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      }),
+      prisma.donor.count(),
+    ]);
+
+    return NextResponse.json({ donors, totalCount }, { status: 200 });
   } catch (error) {
     console.error('Error fetching donors:', error);
     return NextResponse.json({ error: 'Failed to fetch donors' }, { status: 500 });

@@ -71,6 +71,8 @@ model Organization {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
+  donors         Donor[]  @relation
+
   @@map("organizations")
 }
 
@@ -86,6 +88,8 @@ model Donor {
   status    Boolean  @default(true)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  organization_id Int
+  organization   Organization @relation(fields: [organization_id], references: [id])
 
   @@map("donors")
 }

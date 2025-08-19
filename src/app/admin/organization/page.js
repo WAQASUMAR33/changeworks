@@ -3,14 +3,6 @@
 import { useState, useEffect } from 'react';
 import {
   Box,
-  Typography,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Select,
   MenuItem,
@@ -21,15 +13,16 @@ import {
   FormControl,
   InputLabel,
   Alert,
-  Paper,
+  Button,
   IconButton,
   CircularProgress,
   FormControlLabel,
   Checkbox,
   TablePagination,
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Close as CloseIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import { Close as CloseIcon } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Eye, Edit, Trash2, Package, Plus } from 'lucide-react';
 
 // Helper function to format dates consistently
 const formatDate = (dateString) => {
@@ -77,7 +70,7 @@ const uploadImageToServer = async (base64Image) => {
 export default function OrganizationManagementPage() {
   const [organizations, setOrganizations] = useState([]);
   const [filteredOrganizations, setFilteredOrganizations] = useState([]);
-  const [totalCount, setTotalCount] = useState(0); // Total number of organizations
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('view'); // 'view', 'add', 'edit', 'delete'
@@ -90,6 +83,13 @@ export default function OrganizationManagementPage() {
     company: '',
     address: '',
     website: '',
+    city: '',
+    state: '',
+    country: '',
+    postalCode: '',
+    ghlId: '',
+    imageUrl: '',
+    status: true,
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
@@ -101,8 +101,6 @@ export default function OrganizationManagementPage() {
   const [filterName, setFilterName] = useState('');
   const [filterEmail, setFilterEmail] = useState('');
   const [filterCity, setFilterCity] = useState('');
-  const [filterState, setFilterState] = useState('');
-  const [filterCountry, setFilterCountry] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
   // Fetch organizations on mount and when page/rowsPerPage change
@@ -116,19 +114,17 @@ export default function OrganizationManagementPage() {
       const matchesName = org.name.toLowerCase().includes(filterName.toLowerCase());
       const matchesEmail = org.email.toLowerCase().includes(filterEmail.toLowerCase());
       const matchesCity = org.city ? org.city.toLowerCase().includes(filterCity.toLowerCase()) : true;
-      const matchesState = org.state ? org.state.toLowerCase().includes(filterState.toLowerCase()) : true;
-      const matchesCountry = org.country ? org.country.toLowerCase().includes(filterCountry.toLowerCase()) : true;
       const matchesStatus = filterStatus !== '' ? org.status === (filterStatus === 'true') : true;
-      return matchesName && matchesEmail && matchesCity && matchesState && matchesCountry && matchesStatus;
+      return matchesName && matchesEmail && matchesCity && matchesStatus;
     });
     setFilteredOrganizations(filtered);
-  }, [organizations, filterName, filterEmail, filterCity, filterState, filterCountry, filterStatus]);
+  }, [organizations, filterName, filterEmail, filterCity, filterStatus]);
 
   const fetchOrganizations = async () => {
     try {
       const response = await fetch(`/api/organization?page=${page + 1}&limit=${rowsPerPage}`);
       const data = await response.json();
-      console.log('API Response:', data); // Debug log
+      console.log('API Response:', data);
       if (!response.ok) {
         throw new Error(data.error || `HTTP ${response.status}: Failed to fetch organizations`);
       }
@@ -137,7 +133,7 @@ export default function OrganizationManagementPage() {
         throw new Error('Expected organizations data to be an array');
       }
       setOrganizations(data.organizations);
-      setTotalCount(data.totalCount || 0); // Expect totalCount from API
+      setTotalCount(data.totalCount || 0);
       setLoading(false);
     } catch (err) {
       setError(`Failed to load organizations: ${err.message}`);
@@ -150,7 +146,7 @@ export default function OrganizationManagementPage() {
 
   const handleModalOpen = (mode, org = null) => {
     setModalMode(mode);
-    invitadosOrganization(org);
+    setSelectedOrganization(org);
     if (mode === 'view' || mode === 'edit') {
       setFormData({
         name: org?.name || '',
@@ -299,7 +295,6 @@ export default function OrganizationManagementPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || `HTTP ${response.status}: Operation failed`);
 
-      // Reset to first page after add/edit/delete to ensure valid pagination
       setPage(0);
       await fetchOrganizations();
       handleModalClose();
@@ -315,7 +310,7 @@ export default function OrganizationManagementPage() {
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0); // Reset to first page when rows per page changes
+    setPage(0);
   };
 
   // Filter handlers
@@ -326,8 +321,9 @@ export default function OrganizationManagementPage() {
 
   // Animation variants
   const tableRowVariants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: { opacity: 1, x: 0 },
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
   };
 
   const modalVariants = {
@@ -341,13 +337,30 @@ export default function OrganizationManagementPage() {
     visible: { opacity: 1, y: 0 },
   };
 
+  // Permission flags (simplified for organizations)
+  const hasAnyActionPermission = true; // Adjust based on your auth logic
+  const canEdit = true;
+  const canDelete = true;
+  const canCreate = true;
+
+  const getStatusText = (status) => {
+    return status ? 'Active' : 'Inactive';
+  };
+
   return (
     <Box sx={{ p: 3, bgcolor: '#FFF', minHeight: '100vh' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1a3c34' }}>
-          Organization Management
-        </Typography>
-      </Box>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-gray-900">Organization Management</h2>
+        {canCreate && (
+          <button
+            onClick={() => handleModalOpen('add')}
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add New Organization
+          </button>
+        )}
+      </div>
 
       {/* Filters */}
       <motion.div
@@ -355,50 +368,48 @@ export default function OrganizationManagementPage() {
         initial="hidden"
         animate="visible"
         transition={{ duration: 0.5 }}
-        sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}
+        className="mb-6 flex gap-4 flex-wrap"
       >
-        <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <TextField
-            label="Filter by Name"
-            value={filterName}
-            onChange={handleFilterNameChange}
-            variant="outlined"
-            size="small"
-            sx={{ minWidth: 200 }}
-          />
-          <TextField
-            label="Filter by Email"
-            value={filterEmail}
-            onChange={handleFilterEmailChange}
-            variant="outlined"
-            size="small"
-            sx={{ minWidth: 200 }}
-          />
-          <TextField
-            label="Filter by City"
-            value={filterCity}
-            onChange={handleFilterCityChange}
-            variant="outlined"
-            size="small"
-            sx={{ minWidth: 200 }}
-          />
-          <FormControl sx={{ minWidth: 200 }} size="small">
-            <InputLabel>Filter by Status</InputLabel>
-            <Select
-              value={filterStatus}
-              onChange={handleFilterStatusChange}
-              label="Filter by Status"
-            >
-              <MenuItem value="">All</MenuItem>
-              <MenuItem value="true">Active</MenuItem>
-              <MenuItem value="false">Inactive</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
+        <TextField
+          label="Filter by Name"
+          value={filterName}
+          onChange={handleFilterNameChange}
+          variant="outlined"
+          size="small"
+          className="min-w-[200px]"
+        />
+        <TextField
+          label="Filter by Email"
+          value={filterEmail}
+          onChange={handleFilterEmailChange}
+          variant="outlined"
+          size="small"
+          className="min-w-[200px]"
+        />
+        <TextField
+          label="Filter by City"
+          value={filterCity}
+          onChange={handleFilterCityChange}
+          variant="outlined"
+          size="small"
+          className="min-w-[200px]"
+        />
+        <FormControl className="min-w-[200px]" size="small">
+          <InputLabel>Filter by Status</InputLabel>
+          <Select
+            value={filterStatus}
+            onChange={handleFilterStatusChange}
+            label="Filter by Status"
+          >
+            <MenuItem value="">All</MenuItem>
+            <MenuItem value="true">Active</MenuItem>
+            <MenuItem value="false">Inactive</MenuItem>
+          </Select>
+        </FormControl>
       </motion.div>
 
       {error && (
-        <Box sx={{ mb: 3 }}>
+        <div className="mb-6">
           <Alert
             severity="error"
             action={
@@ -409,112 +420,197 @@ export default function OrganizationManagementPage() {
           >
             {error}
           </Alert>
-        </Box>
+        </div>
       )}
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+        <div className="flex justify-center p-6">
           <CircularProgress />
-        </Box>
-      ) : filteredOrganizations.length === 0 ? (
-        <Typography>No organizations found.</Typography>
+        </div>
       ) : (
-        <>
-          <TableContainer component={Paper} sx={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)', borderRadius: '0px' }}>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: '#302E56' }}>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Email</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Phone</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Company</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Website</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Image</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Balance</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Created At</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Phone
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Company
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Website
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Image
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Created At
+                  </th>
+                  {hasAnyActionPermission && (
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
                 <AnimatePresence>
                   {filteredOrganizations.map((org, index) => (
                     <motion.tr
                       key={org.id}
-                      variants={tableRowVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="hidden"
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                      sx={{ '&:hover': { bgcolor: '#f0f0f0' } }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="hover:bg-gray-50 transition-colors"
                     >
-                      <TableCell>{org.name}</TableCell>
-                      <TableCell>{org.email}</TableCell>
-                      <TableCell>{org.phone || 'N/A'}</TableCell>
-                      <TableCell>{org.company || 'N/A'}</TableCell>
-                      <TableCell>
-                        {org.website ? (
-                          <a href={org.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                            {org.website}
-                          </a>
-                        ) : (
-                          'N/A'
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {org.imageUrl ? (
-                          <img
-                            src={org.imageUrl}
-                            alt={org.name}
-                            style={{ height: '40px', width: '40px', objectFit: 'cover', borderRadius: '4px' }}
-                          />
-                        ) : (
-                          'No image'
-                        )}
-                      </TableCell>
-                      <TableCell>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          {org.imageUrl && (
+                            <img
+                              src={org.imageUrl}
+                              alt={org.name}
+                              className="w-10 h-10 rounded-lg object-cover mr-3"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{org.name}</div>
+                            <div className="text-sm text-gray-500">{org.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{org.email}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{org.phone || 'N/A'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{org.company || 'N/A'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">
+                          {org.website ? (
+                            <a
+                              href={org.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              {org.website}
+                            </a>
+                          ) : (
+                            'N/A'
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">
+                          {org.imageUrl ? (
+                            <img
+                              src={org.imageUrl}
+                              alt={org.name}
+                              className="w-10 h-10 rounded-lg object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            'No Image'
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
                         <span
-                          style={{
-                            padding: '4px 8px',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            backgroundColor: org.status ? '#e6f4ea' : '#fdeded',
-                            color: org.status ? '#2e7d32' : '#d32f2f',
-                          }}
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            org.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}
                         >
-                          {org.status ? 'Active' : 'Inactive'}
+                          {getStatusText(org.status)}
                         </span>
-                      </TableCell>
-                      <TableCell>{formatDate(org.balance)}</TableCell>
-                      <TableCell>{formatDate(org.created_at)}</TableCell>
-                      <TableCell sx={{ textAlign: 'center' }}>
-                        {/* <IconButton color="primary" onClick={() => handleModalOpen('view', org)}>
-                          <VisibilityIcon />
-                        </IconButton> */}
-                        <IconButton color="primary" onClick={() => handleModalOpen('edit', org)}>
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton color="error" onClick={() => handleModalOpen('delete', org)}>
-                          <DeleteIcon />
-                        </IconButton>
-                      </TableCell>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{formatDate(org.created_at)}</div>
+                      </td>
+                      {hasAnyActionPermission && (
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleModalOpen('view', org)}
+                              className="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            {canEdit && (
+                              <button
+                                onClick={() => handleModalOpen('edit', org)}
+                                className="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                            )}
+                            {canDelete && (
+                              <button
+                                onClick={() => handleModalOpen('delete', org)}
+                                className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </motion.tr>
                   ))}
                 </AnimatePresence>
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={totalCount}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </>
+              </tbody>
+            </table>
+          </div>
+
+          {filteredOrganizations.length === 0 && (
+            <div className="text-center py-12">
+              <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No organizations found</h3>
+              <p className="text-gray-500 mb-4">Get started by creating your first organization.</p>
+              {canCreate && (
+                <button
+                  onClick={() => handleModalOpen('add')}
+                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add New Organization
+                </button>
+              )}
+            </div>
+          )}
+
+          {filteredOrganizations.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={totalCount}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              className="border-t border-gray-200"
+            />
+          )}
+        </div>
       )}
 
       {/* Modal */}
@@ -671,13 +767,11 @@ export default function OrganizationManagementPage() {
                   )}
                   {(imagePreview || formData.imageUrl) && (
                     <Box sx={{ mt: 2 }}>
-                      <Typography variant="body2" color="textSecondary">
-                        Image Preview:
-                      </Typography>
+                      <span className="text-sm text-gray-500">Image Preview:</span>
                       <img
                         src={imagePreview || formData.imageUrl}
                         alt="Organization preview"
-                        style={{ height: '80px', width: '80px', objectFit: 'cover', borderRadius: '4px' }}
+                        className="h-20 w-20 object-cover rounded-lg mt-2"
                       />
                     </Box>
                   )}
@@ -697,9 +791,9 @@ export default function OrganizationManagementPage() {
                   {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
                 </Box>
               ) : (
-                <Typography>
+                <span className="text-gray-900">
                   Are you sure you want to delete organization <strong>{selectedOrganization?.name}</strong>?
-                </Typography>
+                </span>
               )}
             </DialogContent>
             <DialogActions>
