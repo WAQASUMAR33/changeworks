@@ -62,25 +62,7 @@ export async function POST(req) {
 export async function GET() {
   try {
     const organizations = await prisma.organization.findMany({
-      orderBy: { created_at: "desc" },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        imageUrl: true,
-        phone: true,
-        company: true,
-        address: true,
-        website: true,
-        city: true,
-        state: true,
-        country: true,
-        postalCode: true,
-        ghlId: true,
-        status: true,
-        created_at: true,
-        updated_at: true,
-      },
+      orderBy: { created_at: "desc" }
     });
 
     return NextResponse.json({ organizations }, { status: 200 });

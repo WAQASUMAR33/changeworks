@@ -59,14 +59,7 @@ export async function POST(request) {
     return NextResponse.json({
       message: "Login successful",
       token,
-      organization: {
-        id: organization.id,
-        email: organization.email,
-        name: organization.name,
-        status: organization.status,
-        created_at: organization.created_at,
-        updated_at: organization.updated_at,
-      },
+      organization
     }, { status: 200 });
   } catch (error) {
     if (error instanceof z.ZodError) {

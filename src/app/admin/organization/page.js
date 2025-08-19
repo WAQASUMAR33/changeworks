@@ -26,6 +26,7 @@ import {
   CircularProgress,
   FormControlLabel,
   Checkbox,
+  TablePagination,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Close as CloseIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -76,6 +77,7 @@ const uploadImageToServer = async (base64Image) => {
 export default function OrganizationManagementPage() {
   const [organizations, setOrganizations] = useState([]);
   const [filteredOrganizations, setFilteredOrganizations] = useState([]);
+  const [totalCount, setTotalCount] = useState(0); // Total number of organizations
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('view'); // 'view', 'add', 'edit', 'delete'
@@ -88,17 +90,13 @@ export default function OrganizationManagementPage() {
     company: '',
     address: '',
     website: '',
-    city: '',
-    state: '',
-    country: '',
-    postalCode: '',
-    ghlId: '',
-    imageUrl: '',
-    status: true,
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [error, setError] = useState('');
+  // Pagination states
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   // Filter states
   const [filterName, setFilterName] = useState('');
   const [filterEmail, setFilterEmail] = useState('');
@@ -107,10 +105,10 @@ export default function OrganizationManagementPage() {
   const [filterCountry, setFilterCountry] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
-  // Fetch organizations on mount
+  // Fetch organizations on mount and when page/rowsPerPage change
   useEffect(() => {
     fetchOrganizations();
-  }, []);
+  }, [page, rowsPerPage]);
 
   // Apply filters
   useEffect(() => {
@@ -128,7 +126,7 @@ export default function OrganizationManagementPage() {
 
   const fetchOrganizations = async () => {
     try {
-      const response = await fetch('/api/organization'); // Adjust to '/api/organization' if needed
+      const response = await fetch(`/api/organization?page=${page + 1}&limit=${rowsPerPage}`);
       const data = await response.json();
       console.log('API Response:', data); // Debug log
       if (!response.ok) {
@@ -139,10 +137,12 @@ export default function OrganizationManagementPage() {
         throw new Error('Expected organizations data to be an array');
       }
       setOrganizations(data.organizations);
+      setTotalCount(data.totalCount || 0); // Expect totalCount from API
       setLoading(false);
     } catch (err) {
       setError(`Failed to load organizations: ${err.message}`);
       setOrganizations([]);
+      setTotalCount(0);
       setLoading(false);
       console.error('Fetch error:', err);
     }
@@ -150,7 +150,7 @@ export default function OrganizationManagementPage() {
 
   const handleModalOpen = (mode, org = null) => {
     setModalMode(mode);
-    setSelectedOrganization(org);
+    invitadosOrganization(org);
     if (mode === 'view' || mode === 'edit') {
       setFormData({
         name: org?.name || '',
@@ -247,7 +247,7 @@ export default function OrganizationManagementPage() {
         const payload = {
           name,
           email,
-          password, // Should be hashed in production
+          password,
           phone: phone || null,
           company: company || null,
           address: address || null,
@@ -260,7 +260,7 @@ export default function OrganizationManagementPage() {
           imageUrl: imageUrl || null,
           status,
         };
-        response = await fetch('/api/donor', { // Adjust to '/api/organization' if needed
+        response = await fetch('/api/organization', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -283,7 +283,7 @@ export default function OrganizationManagementPage() {
           imageUrl: imageUrl || selectedOrganization.imageUrl || null,
           status,
         };
-        response = await fetch(`/api/donor/${selectedOrganization.id}`, { // Adjust to '/api/organization/[id]' if needed
+        response = await fetch(`/api/organization/${selectedOrganization.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -291,7 +291,7 @@ export default function OrganizationManagementPage() {
           body: JSON.stringify(payload),
         });
       } else if (modalMode === 'delete' && selectedOrganization) {
-        response = await fetch(`/api/donor/${selectedOrganization.id}`, { // Adjust to '/api/organization/[id]' if needed
+        response = await fetch(`/api/organization/${selectedOrganization.id}`, {
           method: 'DELETE',
         });
       }
@@ -299,6 +299,8 @@ export default function OrganizationManagementPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || `HTTP ${response.status}: Operation failed`);
 
+      // Reset to first page after add/edit/delete to ensure valid pagination
+      setPage(0);
       await fetchOrganizations();
       handleModalClose();
     } catch (err) {
@@ -306,12 +308,20 @@ export default function OrganizationManagementPage() {
     }
   };
 
+  // Pagination handlers
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); // Reset to first page when rows per page changes
+  };
+
   // Filter handlers
   const handleFilterNameChange = (e) => setFilterName(e.target.value);
   const handleFilterEmailChange = (e) => setFilterEmail(e.target.value);
   const handleFilterCityChange = (e) => setFilterCity(e.target.value);
-//   const handleFilterStateChange = (e) => setFilterState(e.target.value);
-//   const handleFilterCountryChange = (e) => setFilterCountry(e.target.value);
   const handleFilterStatusChange = (e) => setFilterStatus(e.target.value);
 
   // Animation variants
@@ -337,15 +347,6 @@ export default function OrganizationManagementPage() {
         <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1a3c34' }}>
           Organization Management
         </Typography>
-        <Button
-          variant="contained"
-          color="success"
-          startIcon={<AddIcon />}
-          onClick={() => handleModalOpen('add')}
-          sx={{ borderRadius: '20px', textTransform: 'none', boxShadow: '0 4px 10px rgba(0, 128, 0, 0.2)' }}
-        >
-          Add Organization
-        </Button>
       </Box>
 
       {/* Filters */}
@@ -373,30 +374,14 @@ export default function OrganizationManagementPage() {
             size="small"
             sx={{ minWidth: 200 }}
           />
-          {/* <TextField
+          <TextField
             label="Filter by City"
             value={filterCity}
             onChange={handleFilterCityChange}
             variant="outlined"
             size="small"
             sx={{ minWidth: 200 }}
-          /> */}
-          {/* <TextField
-            label="Filter by State"
-            value={filterState}
-            onChange={handleFilterStateChange}
-            variant="outlined"
-            size="small"
-            sx={{ minWidth: 200 }}
-          /> */}
-          {/* <TextField
-            label="Filter by Country"
-            value={filterCountry}
-            onChange={handleFilterCountryChange}
-            variant="outlined"
-            size="small"
-            sx={{ minWidth: 200 }}
-          /> */}
+          />
           <FormControl sx={{ minWidth: 200 }} size="small">
             <InputLabel>Filter by Status</InputLabel>
             <Select
@@ -434,92 +419,102 @@ export default function OrganizationManagementPage() {
       ) : filteredOrganizations.length === 0 ? (
         <Typography>No organizations found.</Typography>
       ) : (
-        <TableContainer component={Paper} sx={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)', borderRadius: '0px' }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: '#302E56' }}>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Email</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Phone</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Company</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Website</TableCell>
-           
-                 <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Image</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Created At</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              <AnimatePresence>
-                {filteredOrganizations.map((org, index) => (
-                  <motion.tr
-                    key={org.id}
-                    variants={tableRowVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                    sx={{ '&:hover': { bgcolor: '#f0f0f0' } }}
-                  >
-                    <TableCell>{org.name}</TableCell>
-                    <TableCell>{org.email}</TableCell>
-                    <TableCell>{org.phone || 'N/A'}</TableCell>
-                    <TableCell>{org.company || 'N/A'}</TableCell>
-                    <TableCell>
-                      {org.website ? (
-                        <a href={org.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                          {org.website}
-                        </a>
-                      ) : (
-                        'N/A'
-                      )}
-                    </TableCell>
-            
-                  
-                    <TableCell>
-                      {org.imageUrl ? (
-                        <img
-                          src={org.imageUrl}
-                          alt={org.name}
-                          style={{ height: '40px', width: '40px', objectFit: 'cover', borderRadius: '4px' }}
-                        />
-                      ) : (
-                        'No image'
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        style={{
-                          padding: '4px 8px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: 'bold',
-                          backgroundColor: org.status ? '#e6f4ea' : '#fdeded',
-                          color: org.status ? '#2e7d32' : '#d32f2f',
-                        }}
-                      >
-                        {org.status ? 'Active' : 'Inactive'}
-                      </span>
-                    </TableCell>
-                    <TableCell>{formatDate(org.created_at)}</TableCell>
-                    <TableCell sx={{ textAlign: 'center' }}>
-                      <IconButton color="primary" onClick={() => handleModalOpen('view', org)}>
-                        <VisibilityIcon />
-                      </IconButton>
-                      <IconButton color="primary" onClick={() => handleModalOpen('edit', org)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton color="error" onClick={() => handleModalOpen('delete', org)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </motion.tr>
-                ))}
-              </AnimatePresence>
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <>
+          <TableContainer component={Paper} sx={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)', borderRadius: '0px' }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ bgcolor: '#302E56' }}>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Email</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Phone</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Company</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Website</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Image</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Balance</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Created At</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <AnimatePresence>
+                  {filteredOrganizations.map((org, index) => (
+                    <motion.tr
+                      key={org.id}
+                      variants={tableRowVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      sx={{ '&:hover': { bgcolor: '#f0f0f0' } }}
+                    >
+                      <TableCell>{org.name}</TableCell>
+                      <TableCell>{org.email}</TableCell>
+                      <TableCell>{org.phone || 'N/A'}</TableCell>
+                      <TableCell>{org.company || 'N/A'}</TableCell>
+                      <TableCell>
+                        {org.website ? (
+                          <a href={org.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            {org.website}
+                          </a>
+                        ) : (
+                          'N/A'
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {org.imageUrl ? (
+                          <img
+                            src={org.imageUrl}
+                            alt={org.name}
+                            style={{ height: '40px', width: '40px', objectFit: 'cover', borderRadius: '4px' }}
+                          />
+                        ) : (
+                          'No image'
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            backgroundColor: org.status ? '#e6f4ea' : '#fdeded',
+                            color: org.status ? '#2e7d32' : '#d32f2f',
+                          }}
+                        >
+                          {org.status ? 'Active' : 'Inactive'}
+                        </span>
+                      </TableCell>
+                      <TableCell>{formatDate(org.balance)}</TableCell>
+                      <TableCell>{formatDate(org.created_at)}</TableCell>
+                      <TableCell sx={{ textAlign: 'center' }}>
+                        {/* <IconButton color="primary" onClick={() => handleModalOpen('view', org)}>
+                          <VisibilityIcon />
+                        </IconButton> */}
+                        <IconButton color="primary" onClick={() => handleModalOpen('edit', org)}>
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton color="error" onClick={() => handleModalOpen('delete', org)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={totalCount}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </>
       )}
 
       {/* Modal */}

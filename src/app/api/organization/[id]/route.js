@@ -35,26 +35,7 @@ export async function GET(req, { params }) {
     }
 
     const organization = await prisma.organization.findUnique({
-      where: { id: parsedId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        imageUrl: true,
-        phone: true,
-        company: true,
-        address: true,
-        website: true,
-        city: true,
-        state: true,
-        country: true,
-        postalCode: true,
-        ghlId: true,
-        status: true,
-        created_at: true,
-        updated_at: true,
-      },
-    });
+      where: { id: parsedId }});
 
     if (!organization) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
