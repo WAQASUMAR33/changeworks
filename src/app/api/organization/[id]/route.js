@@ -28,8 +28,14 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: "Organization ID is required" }, { status: 400 });
     }
 
+    // Convert id to integer
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      return NextResponse.json({ error: "Invalid organization ID" }, { status: 400 });
+    }
+
     const organization = await prisma.organization.findUnique({
-      where: { id },
+      where: { id: parsedId },
       select: {
         id: true,
         name: true,
@@ -71,8 +77,14 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ error: "Organization ID is required" }, { status: 400 });
     }
 
+    // Convert id to integer
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      return NextResponse.json({ error: "Invalid organization ID" }, { status: 400 });
+    }
+
     const existing = await prisma.organization.findUnique({
-      where: { id },
+      where: { id: parsedId },
     });
 
     if (!existing) {
@@ -97,7 +109,7 @@ export async function PUT(req, { params }) {
     }
 
     const organization = await prisma.organization.update({
-      where: { id },
+      where: { id: parsedId },
       data: updateData,
       select: {
         id: true,
@@ -140,8 +152,14 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ error: "Organization ID is required" }, { status: 400 });
     }
 
+    // Convert id to integer
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      return NextResponse.json({ error: "Invalid organization ID" }, { status: 400 });
+    }
+
     const existing = await prisma.organization.findUnique({
-      where: { id },
+      where: { id: parsedId },
     });
 
     if (!existing) {
@@ -149,7 +167,7 @@ export async function DELETE(req, { params }) {
     }
 
     await prisma.organization.delete({
-      where: { id },
+      where: { id: parsedId },
     });
 
     return NextResponse.json({ message: "Organization deleted successfully" }, { status: 200 });
