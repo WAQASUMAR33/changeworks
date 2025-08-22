@@ -72,7 +72,6 @@ model Organization {
   status     Boolean  @default(true)
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
-
   donors         Donor[]  @relation
   transactions   DonorTransaction[] @relation("OrganizationTransactions")
 

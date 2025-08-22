@@ -69,10 +69,10 @@ const Sidebar = () => {
         { name: 'Preferences', path: '/admin' },
       ],
     },
-    
+
     { name: 'User\'s Management', icon: CircleUserRound, path: '/admin/users_management' },
-    { name: 'Reports', icon: ClipboardPlus, path: '/reports' },
-    { name: 'Logout', icon: LogOut, path: '/login' },
+    { name: 'Reports', icon: ClipboardPlus, path: '/admin' },
+    { name: 'Logout', icon: LogOut, path: '/admin' },
   ];
 
   return (
