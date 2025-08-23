@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../lib/prisma";
+import { prisma } from "../../../../lib/prisma";
 
 // GET: Fetch all transactions for a specific organization_id
 export async function GET(request, { params }) {
