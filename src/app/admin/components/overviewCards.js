@@ -115,7 +115,7 @@ export default function OverviewCards() {
                     Dashboard Overview
                 </h1>
                 <p className="text-gray-600 max-w-2xl mx-auto">
-                    Welcome to your ChangeWorks admin dashboard. Here's a comprehensive overview of your platform's performance and key metrics.
+                    Welcome to your ChangeWorks admin dashboard. Here&apos;s a comprehensive overview of your platform&apos;s performance and key metrics.
                 </p>
             </div>
 
