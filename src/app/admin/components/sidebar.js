@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import Image from 'next/image';
 
 import {
   Settings,
@@ -17,12 +16,29 @@ import {
   Gift,
   Users,
   ClipboardPlus,
+  Home,
+  BarChart3,
+  Shield,
+  Bell,
+  Menu,
+  X,
+  ChevronLeft,
+  Pin,
+  PinOff,
 } from 'lucide-react';
 
 const Sidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openSubmenus, setOpenSubmenus] = useState({});
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
 
   const toggleSubmenu = (name) => {
     setOpenSubmenus((prev) => ({
@@ -31,12 +47,28 @@ const Sidebar = () => {
     }));
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    router.push('/login');
+  };
+
+  const togglePin = () => {
+    setIsPinned(!isPinned);
+  };
+
+  const isExpanded = isHovered || isPinned;
+
   const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
+    { 
+      name: 'Dashboard', 
+      icon: LayoutDashboard, 
+      path: '/admin',
+    },
     {
       name: 'Donors',
       icon: Gift,
-      path: '',
+      path: '/admin/donor-accounts',
       subItems: [
         { name: 'List Donors', path: '/admin/donor-accounts' },
         { name: 'Transactions', path: '/admin/transactions_page' },
@@ -45,124 +77,232 @@ const Sidebar = () => {
     {
       name: 'Organizations',
       icon: Users,
-      path: '',
+      path: '/admin/organization',
       subItems: [
         { name: 'List Organizations', path: '/admin/organization' },
         { name: 'Transactions', path: '/admin/transactions_page' },
       ],
     },
     {
-      name: 'Organizations Trnx',
+      name: 'Transactions',
       icon: ArrowRightLeft,
-      path: '',
-      subItems: [
-        { name: 'List Organizations', path: '/admin' },
-        { name: 'Transactions', path: '/admin' },
-      ],
+      path: '/admin/transactions_page',
     },
     {
-      name: 'Settings',
-      icon: Settings,
-      path: '',
-      subItems: [
-        { name: 'General', path: '/admin/settings' },
-        { name: 'Preferences', path: '/admin' },
-      ],
+      name: 'Fund Transfer',
+      icon: ArrowRightLeft,
+      path: '/admin/fund-transfer',
     },
-
-    { name: 'User\'s Management', icon: CircleUserRound, path: '/admin/users_management' },
-    { name: 'Reports', icon: ClipboardPlus, path: '/admin' },
-    { name: 'Logout', icon: LogOut, path: '/admin' },
+    {
+      name: 'User Management',
+      icon: CircleUserRound,
+      path: '/admin/users_management',
+    },
+    {
+      name: 'Reports',
+      icon: BarChart3,
+      path: '/admin/reports',
+    },
   ];
 
-  return (
-    <motion.div
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      animate={{ width: isHovered ? 260 : 80 }}
-      transition={{ duration: 0.25 }}
-      className="h-full bg-[#1f2937] text-white border-r border-black shadow-lg overflow-y-auto flex-shrink-0"
-    >
-      <div className="flex flex-col h-full">
-        {/* Logo */}
-        <div className="flex items-center justify-center h-20 border-b border-gray-800">
-          <Image src="/images/logo.png" alt="Logo" width={40} height={40} />
-          {isHovered && <span className="ml-2 text-lg font-bold">Logo</span>}
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Logo Section */}
+      <div className="flex items-center justify-between h-14 px-3 border-b border-gray-700">
+        <div className="flex items-center space-x-2">
+          <div className="w-7 h-7 bg-blue-500 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-xs">C</span>
+          </div>
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                className="ml-1"
+              >
+                <h1 className="text-base font-semibold text-white">ChangeWorks</h1>
+                <p className="text-xs text-gray-400">Admin Panel</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              onClick={togglePin}
+              className="p-1 rounded hover:bg-gray-700 transition-colors duration-200"
+            >
+              {isPinned ? (
+                <PinOff className="w-3 h-3 text-gray-400" />
+              ) : (
+                <Pin className="w-3 h-3 text-gray-400" />
+              )}
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
 
-        {/* Menu Items */}
-        <nav className="flex-1 mt-4">
-          <ul className="space-y-1 text-xs"> {/* font 2px smaller */}
-            {menuItems.map((item) => {
-              const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
-              const hasSub = item.subItems && item.subItems.length > 0;
-              const isSubmenuOpen = openSubmenus[item.name];
+      {/* Navigation Menu */}
+      <nav className="flex-1 px-2 py-2 overflow-y-auto">
+        <ul className="space-y-0.5">
+          {menuItems.map((item, index) => {
+            const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
+            const hasSub = item.subItems && item.subItems.length > 0;
+            const isSubmenuOpen = openSubmenus[item.name];
 
-              return (
-                <li key={item.name}>
-                  {/* Main menu item */}
-                  <motion.div
-                    onClick={() => hasSub && toggleSubmenu(item.name)}
-                    whileHover={{ scale: 1.02, backgroundColor: 'rgba(55,65,81,0.8)' }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`flex items-center px-4 py-3 cursor-pointer rounded-md transition duration-200 ${
-                      isActive ? 'bg-gray-800 font-semibold' : ''
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    {isHovered && (
-                      <div className="flex items-center justify-between flex-1 ml-3">
-                        <span>{item.name}</span>
-                        {hasSub &&
-                          (isSubmenuOpen ? (
-                            <ChevronDown className="w-4 h-4" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4" />
-                          ))}
-                      </div>
-                    )}
-                  </motion.div>
-
-                  {/* Submenu with AnimatePresence */}
+            return (
+              <li key={item.name}>
+                {/* Main menu item */}
+                <div
+                  onClick={() => {
+                    if (hasSub) {
+                      toggleSubmenu(item.name);
+                    } else {
+                      router.push(item.path);
+                    }
+                  }}
+                  className={`group flex items-center px-2 py-1.5 cursor-pointer rounded-md transition-all duration-200 ${
+                    isActive 
+                      ? 'bg-blue-600 text-white' 
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  <item.icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
+                  
                   <AnimatePresence>
-                    {hasSub && isSubmenuOpen && isHovered && (
-                      <motion.ul
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="pl-12 pr-4 pb-1 space-y-1"
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex items-center justify-between flex-1 ml-2"
                       >
-                        {item.subItems.map((sub) => {
-                          const isSubActive = pathname === sub.path;
-                          return (
-                            <motion.li
-                              key={sub.name}
-                              initial={{ x: -10, opacity: 0 }}
-                              animate={{ x: 0, opacity: 1 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <Link
-                                href={sub.path}
-                                className={`block py-1 text-xs hover:text-white transition ${
-                                  isSubActive ? 'text-white font-medium' : 'text-gray-400'
-                                }`}
-                              >
-                                {sub.name}
-                              </Link>
-                            </motion.li>
-                          );
-                        })}
-                      </motion.ul>
+                        <span className="font-medium text-sm">{item.name}</span>
+                        {hasSub && (
+                          <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isSubmenuOpen ? 'rotate-180' : ''} ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                        )}
+                      </motion.div>
                     )}
                   </AnimatePresence>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+                </div>
+
+                {/* Submenu */}
+                <AnimatePresence>
+                  {hasSub && isSubmenuOpen && isExpanded && (
+                    <motion.ul
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="ml-4 mt-0.5 space-y-0.5"
+                    >
+                      {item.subItems.map((sub, subIndex) => {
+                        const isSubActive = pathname === sub.path;
+                        return (
+                          <motion.li
+                            key={sub.name}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: subIndex * 0.05 }}
+                          >
+                            <Link
+                              href={sub.path}
+                              className={`block px-2 py-0.5 text-sm rounded-md transition-all duration-200 ${
+                                isSubActive 
+                                  ? 'bg-blue-600/20 text-blue-300 font-medium' 
+                                  : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                              }`}
+                            >
+                              {sub.name}
+                            </Link>
+                          </motion.li>
+                        );
+                      })}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* Bottom Section */}
+      <div className="p-1.5 border-t border-gray-700">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center px-2 py-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-md transition-all duration-200 group"
+        >
+          <LogOut className="w-4 h-4" />
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.span
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                className="ml-2 font-medium text-sm"
+              >
+                Logout
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
       </div>
-    </motion.div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <motion.div
+        initial={{ width: 64 }}
+        animate={{ width: isExpanded ? 240 : 64 }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        onMouseEnter={() => !isPinned && setIsHovered(true)}
+        onMouseLeave={() => !isPinned && setIsHovered(false)}
+        className="hidden lg:block h-full bg-gray-900 border-r border-gray-700 shadow-lg overflow-hidden"
+      >
+        <SidebarContent />
+      </motion.div>
+
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {isMobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="lg:hidden fixed inset-0 bg-black/50 z-40"
+            onClick={() => setIsMobileOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Sidebar */}
+      <motion.div
+        initial={{ x: -240 }}
+        animate={{ x: isMobileOpen ? 0 : -240 }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className="lg:hidden fixed left-0 top-0 h-full w-60 bg-gray-900 border-r border-gray-700 shadow-lg z-50"
+      >
+        <SidebarContent />
+      </motion.div>
+
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-gray-900 rounded-lg text-white shadow-lg border border-gray-700"
+      >
+        {isMobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+      </button>
+    </>
   );
 };
 

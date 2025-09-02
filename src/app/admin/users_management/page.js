@@ -1,32 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-  Box,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Alert,
-  Button,
-  CircularProgress,
-  TablePagination,
-  Modal,
-  Typography,
-  Chip,
-  IconButton,
-  Tooltip,
-  InputAdornment,
-  Card,
-  CardContent,
-  Skeleton,
-  Snackbar,
-} from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, 
-  Package, 
   Search, 
   Edit, 
   Trash2, 
@@ -35,15 +12,23 @@ import {
   EyeOff,
   Filter,
   Download,
-  RefreshCw
+  RefreshCw,
+  User,
+  Mail,
+  Shield,
+  Calendar,
+  MoreHorizontal,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  X
 } from 'lucide-react';
 
 // Constants
 const ROLES = [
-  { value: 'DONOR', label: 'Donor', color: 'primary' },
-  { value: 'ADMIN', label: 'Admin', color: 'warning' },
-  { value: 'MANAGER', label: 'Manager', color: 'info' },
-  { value: 'SUPERADMIN', label: 'Superadmin', color: 'error' },
+  { value: 'SUPERADMIN', label: 'Super Admin', color: 'orange', bgColor: 'bg-orange-50', textColor: 'text-orange-700', borderColor: 'border-orange-200' },
+  { value: 'MANAGER', label: 'Manager', color: 'purple', bgColor: 'bg-purple-50', textColor: 'text-purple-700', borderColor: 'border-purple-200' },
+  { value: 'ADMIN', label: 'Admin', color: 'red', bgColor: 'bg-red-50', textColor: 'text-red-700', borderColor: 'border-red-200' },
 ];
 
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
@@ -55,13 +40,11 @@ const formatDate = (dateString) => {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
   });
 };
 
-const getRoleColor = (role) => {
-  return ROLES.find(r => r.value === role)?.color || 'default';
+const getRoleConfig = (role) => {
+  return ROLES.find(r => r.value === role) || ROLES[0];
 };
 
 const validateEmail = (email) => {
@@ -92,27 +75,6 @@ const validateForm = (formData, isEdit = false) => {
   return errors;
 };
 
-// Loading skeleton component
-const UserTableSkeleton = () => (
-  <Card className="mb-6">
-    <CardContent>
-      {[...Array(5)].map((_, index) => (
-        <Box key={index} className="flex items-center space-x-4 py-4">
-          <Skeleton variant="text" width="5%" />
-          <Skeleton variant="text" width="20%" />
-          <Skeleton variant="text" width="25%" />
-          <Skeleton variant="rectangular" width="10%" height={24} />
-          <Skeleton variant="text" width="15%" />
-          <Box className="flex space-x-2">
-            <Skeleton variant="rectangular" width={60} height={32} />
-            <Skeleton variant="rectangular" width={60} height={32} />
-          </Box>
-        </Box>
-      ))}
-    </CardContent>
-  </Card>
-);
-
 export default function UserManagementPage() {
   // State management
   const [users, setUsers] = useState([]);
@@ -132,7 +94,7 @@ export default function UserManagementPage() {
     name: '',
     email: '',
     password: '',
-    role: 'DONOR',
+    role: 'ADMIN',
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -146,19 +108,30 @@ export default function UserManagementPage() {
       setLoading(true);
       setError('');
       
-      const response = await fetch(`/api/user?page=${page + 1}&limit=${rowsPerPage}`);
-      const data = await response.json();
+      const response = await fetch('/api/users', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       
       if (!response.ok) {
-        throw new Error(data.error || `HTTP ${response.status}: Failed to fetch users`);
+        throw new Error(`HTTP ${response.status}: Failed to fetch users`);
       }
+      
+      const data = await response.json();
 
-      if (!data.users || !Array.isArray(data.users)) {
-        throw new Error('Invalid response format');
+      // Handle direct array response format
+      if (Array.isArray(data)) {
+        setUsers(data);
+        setTotalCount(data.length);
+      } else if (data.users && Array.isArray(data.users)) {
+        // Fallback for object format with users property
+        setUsers(data.users);
+        setTotalCount(data.totalCount || data.users.length);
+      } else {
+        throw new Error('Invalid response format: Expected array or object with users property');
       }
-
-      setUsers(data.users);
-      setTotalCount(data.totalCount || data.users.length);
     } catch (err) {
       setError(`Failed to load users: ${err.message}`);
       setUsers([]);
@@ -167,7 +140,7 @@ export default function UserManagementPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage]);
+  }, []);
 
   // Effects
   useEffect(() => {
@@ -187,24 +160,43 @@ export default function UserManagementPage() {
             user.email.toLowerCase().includes(filterNameEmail.toLowerCase())
           : true;
         const matchesRole = filterRole ? user.role === filterRole : true;
+        
         return matchesNameEmail && matchesRole;
       });
+      
       setFilteredUsers(filtered);
+      setPage(0);
     }, 300);
     
     setSearchTimeout(timeout);
-    
-    return () => clearTimeout(timeout);
   }, [users, filterNameEmail, filterRole]);
 
-  // Event handlers
+  // Calculate summary stats
+  const totalUsers = users.length;
+  const activeUsers = users.filter(u => u.status !== 'inactive').length;
+  const superAdminUsers = users.filter(u => u.role === 'SUPERADMIN').length;
+  const managerUsers = users.filter(u => u.role === 'MANAGER').length;
+  const adminUsers = users.filter(u => u.role === 'ADMIN').length;
+
+  // Modal handlers
   const handleOpenModal = (user = null) => {
-    setSelectedUser(user);
-    setFormData(
-      user
-        ? { name: user.name || '', email: user.email, password: '', role: user.role }
-        : { name: '', email: '', password: '', role: 'DONOR' }
-    );
+    if (user) {
+      setSelectedUser(user);
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        password: '',
+        role: user.role || 'ADMIN',
+      });
+    } else {
+      setSelectedUser(null);
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        role: 'ADMIN',
+      });
+    }
     setFormErrors({});
     setShowPassword(false);
     setOpenModal(true);
@@ -213,18 +205,28 @@ export default function UserManagementPage() {
   const handleCloseModal = () => {
     setOpenModal(false);
     setSelectedUser(null);
-    setFormData({ name: '', email: '', password: '', role: 'DONOR' });
+    setFormData({
+      name: '',
+      email: '',
+      password: '',
+      role: 'ADMIN',
+    });
     setFormErrors({});
-    setShowPassword(false);
   };
 
-  const handleFormChange = (e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
     
-    // Clear specific field error when user starts typing
+    // Clear error when user starts typing
     if (formErrors[name]) {
-      setFormErrors(prev => ({ ...prev, [name]: '' }));
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
     }
   };
 
@@ -238,51 +240,64 @@ export default function UserManagementPage() {
     }
 
     setSubmitting(true);
-    setFormErrors({});
-
+    
     try {
-      const url = selectedUser ? `/api/user/${selectedUser.id}` : '/api/user';
+      const url = selectedUser ? '/api/users' : '/api/users';
       const method = selectedUser ? 'PUT' : 'POST';
+      
+      const requestBody = selectedUser 
+        ? { ...formData, id: selectedUser.id }
+        : formData;
+      
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
       });
+
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || `Failed to ${selectedUser ? 'update' : 'create'} user`);
+      if (response.ok) {
+        setSuccess(selectedUser ? 'User updated successfully!' : 'User created successfully!');
+        handleCloseModal();
+        fetchUsers();
+      } else {
+        setError(data.error || 'Failed to save user');
       }
-
-      setSuccess(`User ${selectedUser ? 'updated' : 'created'} successfully!`);
-      fetchUsers();
-      handleCloseModal();
-    } catch (err) {
-      setFormErrors({ submit: err.message });
+    } catch (error) {
+      setError('Failed to save user');
+      console.error('Submit error:', error);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (user) => {
-    if (!confirm(`Are you sure you want to delete ${user.name || user.email}?`)) return;
-    
+  const handleDelete = async (userId) => {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+
     try {
-      const response = await fetch(`/api/user/${user.id}`, {
+      const response = await fetch(`/api/users?id=${userId}`, {
         method: 'DELETE',
       });
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete user');
+
+      if (response.ok) {
+        setSuccess('User deleted successfully!');
+        fetchUsers();
+      } else {
+        setError('Failed to delete user');
       }
-      
-      setSuccess('User deleted successfully!');
-      fetchUsers();
-    } catch (err) {
-      setError(err.message);
+    } catch (error) {
+      setError('Failed to delete user');
+      console.error('Delete error:', error);
     }
   };
+
+  // Pagination
+  const startIndex = page * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -293,490 +308,453 @@ export default function UserManagementPage() {
     setPage(0);
   };
 
-  const handleFilterNameEmailChange = (e) => {
-    setFilterNameEmail(e.target.value);
-  };
-
-  const handleFilterRoleChange = (e) => {
-    setFilterRole(e.target.value);
-  };
-
-  const clearFilters = () => {
-    setFilterNameEmail('');
-    setFilterRole('');
-  };
-
-  const exportUsers = () => {
-    const csvContent = [
-      ['ID', 'Name', 'Email', 'Role', 'Created At'].join(','),
-      ...filteredUsers.map(user => [
-        user.id,
-        user.name || '',
-        user.email,
-        user.role,
-        formatDate(user.created_at)
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `users_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="min-h-screen bg-gray-50 p-6"
-    >
-      <Box className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div variants={itemVariants} className="flex justify-between items-center mb-8">
-          <div>
-            <Typography variant="h4" className="font-bold text-gray-900 mb-2">
-              User Management
-            </Typography>
-            <Typography variant="body2" className="text-gray-600">
-              Manage and organize your users efficiently
-            </Typography>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+          <p className="text-gray-600 mt-1">Manage system users, roles, and permissions</p>
+        </div>
+        <button
+          onClick={() => handleOpenModal()}
+          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add New User
+        </button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Users</p>
+              <p className="text-2xl font-bold text-gray-900">{totalUsers}</p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <Users className="w-6 h-6 text-blue-600" />
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Tooltip title="Export Users">
-              <Button
-                variant="outlined"
-                onClick={exportUsers}
-                startIcon={<Download className="w-4 h-4" />}
-                disabled={filteredUsers.length === 0}
-              >
-                Export
-              </Button>
-            </Tooltip>
-            <Tooltip title="Refresh">
-              <Button
-                variant="outlined"
-                onClick={fetchUsers}
-                startIcon={<RefreshCw className="w-4 h-4" />}
-              >
-                Refresh
-              </Button>
-            </Tooltip>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => handleOpenModal()}
-              startIcon={<Plus className="w-4 h-4" />}
-              className="shadow-lg"
-            >
-              Add User
-            </Button>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Users</p>
+              <p className="text-2xl font-bold text-green-600">{activeUsers}</p>
+            </div>
+            <div className="p-3 bg-green-50 rounded-lg">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+            </div>
           </div>
-        </motion.div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Super Admins</p>
+              <p className="text-2xl font-bold text-orange-600">{superAdminUsers}</p>
+            </div>
+            <div className="p-3 bg-orange-50 rounded-lg">
+              <Shield className="w-6 h-6 text-orange-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Managers</p>
+              <p className="text-2xl font-bold text-purple-600">{managerUsers}</p>
+            </div>
+            <div className="p-3 bg-purple-50 rounded-lg">
+              <User className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Admins</p>
+              <p className="text-2xl font-bold text-red-600">{adminUsers}</p>
+            </div>
+            <div className="p-3 bg-red-50 rounded-lg">
+              <Shield className="w-6 h-6 text-red-600" />
+            </div>
+          </div>
+        </div>
+      </div>
 
-        {/* Stats Cards */}
-        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {ROLES.map((role) => {
-            const count = users.filter(user => user.role === role.value).length;
-            return (
-              <Card key={role.value} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Typography variant="body2" className="text-gray-600 mb-1">
-                        {role.label}s
-                      </Typography>
-                      <Typography variant="h5" className="font-bold">
-                        {count}
-                      </Typography>
-                    </div>
-                    <Chip 
-                      label={role.label} 
-                      color={role.color} 
-                      size="small"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </motion.div>
-
-        {/* Filters */}
-        <motion.div variants={itemVariants}>
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4 flex-wrap">
-                <Typography variant="h6" className="text-gray-900 flex items-center gap-2 min-w-fit">
-                  <Filter className="w-5 h-5" />
-                  Filters
-                </Typography>
-                <TextField
-                  label="Search by Name or Email"
-                  value={filterNameEmail}
-                  onChange={handleFilterNameEmailChange}
-                  variant="outlined"
-                  size="small"
-                  className="min-w-[250px]"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Search className="w-4 h-4 text-gray-400" />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                <FormControl className="min-w-[180px]" size="small">
-                  <InputLabel>Role</InputLabel>
-                  <Select
-                    value={filterRole}
-                    onChange={handleFilterRoleChange}
-                    label="Role"
-                  >
-                    <MenuItem value="">All Roles</MenuItem>
-                    {ROLES.map((role) => (
-                      <MenuItem key={role.value} value={role.value}>
-                        {role.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                {(filterNameEmail || filterRole) && (
-                  <Button
-                    variant="outlined"
-                    onClick={clearFilters}
-                    size="small"
-                    className="text-gray-600"
-                  >
-                    Clear Filters
-                  </Button>
-                )}
-                <div className="ml-auto text-sm text-gray-600">
-                  {filteredUsers.length} of {totalCount} users
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Error Alert */}
-        {error && (
-          <motion.div variants={itemVariants} className="mb-6">
-            <Alert
-              severity="error"
-              action={
-                <Button color="inherit" size="small" onClick={fetchUsers}>
-                  Retry
-                </Button>
-              }
-              onClose={() => setError('')}
+      {/* Filters */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search users by name or email..."
+                value={filterNameEmail}
+                onChange={(e) => setFilterNameEmail(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
+            </div>
+          </div>
+          <div className="sm:w-48">
+            <select
+              value={filterRole}
+              onChange={(e) => setFilterRole(e.target.value)}
+              className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             >
-              {error}
-            </Alert>
-          </motion.div>
-        )}
+              <option value="">All Roles</option>
+              {ROLES.map((role) => (
+                <option key={role.value} value={role.value}>
+                  {role.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={fetchUsers}
+            className="inline-flex items-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </button>
+        </div>
+      </div>
 
-        {/* Table */}
-        <motion.div variants={itemVariants}>
-          {loading ? (
-            <UserTableSkeleton />
-          ) : (
-            <Card className="overflow-hidden shadow-lg">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        ID
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        User
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Email
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Role
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Created
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    <AnimatePresence>
-                      {filteredUsers.map((user, index) => (
-                        <motion.tr
-                          key={user.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 20 }}
-                          transition={{ delay: index * 0.03 }}
-                          className="hover:bg-gray-50 transition-colors"
+      {/* Users Table */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Role
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Created
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {paginatedUsers.map((user) => {
+                const roleConfig = getRoleConfig(user.role);
+                return (
+                  <motion.tr
+                    key={user.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                          <User className="w-5 h-5 text-gray-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {user.name || 'N/A'}
+                          </div>
+                          <div className="text-sm text-gray-500 flex items-center">
+                            <Mail className="w-3 h-3 mr-1" />
+                            {user.email}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${roleConfig.bgColor} ${roleConfig.textColor} ${roleConfig.borderColor}`}>
+                        <Shield className="w-3 h-3 mr-1" />
+                        {roleConfig.label}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                        user.status === 'active' 
+                          ? 'bg-green-100 text-green-800 border border-green-200' 
+                          : 'bg-gray-100 text-gray-800 border border-gray-200'
+                      }`}>
+                        {user.status === 'active' ? <CheckCircle className="w-3 h-3 mr-1" /> : <Clock className="w-3 h-3 mr-1" />}
+                        {user.status || 'active'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {formatDate(user.created_at)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleOpenModal(user)}
+                          className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                          title="Edit user"
                         >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Typography variant="body2" className="text-gray-900 font-mono">
-                              #{user.id}
-                            </Typography>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-8 w-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                <span className="text-white text-sm font-semibold">
-                                  {(user.name || user.email).charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                              <div className="ml-3">
-                                <Typography variant="body2" className="text-gray-900 font-medium">
-                                  {user.name || 'No Name'}
-                                </Typography>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Typography variant="body2" className="text-gray-600">
-                              {user.email}
-                            </Typography>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Chip
-                              label={user.role}
-                              color={getRoleColor(user.role)}
-                              size="small"
-                              className="font-medium"
-                            />
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Typography variant="body2" className="text-gray-600">
-                              {formatDate(user.created_at)}
-                            </Typography>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex space-x-2">
-                              <Tooltip title="Edit User">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleOpenModal(user)}
-                                  className="text-blue-600 hover:bg-blue-50"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Delete User">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleDelete(user)}
-                                  className="text-red-600 hover:bg-red-50"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </IconButton>
-                              </Tooltip>
-                            </div>
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </AnimatePresence>
-                  </tbody>
-                </table>
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user.id)}
+                          className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                          title="Delete user"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        
+        {paginatedUsers.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-500 text-lg font-medium">No users found</div>
+            <p className="text-gray-400 mt-1">Try adjusting your search or filter criteria</p>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
+      {filteredUsers.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} results
+            </div>
+            <div className="flex items-center space-x-2">
+              <select
+                value={rowsPerPage}
+                onChange={handleChangeRowsPerPage}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              >
+                {ROWS_PER_PAGE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option} per page
+                  </option>
+                ))}
+              </select>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => handleChangePage(null, page - 1)}
+                  disabled={page === 0}
+                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  Previous
+                </button>
+                <span className="px-3 py-2 text-sm text-gray-700">
+                  Page {page + 1} of {Math.ceil(filteredUsers.length / rowsPerPage)}
+                </span>
+                <button
+                  onClick={() => handleChangePage(null, page + 1)}
+                  disabled={endIndex >= filteredUsers.length}
+                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add/Edit User Modal */}
+      <AnimatePresence>
+        {openModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            onClick={handleCloseModal}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-lg shadow-xl max-w-md w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {selectedUser ? 'Edit User' : 'Add New User'}
+                </h2>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                >
+                  <X className="w-6 h-6" />
+                </button>
               </div>
 
-              {filteredUsers.length === 0 && !loading && (
-                <div className="text-center py-16">
-                  <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <Typography variant="h6" className="text-gray-500 mb-2">
-                    No users found
-                  </Typography>
-                  <Typography variant="body2" className="text-gray-400 mb-6">
-                    {filterNameEmail || filterRole 
-                      ? 'No users match your current filters. Try adjusting your search criteria.'
-                      : 'Get started by adding your first user.'
-                    }
-                  </Typography>
-                  {(filterNameEmail || filterRole) && (
-                    <Button variant="outlined" onClick={clearFilters}>
-                      Clear Filters
-                    </Button>
+              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                {/* Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                      formErrors.name ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter full name"
+                  />
+                  {formErrors.name && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
                   )}
                 </div>
-              )}
 
-              {filteredUsers.length > 0 && (
-                <TablePagination
-                  rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
-                  component="div"
-                  count={totalCount}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  onPageChange={handleChangePage}
-                  onRowsPerPageChange={handleChangeRowsPerPage}
-                  className="border-t border-gray-200 bg-gray-50"
-                />
-              )}
-            </Card>
-          )}
-        </motion.div>
-
-        {/* Modal for Add/Edit User */}
-        <Modal 
-          open={openModal} 
-          onClose={handleCloseModal}
-          closeAfterTransition
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Box
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl p-8 w-full max-w-md mx-4"
-            >
-              <Typography variant="h5" className="mb-6 text-gray-900 font-bold">
-                {selectedUser ? 'Edit User' : 'Add New User'}
-              </Typography>
-              
-              {formErrors.submit && (
-                <Alert severity="error" className="mb-4">
-                  {formErrors.submit}
-                </Alert>
-              )}
-              
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <TextField
-                  label="Full Name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleFormChange}
-                  fullWidth
-                  variant="outlined"
-                  error={!!formErrors.name}
-                  helperText={formErrors.name}
-                  required
-                />
-                
-                <TextField
-                  label="Email Address"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleFormChange}
-                  fullWidth
-                  variant="outlined"
-                  error={!!formErrors.email}
-                  helperText={formErrors.email}
-                  required
-                />
-                
-                {!selectedUser && (
-                  <TextField
-                    label="Password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={handleFormChange}
-                    fullWidth
-                    variant="outlined"
-                    error={!!formErrors.password}
-                    helperText={formErrors.password || 'Minimum 6 characters'}
-                    required
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() => setShowPassword(!showPassword)}
-                            edge="end"
-                          >
-                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                      formErrors.email ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter email address"
                   />
+                  {formErrors.email && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
+                  )}
+                </div>
+
+                {/* Password */}
+                {!selectedUser && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Password *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        className={`w-full px-3 py-3 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                          formErrors.password ? 'border-red-300' : 'border-gray-300'
+                        }`}
+                        placeholder="Enter password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {formErrors.password && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.password}</p>
+                    )}
+                  </div>
                 )}
-                
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel>Role</InputLabel>
-                  <Select
+
+                {/* Role */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Role *
+                  </label>
+                  <select
                     name="role"
                     value={formData.role}
-                    onChange={handleFormChange}
-                    label="Role"
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                   >
                     {ROLES.map((role) => (
-                      <MenuItem key={role.value} value={role.value}>
-                        <div className="flex items-center gap-2">
-                          <Chip label={role.label} color={role.color} size="small" />
-                        </div>
-                      </MenuItem>
+                      <option key={role.value} value={role.value}>
+                        {role.label}
+                      </option>
                     ))}
-                  </Select>
-                </FormControl>
-                
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button 
-                    variant="outlined" 
+                  </select>
+                </div>
+
+                {/* Form Actions */}
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
                     onClick={handleCloseModal}
-                    disabled={submitting}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200"
                   >
                     Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    variant="contained" 
-                    color="primary"
+                  </button>
+                  <button
+                    type="submit"
                     disabled={submitting}
-                    startIcon={submitting && <CircularProgress size={16} />}
-                    className="min-w-[100px]"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                   >
-                    {submitting 
-                      ? 'Processing...' 
-                      : selectedUser ? 'Update User' : 'Create User'
-                    }
-                  </Button>
+                    {submitting ? 'Saving...' : (selectedUser ? 'Update User' : 'Create User')}
+                  </button>
                 </div>
               </form>
-            </Box>
+            </motion.div>
           </motion.div>
-        </Modal>
+        )}
+      </AnimatePresence>
 
-        {/* Success Snackbar */}
-        <Snackbar
-          open={!!success}
-          autoHideDuration={4000}
-          onClose={() => setSuccess('')}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert 
-            onClose={() => setSuccess('')} 
-            severity="success" 
-            className="shadow-lg"
+      {/* Success/Error Messages */}
+      <AnimatePresence>
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50"
           >
-            {success}
-          </Alert>
-        </Snackbar>
-      </Box>
-    </motion.div>
+            <div className="flex items-center">
+              <CheckCircle className="w-5 h-5 mr-2" />
+              {success}
+            </div>
+          </motion.div>
+        )}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50"
+          >
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 mr-2" />
+              {error}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

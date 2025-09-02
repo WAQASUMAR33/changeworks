@@ -1,80 +1,110 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import {
-  Box,
-  TextField,
-  Select,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Alert,
-  Button,
-  IconButton,
-  CircularProgress,
-  FormControlLabel,
-  Checkbox,
-  TablePagination,
-} from '@mui/material';
-import { Close as CloseIcon } from '@mui/icons-material';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, Edit, Trash2, Package, Plus } from 'lucide-react';
+import Image from 'next/image';
+import { 
+  Eye, 
+  Edit, 
+  Trash2, 
+  Plus, 
+  Search, 
+  Filter,
+  Download,
+  RefreshCw,
+  User,
+  MapPin,
+  Phone,
+  Mail,
+  Calendar,
+  Image as ImageIcon,
+  Upload,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  X,
+  EyeOff
+} from 'lucide-react';
 
-// Helper function to format dates consistently
+// Constants
+const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
+const STATUS_OPTIONS = [
+  { value: true, label: 'Active', color: 'green', bgColor: 'bg-green-50', textColor: 'text-green-700', borderColor: 'border-green-200' },
+  { value: false, label: 'Inactive', color: 'red', bgColor: 'bg-red-50', textColor: 'text-red-700', borderColor: 'border-red-200' },
+];
+
+// Helper functions
 const formatDate = (dateString) => {
-  if (!dateString) return '';
-  return dateString; // Already formatted as YYYY-MM-DD from API
-};
-
-const convertToBase64 = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
-  });
-};
-
-const uploadImageToServer = async (base64Image) => {
+  if (!dateString) return 'N/A';
   try {
-    const uploadApiUrl = process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API || '/api/upload-image';
-    const response = await fetch(uploadApiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ image: base64Image }),
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     });
-    const text = await response.text();
-    if (!response.ok) {
-      throw new Error(`Image upload failed: HTTP ${response.status}`);
-    }
-    const data = JSON.parse(text);
-    if (!data.image_url) {
-      throw new Error('No image URL returned from server');
-    }
-    const fullPath = `${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_PATH || ''}/${data.image_url}`;
-    if (!/^https?:\/\/.+/.test(fullPath)) {
-      throw new Error('Invalid image URL returned from server');
-    }
-    return fullPath;
   } catch (error) {
-    throw error;
+    return 'Invalid Date';
   }
 };
 
+const getStatusConfig = (status) => {
+  return STATUS_OPTIONS.find(s => s.value === status) || STATUS_OPTIONS[0];
+};
+
+const validateEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
+const validateForm = (formData, isEdit = false) => {
+  const errors = {};
+  
+  if (!formData.name?.trim()) {
+    errors.name = 'Name is required';
+  }
+  
+  if (!formData.email?.trim()) {
+    errors.email = 'Email is required';
+  } else if (!validateEmail(formData.email)) {
+    errors.email = 'Invalid email format';
+  }
+  
+  if (!isEdit && !formData.password?.trim()) {
+    errors.password = 'Password is required';
+  }
+  
+  if (!isEdit && formData.password && formData.password.length < 6) {
+    errors.password = 'Password must be at least 6 characters';
+  }
+  
+  if (!formData.phone?.trim()) {
+    errors.phone = 'Phone number is required';
+  }
+  
+  if (!formData.city?.trim()) {
+    errors.city = 'City is required';
+  }
+  
+  return errors;
+};
+
 export default function DonorManagementPage() {
+  // State management
   const [donors, setDonors] = useState([]);
   const [filteredDonors, setFilteredDonors] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [filterName, setFilterName] = useState('');
+  const [filterEmail, setFilterEmail] = useState('');
+  const [filterCity, setFilterCity] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('view'); // 'view', 'add', 'edit', 'delete'
+  const [modalMode, setModalMode] = useState('add');
   const [selectedDonor, setSelectedDonor] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -85,75 +115,108 @@ export default function DonorManagementPage() {
     imageUrl: '',
     status: true,
   });
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
-  const [error, setError] = useState('');
-  // Pagination states
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  // Filter states
-  const [filterName, setFilterName] = useState('');
-  const [filterEmail, setFilterEmail] = useState('');
-  const [filterCity, setFilterCity] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [formErrors, setFormErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
-  // Fetch donors on mount and when page/rowsPerPage change
-  useEffect(() => {
-    fetchDonors();
-  }, [page, rowsPerPage]);
+  // Debounced search
+  const searchTimeoutRef = useRef(null);
 
-  // Apply filters
-  useEffect(() => {
-    const filtered = donors.filter((donor) => {
-      const matchesName = donor.name.toLowerCase().includes(filterName.toLowerCase());
-      const matchesEmail = donor.email.toLowerCase().includes(filterEmail.toLowerCase());
-      const matchesCity = donor.city ? donor.city.toLowerCase().includes(filterCity.toLowerCase()) : true;
-      const matchesStatus = filterStatus !== '' ? donor.status === (filterStatus === 'true') : true;
-      return matchesName && matchesEmail && matchesCity && matchesStatus;
-    });
-    setFilteredDonors(filtered);
-  }, [donors, filterName, filterEmail, filterCity, filterStatus]);
-
-  const fetchDonors = async () => {
+  // Fetch donors with error handling and loading states
+  const fetchDonors = useCallback(async () => {
     try {
-      const response = await fetch(`/api/donor?page=${page + 1}&limit=${rowsPerPage}`);
-      const data = await response.json();
-      console.log('API Response:', data); // Debug log to inspect response
+      setLoading(true);
+      setError('');
+      
+      const response = await fetch('/api/donor', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
       if (!response.ok) {
-        throw new Error(data.error || `HTTP ${response.status}: Failed to fetch donors`);
+        throw new Error(`HTTP ${response.status}: Failed to fetch donors`);
       }
+      
+      const data = await response.json();
 
-      // Handle different response formats
-      let donorsData = [];
-      let totalCountData = 0;
+      // Handle direct array response format
       if (Array.isArray(data)) {
-        // Case 1: API returns a direct array of donors
-        donorsData = data;
-        totalCountData = data.length; // Fallback totalCount
+        setDonors(data);
+        setTotalCount(data.length);
       } else if (data.donors && Array.isArray(data.donors)) {
-        // Case 2: API returns an object with donors array
-        donorsData = data.donors;
-        totalCountData = data.totalCount || data.donors.length;
+        // Fallback for object format with donors property
+        setDonors(data.donors);
+        setTotalCount(data.totalCount || data.donors.length);
       } else {
-        console.error('Unexpected response format:', data);
-        throw new Error('Expected donors data to be an array or an object with a donors array');
+        throw new Error('Invalid response format: Expected array or object with donors property');
       }
-
-      setDonors(donorsData);
-      setTotalCount(totalCountData);
-      setLoading(false);
     } catch (err) {
       setError(`Failed to load donors: ${err.message}`);
       setDonors([]);
       setTotalCount(0);
-      setLoading(false);
       console.error('Fetch error:', err);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
+  // Effects
+  useEffect(() => {
+    fetchDonors();
+  }, [fetchDonors]);
+
+    // Debounced filtering
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    const timeout = setTimeout(() => {
+      const filtered = donors.filter((donor) => {
+        const matchesName = filterName
+          ? donor.name?.toLowerCase().includes(filterName.toLowerCase())
+          : true;
+        const matchesEmail = filterEmail
+          ? donor.email?.toLowerCase().includes(filterEmail.toLowerCase())
+          : true;
+        const matchesCity = filterCity
+          ? donor.city?.toLowerCase().includes(filterCity.toLowerCase())
+          : true;
+        const matchesStatus = filterStatus !== ''
+          ? donor.status === (filterStatus === 'true')
+          : true;
+        
+        return matchesName && matchesEmail && matchesCity && matchesStatus;
+      });
+      
+      setFilteredDonors(filtered);
+      setPage(0);
+    }, 300);
+    
+    searchTimeoutRef.current = timeout;
+    
+    return () => clearTimeout(timeout);
+  }, [donors, filterName, filterEmail, filterCity, filterStatus]);
+
+  // Calculate summary stats
+  const totalDonors = donors.length;
+  const activeDonors = donors.filter(d => d.status === true).length;
+  const inactiveDonors = donors.filter(d => d.status === false).length;
+  const recentDonors = donors.filter(d => {
+    const createdDate = new Date(d.created_at);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return createdDate > thirtyDaysAgo;
+  }).length;
+
+  // Modal handlers
   const handleModalOpen = (mode, donor = null) => {
     setModalMode(mode);
     setSelectedDonor(donor);
+    setFormErrors({});
+    setError('');
+    
     if (mode === 'view' || mode === 'edit') {
       setFormData({
         name: donor?.name || '',
@@ -165,7 +228,6 @@ export default function DonorManagementPage() {
         imageUrl: donor?.imageUrl || '',
         status: donor?.status !== undefined ? donor.status : true,
       });
-      setImagePreview(donor?.imageUrl || '');
     } else if (mode === 'add') {
       setFormData({
         name: '',
@@ -177,116 +239,101 @@ export default function DonorManagementPage() {
         imageUrl: '',
         status: true,
       });
-      setImagePreview('');
     }
-    setImageFile(null);
-    setError('');
+    
+    setShowPassword(false);
     setModalOpen(true);
   };
 
   const handleModalClose = () => {
     setModalOpen(false);
     setSelectedDonor(null);
-    setImageFile(null);
-    setImagePreview('');
+    setFormErrors({});
     setError('');
+    setShowPassword(false);
   };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value,
-    });
-  };
-
-  const handleImageChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      try {
-        setImageFile(file);
-        const base64 = await convertToBase64(file);
-        setImagePreview(base64);
-        setFormData({ ...formData, imageUrl: '' });
-      } catch (error) {
-        setError('Failed to process image');
-      }
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    
+    // Clear error when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
-    const { name, email, password, phone, city, address, status } = formData;
-    if (modalMode === 'add' || modalMode === 'edit') {
-      if (!name || !email || (modalMode === 'add' && !password)) {
-        setError('Name, email, and password (for new donors) are required');
-        return;
-      }
+    
+    const errors = validateForm(formData, modalMode === 'edit');
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
     }
 
+    setSubmitting(true);
+    
     try {
-      let imageUrl = formData.imageUrl;
-      if (imageFile) {
-        const base64Image = await convertToBase64(imageFile);
-        imageUrl = await uploadImageToServer(base64Image);
-      }
-
-      let response;
-      if (modalMode === 'add') {
-        const payload = {
-          name,
-          email,
-          password, // Should be hashed in production
-          phone: phone || null,
-          city: city || null,
-          address: address || null,
-          imageUrl: imageUrl || null,
-          status,
-        };
-        response = await fetch('/api/donor', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-      } else if (modalMode === 'edit' && selectedDonor) {
-        const payload = {
-          name,
-          email,
-          phone: phone || null,
-          city: city || null,
-          address: address || null,
-          imageUrl: imageUrl || selectedDonor.imageUrl || null,
-          status,
-        };
-        response = await fetch(`/api/donor/${selectedDonor.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-      } else if (modalMode === 'delete' && selectedDonor) {
-        response = await fetch(`/api/donor/${selectedDonor.id}`, {
-          method: 'DELETE',
-        });
-      }
+      const url = selectedDonor ? `/api/donor/${selectedDonor.id}` : '/api/donor';
+      const method = selectedDonor ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}: Operation failed`);
 
-      setPage(0); // Reset to first page after modification
-      await fetchDonors();
-      handleModalClose();
-    } catch (err) {
-      setError(`Operation failed: ${err.message}`);
+      if (response.ok) {
+        setSuccess(selectedDonor ? 'Donor updated successfully!' : 'Donor created successfully!');
+        handleModalClose();
+        fetchDonors();
+      } else {
+        setError(data.error || 'Failed to save donor');
+      }
+    } catch (error) {
+      setError('Failed to save donor');
+      console.error('Submit error:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // Pagination handlers
+  const handleDelete = async (donorId) => {
+    if (!confirm('Are you sure you want to delete this donor?')) return;
+
+    try {
+      const response = await fetch(`/api/donor/${donorId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setSuccess('Donor deleted successfully!');
+        fetchDonors();
+      } else {
+        setError('Failed to delete donor');
+      }
+    } catch (error) {
+      setError('Failed to delete donor');
+      console.error('Delete error:', error);
+    }
+  };
+
+  // Pagination
+  const startIndex = page * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const paginatedDonors = filteredDonors.slice(startIndex, endIndex);
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -296,442 +343,557 @@ export default function DonorManagementPage() {
     setPage(0);
   };
 
-  // Filter handlers
-  const handleFilterNameChange = (e) => setFilterName(e.target.value);
-  const handleFilterEmailChange = (e) => setFilterEmail(e.target.value);
-  const handleFilterCityChange = (e) => setFilterCity(e.target.value);
-  const handleFilterStatusChange = (e) => setFilterStatus(e.target.value);
-
-  // Animation variants
-  const tableRowVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -20 },
-  };
-
-  const filterVariants = {
-    hidden: { opacity: 0, y: -20 },
-    visible: { opacity: 1, y: 0 },
-  };
-
-  const modalVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: { opacity: 1, scale: 1 },
-    exit: { opacity: 0, scale: 0.8 },
-  };
-
-  // Permission flags (simplified for donors)
-  const hasAnyActionPermission = true; // Adjust based on your auth logic
-  const canEdit = true;
-  const canDelete = true;
-  const canCreate = true;
-
-  const getStatusText = (status) => {
-    return status ? 'Active' : 'Inactive';
-  };
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Box sx={{ p: 3, bgcolor: '#FFF', minHeight: '100vh' }}>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Donor Management</h2>
-       
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Donor Management</h1>
+          <p className="text-gray-600 mt-1">Manage donor accounts and information</p>
+        </div>
+        <button
+          onClick={() => handleModalOpen('add')}
+          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add New Donor
+        </button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Donors</p>
+              <p className="text-2xl font-bold text-gray-900">{totalDonors}</p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <User className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Donors</p>
+              <p className="text-2xl font-bold text-green-600">{activeDonors}</p>
+            </div>
+            <div className="p-3 bg-green-50 rounded-lg">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Inactive Donors</p>
+              <p className="text-2xl font-bold text-red-600">{inactiveDonors}</p>
+            </div>
+            <div className="p-3 bg-red-50 rounded-lg">
+              <AlertCircle className="w-6 h-6 text-red-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Recent (30 days)</p>
+              <p className="text-2xl font-bold text-purple-600">{recentDonors}</p>
+            </div>
+            <div className="p-3 bg-purple-50 rounded-lg">
+              <Calendar className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
-      <motion.div
-        variants={filterVariants}
-        initial="hidden"
-        animate="visible"
-        transition={{ duration: 0.5 }}
-        className="mb-6 flex gap-4 flex-wrap"
-      >
-        <TextField
-          label="Filter by Name"
-          value={filterName}
-          onChange={handleFilterNameChange}
-          variant="outlined"
-          size="small"
-          className="min-w-[200px]"
-        />
-        <TextField
-          label="Filter by Email"
-          value={filterEmail}
-          onChange={handleFilterEmailChange}
-          variant="outlined"
-          size="small"
-          className="min-w-[200px]"
-        />
-        <TextField
-          label="Filter by City"
-          value={filterCity}
-          onChange={handleFilterCityChange}
-          variant="outlined"
-          size="small"
-          className="min-w-[200px]"
-        />
-        <FormControl className="min-w-[200px]" size="small">
-          <InputLabel>Filter by Status</InputLabel>
-          <Select
-            value={filterStatus}
-            onChange={handleFilterStatusChange}
-            label="Filter by Status"
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="true">Active</MenuItem>
-            <MenuItem value="false">Inactive</MenuItem>
-          </Select>
-        </FormControl>
-      </motion.div>
-
-      {error && (
-        <div className="mb-6">
-          <Alert
-            severity="error"
-            action={
-              <Button color="inherit" size="small" onClick={fetchDonors}>
-                Retry
-              </Button>
-            }
-          >
-            {error}
-          </Alert>
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search by name..."
+                value={filterName}
+                onChange={(e) => setFilterName(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
+            </div>
+          </div>
+          <div>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search by email..."
+                value={filterEmail}
+                onChange={(e) => setFilterEmail(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
+            </div>
+          </div>
+          <div>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search by city..."
+                value={filterCity}
+                onChange={(e) => setFilterCity(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="flex-1 px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            >
+              <option value="">All Status</option>
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+            <button
+              onClick={fetchDonors}
+              className="inline-flex items-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-      )}
+      </div>
 
-      {loading ? (
-        <div className="flex justify-center p-6">
-          <CircularProgress />
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phone
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    City
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Address
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Image
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created At
-                  </th>
-                  {hasAnyActionPermission && (
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                <AnimatePresence>
-                  {filteredDonors.map((donor, index) => (
-                    <motion.tr
-                      key={donor.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          {donor.imageUrl && (
-                            <img
-                              src={donor.imageUrl}
-                              alt={donor.name}
-                              className="w-10 h-10 rounded-lg object-cover mr-3"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                              }}
-                            />
-                          )}
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{donor.name}</div>
-                            <div className="text-sm text-gray-500">{donor.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{donor.email}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{donor.phone || 'N/A'}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{donor.city || 'N/A'}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{donor.address || 'N/A'}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
+      {/* Donors Table */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Donor
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Contact
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Location
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Created
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {paginatedDonors.map((donor) => {
+                const statusConfig = getStatusConfig(donor.status);
+                return (
+                  <motion.tr
+                    key={donor.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
                           {donor.imageUrl ? (
-                            <img
-                              src={donor.imageUrl}
+                            <Image 
+                              src={donor.imageUrl} 
                               alt={donor.name}
+                              width={40}
+                              height={40}
                               className="w-10 h-10 rounded-lg object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                              }}
                             />
                           ) : (
-                            'No Image'
+                            <User className="w-5 h-5 text-gray-600" />
                           )}
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            donor.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {getStatusText(donor.status)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{formatDate(donor.created_at)}</div>
-                      </td>
-                      {hasAnyActionPermission && (
-                        <td className="px-6 py-4">
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => handleModalOpen('view', donor)}
-                              className="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            {canEdit && (
-                              <button
-                                onClick={() => handleModalOpen('edit', donor)}
-                                className="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </button>
-                            )}
-                            {canDelete && (
-                              <button
-                                onClick={() => handleModalOpen('delete', donor)}
-                                className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {donor.name || 'N/A'}
                           </div>
-                        </td>
+                          <div className="text-sm text-gray-500">
+                            ID: #{donor.id}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 flex items-center">
+                        <Mail className="w-3 h-3 mr-1 text-gray-400" />
+                        {donor.email}
+                      </div>
+                      <div className="text-sm text-gray-500 flex items-center">
+                        <Phone className="w-3 h-3 mr-1 text-gray-400" />
+                        {donor.phone || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 flex items-center">
+                        <MapPin className="w-3 h-3 mr-1 text-gray-400" />
+                        {donor.city || 'N/A'}
+                      </div>
+                      {donor.address && (
+                        <div className="text-sm text-gray-500 truncate max-w-xs">
+                          {donor.address}
+                        </div>
                       )}
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusConfig.bgColor} ${statusConfig.textColor} ${statusConfig.borderColor}`}>
+                        {donor.status ? <CheckCircle className="w-3 h-3 mr-1" /> : <AlertCircle className="w-3 h-3 mr-1" />}
+                        {statusConfig.label}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {formatDate(donor.created_at)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleModalOpen('view', donor)}
+                          className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                          title="View donor"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleModalOpen('edit', donor)}
+                          className="p-2 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                          title="Edit donor"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(donor.id)}
+                          className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                          title="Delete donor"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        
+        {paginatedDonors.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-500 text-lg font-medium">No donors found</div>
+            <p className="text-gray-400 mt-1">Try adjusting your search or filter criteria</p>
           </div>
+        )}
+      </div>
 
-          {filteredDonors.length === 0 && (
-            <div className="text-center py-12">
-              <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No donors found</h3>
-              <p className="text-gray-500 mb-4">Get started by creating your first donor.</p>
-              {canCreate && (
-                <button
-                  onClick={() => handleModalOpen('add')}
-                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add New Donor
-                </button>
-              )}
+      {/* Pagination */}
+      {filteredDonors.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredDonors.length)} of {filteredDonors.length} results
             </div>
-          )}
-
-          {filteredDonors.length > 0 && (
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={totalCount}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              className="border-t border-gray-200"
-            />
-          )}
+            <div className="flex items-center space-x-2">
+              <select
+                value={rowsPerPage}
+                onChange={handleChangeRowsPerPage}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              >
+                {ROWS_PER_PAGE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option} per page
+                  </option>
+                ))}
+              </select>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => handleChangePage(null, page - 1)}
+                  disabled={page === 0}
+                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  Previous
+                </button>
+                <span className="px-3 py-2 text-sm text-gray-700">
+                  Page {page + 1} of {Math.ceil(filteredDonors.length / rowsPerPage)}
+                </span>
+                <button
+                  onClick={() => handleChangePage(null, page + 1)}
+                  disabled={endIndex >= filteredDonors.length}
+                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Modal */}
+      {/* Add/Edit/View Donor Modal */}
       <AnimatePresence>
         {modalOpen && (
-          <Dialog
-            open={modalOpen}
-            onClose={handleModalClose}
-            maxWidth="sm"
-            fullWidth
-            component={motion.div}
-            variants={modalVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            transition={{ duration: 0.3 }}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            onClick={handleModalClose}
           >
-            <DialogTitle sx={{ bgcolor: '#1a3c34', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              {modalMode === 'add' ? 'Add Donor' : modalMode === 'edit' ? 'Edit Donor' : modalMode === 'view' ? 'View Donor' : 'Delete Donor'}
-              <IconButton onClick={handleModalClose} sx={{ color: 'white' }}>
-                <CloseIcon />
-              </IconButton>
-            </DialogTitle>
-            <DialogContent>
-              {modalMode !== 'delete' ? (
-                <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-                  <TextField
-                    label="Name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    fullWidth
-                    margin="normal"
-                    required
-                    disabled={modalMode === 'view'}
-                  />
-                  <TextField
-                    label="Email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    fullWidth
-                    margin="normal"
-                    required
-                    disabled={modalMode === 'view'}
-                  />
-                  {modalMode === 'add' && (
-                    <TextField
-                      label="Password"
-                      name="password"
-                      type="password"
-                      value={formData.password}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {modalMode === 'add' ? 'Add New Donor' : 
+                   modalMode === 'edit' ? 'Edit Donor' : 'View Donor'}
+                </h2>
+                <button
+                  onClick={handleModalClose}
+                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
                       onChange={handleInputChange}
-                      fullWidth
-                      margin="normal"
-                      required
+                      disabled={modalMode === 'view'}
+                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                        formErrors.name ? 'border-red-300' : 'border-gray-300'
+                      } ${modalMode === 'view' ? 'bg-gray-50' : ''}`}
+                      placeholder="Enter full name"
                     />
+                    {formErrors.name && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      disabled={modalMode === 'view'}
+                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                        formErrors.email ? 'border-red-300' : 'border-gray-300'
+                      } ${modalMode === 'view' ? 'bg-gray-50' : ''}`}
+                      placeholder="Enter email address"
+                    />
+                    {formErrors.email && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
+                    )}
+                  </div>
+
+                  {/* Password */}
+                  {modalMode !== 'view' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Password {modalMode === 'add' ? '*' : ''}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          name="password"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          className={`w-full px-3 py-3 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                            formErrors.password ? 'border-red-300' : 'border-gray-300'
+                          }`}
+                          placeholder={modalMode === 'add' ? 'Enter password' : 'Leave blank to keep current'}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {formErrors.password && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.password}</p>
+                      )}
+                    </div>
                   )}
-                  <TextField
-                    label="Phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    fullWidth
-                    margin="normal"
-                    disabled={modalMode === 'view'}
-                  />
-                  <TextField
-                    label="City"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    fullWidth
-                    margin="normal"
-                    disabled={modalMode === 'view'}
-                  />
-                  <TextField
-                    label="Address"
+
+                  {/* Phone */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number *
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      disabled={modalMode === 'view'}
+                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                        formErrors.phone ? 'border-red-300' : 'border-gray-300'
+                      } ${modalMode === 'view' ? 'bg-gray-50' : ''}`}
+                      placeholder="Enter phone number"
+                    />
+                    {formErrors.phone && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.phone}</p>
+                    )}
+                  </div>
+
+                  {/* City */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      City *
+                    </label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      disabled={modalMode === 'view'}
+                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                        formErrors.city ? 'border-red-300' : 'border-gray-300'
+                      } ${modalMode === 'view' ? 'bg-gray-50' : ''}`}
+                      placeholder="Enter city"
+                    />
+                    {formErrors.city && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.city}</p>
+                    )}
+                  </div>
+
+                  {/* Status */}
+                  {modalMode !== 'view' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Status
+                      </label>
+                      <select
+                        name="status"
+                        value={formData.status}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                      >
+                        <option value={true}>Active</option>
+                        <option value={false}>Inactive</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Address
+                  </label>
+                  <textarea
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
-                    fullWidth
-                    margin="normal"
-                    multiline
-                    rows={2}
                     disabled={modalMode === 'view'}
+                    rows={3}
+                    className={`w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                      modalMode === 'view' ? 'bg-gray-50' : ''
+                    }`}
+                    placeholder="Enter address"
                   />
-                  {modalMode !== 'view' && (
-                    <TextField
-                      type="file"
-                      label="Donor Image"
-                      InputLabelProps={{ shrink: true }}
-                      name="image"
-                      onChange={handleImageChange}
-                      fullWidth
-                      margin="normal"
-                      inputProps={{ accept: 'image/*' }}
-                    />
-                  )}
-                  {(imagePreview || formData.imageUrl) && (
-                    <Box sx={{ mt: 2 }}>
-                      <span className="text-sm text-gray-500">Image Preview:</span>
-                      <img
-                        src={imagePreview || formData.imageUrl}
-                        alt="Donor preview"
-                        className="h-20 w-20 object-cover rounded-lg mt-2"
-                      />
-                    </Box>
-                  )}
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        name="status"
-                        checked={formData.status}
-                        onChange={handleInputChange}
-                        color="success"
-                        disabled={modalMode === 'view'}
-                      />
-                    }
-                    label="Active"
-                    sx={{ mt: 2 }}
-                  />
-                  {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
-                </Box>
-              ) : (
-                <span className="text-gray-900">
-                  Are you sure you want to delete donor <strong>{selectedDonor?.name}</strong>?
-                </span>
-              )}
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleModalClose} color="inherit">
-                Cancel
-              </Button>
-              {modalMode === 'view' ? null : modalMode !== 'delete' ? (
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="success"
-                  onClick={handleSubmit}
-                  sx={{ borderRadius: '20px', textTransform: 'none' }}
-                >
-                  {modalMode === 'add' ? 'Add' : 'Update'}
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  color="error"
-                  onClick={handleSubmit}
-                  sx={{ borderRadius: '20px', textTransform: 'none' }}
-                >
-                  Delete
-                </Button>
-              )}
-            </DialogActions>
-          </Dialog>
+                </div>
+
+                {/* Form Actions */}
+                {modalMode !== 'view' && (
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                    <button
+                      type="button"
+                      onClick={handleModalClose}
+                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    >
+                      {submitting ? 'Saving...' : (selectedDonor ? 'Update Donor' : 'Create Donor')}
+                    </button>
+                  </div>
+                )}
+              </form>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
-    </Box>
+
+      {/* Success/Error Messages */}
+      <AnimatePresence>
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50"
+          >
+            <div className="flex items-center">
+              <CheckCircle className="w-5 h-5 mr-2" />
+              {success}
+            </div>
+          </motion.div>
+        )}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50"
+          >
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 mr-2" />
+              {error}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

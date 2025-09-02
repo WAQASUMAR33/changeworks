@@ -1,21 +1,19 @@
-// app/layout.js
+// app/admin/layout.js
 import Sidebar from './components/sidebar';
 import Header from './components/header';
 
-export default function RootLayout({ children }) {
+export default function AdminLayout({ children }) {
   return (
-    <html lang="en">
-      <body className="antialiased">
-        <div className="flex h-screen w-full">
-          <Sidebar />
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <Header />
-            <main className="flex-1 p-4 overflow-y-auto">
-              {children}
-            </main>
+    <div className="flex h-screen w-full overflow-hidden bg-gray-50">
+      <Sidebar />
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <Header />
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {children}
           </div>
-        </div>
-      </body>
-    </html>
+        </main>
+      </div>
+    </div>
   );
 }

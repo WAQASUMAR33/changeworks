@@ -50,6 +50,16 @@ model DonorVerificationToken {
   @@map("donor_verification_tokens")
 }
 
+model PasswordResetToken {
+  id         Int      @id @default(autoincrement())
+  identifier String   @db.VarChar(100) // User email
+  token      String   @unique @db.VarChar(100)
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("password_reset_tokens")
+}
+
 
 
 
@@ -74,6 +84,7 @@ model Organization {
   updated_at  DateTime @updatedAt
   donors         Donor[]  @relation
   transactions   DonorTransaction[] @relation("OrganizationTransactions")
+  fundTransfers  FundTransfer[] @relation("OrganizationFundTransfers")
 
   @@map("organizations")
 }
@@ -114,4 +125,21 @@ model DonorTransaction {
   organization      Organization @relation("OrganizationTransactions", fields: [organization_id], references: [id])
 
   @@map("donor_transactions")
+}
+
+model FundTransfer {
+  id                Int         @id @default(autoincrement())
+  trnx_id           String      @unique @db.VarChar(100)
+  organization_id   Int
+  amount            Float
+  status            String      @db.VarChar(50)
+  receipt_url       String?     @db.VarChar(255)
+  transfer_date     DateTime
+  transfer_time     String      @db.VarChar(20)
+  description       String?     @db.Text
+  created_at        DateTime    @default(now())
+  updated_at        DateTime    @updatedAt
+  organization      Organization @relation("OrganizationFundTransfers", fields: [organization_id], references: [id])
+
+  @@map("fund_transfers")
 }
