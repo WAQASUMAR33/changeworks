@@ -93,12 +93,12 @@ const OrgSidebar = () => {
   ];
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gray-800">
       {/* Logo Section */}
-      <div className="flex items-center justify-between h-14 px-3 border-b border-gray-700">
-        <div className="flex items-center space-x-2">
-          <div className="w-7 h-7 bg-blue-500 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xs">C</span>
+      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-700">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">CW</span>
           </div>
           <AnimatePresence>
             {isExpanded && (
@@ -109,7 +109,7 @@ const OrgSidebar = () => {
                 transition={{ duration: 0.2 }}
                 className="ml-1"
               >
-                <h1 className="text-base font-semibold text-white">ChangeWorks</h1>
+                <h1 className="text-lg font-semibold text-white">ChangeWorks</h1>
                 <p className="text-xs text-gray-400">Organization Portal</p>
               </motion.div>
             )}
@@ -122,21 +122,18 @@ const OrgSidebar = () => {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               onClick={togglePin}
-              className="p-1 rounded hover:bg-gray-700 transition-colors duration-200"
+              className="p-1.5 rounded-lg hover:bg-gray-700 transition-colors duration-200"
             >
-              {isPinned ? (
-                <PinOff className="w-3 h-3 text-gray-400" />
-              ) : (
-                <Pin className="w-3 h-3 text-gray-400" />
-              )}
+              <ChevronRight className="w-4 h-4 text-gray-400" />
             </motion.button>
           )}
         </AnimatePresence>
       </div>
 
+
       {/* Navigation Menu */}
-      <nav className="flex-1 px-2 py-2 overflow-y-auto">
-        <ul className="space-y-0.5">
+      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+        <ul className="space-y-1">
           {menuItems.map((item, index) => {
             const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
             const hasSub = item.subItems && item.subItems.length > 0;
@@ -153,13 +150,13 @@ const OrgSidebar = () => {
                       router.push(item.path);
                     }
                   }}
-                  className={`group flex items-center px-2 py-1.5 cursor-pointer rounded-md transition-all duration-200 ${
+                  className={`group flex items-center px-3 py-3 cursor-pointer rounded-lg transition-all duration-200 ${
                     isActive 
-                      ? 'bg-blue-600 text-white' 
+                      ? 'bg-gray-700 text-white' 
                       : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
                 >
-                  <item.icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
+                  <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
                   
                   <AnimatePresence>
                     {isExpanded && (
@@ -168,11 +165,11 @@ const OrgSidebar = () => {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -10 }}
                         transition={{ duration: 0.2 }}
-                        className="flex items-center justify-between flex-1 ml-2"
+                        className="flex items-center justify-between flex-1 ml-3"
                       >
                         <span className="font-medium text-sm">{item.name}</span>
                         {hasSub && (
-                          <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isSubmenuOpen ? 'rotate-180' : ''} ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                          <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isSubmenuOpen ? 'rotate-180' : ''} ${isActive ? 'text-white' : 'text-gray-400'}`} />
                         )}
                       </motion.div>
                     )}
@@ -187,7 +184,7 @@ const OrgSidebar = () => {
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="ml-4 mt-0.5 space-y-0.5"
+                      className="ml-6 mt-1 space-y-1"
                     >
                       {item.subItems.map((sub, subIndex) => {
                         const isSubActive = pathname === sub.path;
@@ -200,9 +197,9 @@ const OrgSidebar = () => {
                           >
                             <Link
                               href={sub.path}
-                              className={`block px-2 py-0.5 text-sm rounded-md transition-all duration-200 ${
+                              className={`block px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
                                 isSubActive 
-                                  ? 'bg-blue-600/20 text-blue-300 font-medium' 
+                                  ? 'bg-purple-600/20 text-purple-300 font-medium' 
                                   : 'text-gray-400 hover:text-white hover:bg-gray-700'
                               }`}
                             >
@@ -221,12 +218,13 @@ const OrgSidebar = () => {
       </nav>
 
       {/* Bottom Section */}
-      <div className="p-1.5 border-t border-gray-700">
+      <div className="p-3 border-t border-gray-700">
+        {/* Logout Button */}
         <button
           onClick={handleLogout}
-          className="w-full flex items-center px-2 py-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-md transition-all duration-200 group"
+          className="w-full flex items-center px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all duration-200 group"
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut className="w-5 h-5" />
           <AnimatePresence>
             {isExpanded && (
               <motion.span
@@ -234,7 +232,7 @@ const OrgSidebar = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
                 transition={{ duration: 0.2 }}
-                className="ml-2 font-medium text-sm"
+                className="ml-3 font-medium text-sm"
               >
                 Logout
               </motion.span>
@@ -250,11 +248,11 @@ const OrgSidebar = () => {
       {/* Desktop Sidebar */}
       <motion.div
         initial={{ width: 64 }}
-        animate={{ width: isExpanded ? 240 : 64 }}
+        animate={{ width: isExpanded ? 280 : 64 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         onMouseEnter={() => !isPinned && setIsHovered(true)}
         onMouseLeave={() => !isPinned && setIsHovered(false)}
-        className="hidden lg:block h-full bg-gray-900 border-r border-gray-700 shadow-lg overflow-hidden"
+        className="hidden lg:block h-full bg-gray-800 border-r border-gray-700 shadow-xl overflow-hidden"
       >
         <SidebarContent />
       </motion.div>
@@ -274,10 +272,10 @@ const OrgSidebar = () => {
 
       {/* Mobile Sidebar */}
       <motion.div
-        initial={{ x: -240 }}
-        animate={{ x: isMobileOpen ? 0 : -240 }}
+        initial={{ x: -280 }}
+        animate={{ x: isMobileOpen ? 0 : -280 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="lg:hidden fixed left-0 top-0 h-full w-60 bg-gray-900 border-r border-gray-700 shadow-lg z-50"
+        className="lg:hidden fixed left-0 top-0 h-full w-70 bg-gray-800 border-r border-gray-700 shadow-xl z-50"
       >
         <SidebarContent />
       </motion.div>
@@ -285,9 +283,9 @@ const OrgSidebar = () => {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-gray-900 rounded-lg text-white shadow-lg border border-gray-700"
+        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-gray-800 rounded-lg text-white shadow-xl border border-gray-700 hover:bg-gray-700 transition-colors"
       >
-        {isMobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
     </>
   );

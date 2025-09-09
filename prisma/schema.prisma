@@ -186,6 +186,22 @@ model SaveTrRecord {
   @@map("save_tr_record")
 }
 
+model Package {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(255)
+  description String   @db.Text
+  price       Float
+  currency    String   @default("USD") @db.VarChar(10)
+  features    String   @db.Text // JSON string of features array
+  duration    String?  @db.VarChar(100)
+  isActive    Boolean  @default(true)
+  category    String?  @db.VarChar(100)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@map("packages")
+}
+
 enum Role {
   ADMIN
   DONOR
