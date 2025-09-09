@@ -1,11 +1,11 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, X, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function OrganizationLoginPage() {
+function OrganizationLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [form, setForm] = useState({ email: '', password: '' });
@@ -440,7 +440,7 @@ export default function OrganizationLoginPage() {
                 className="mt-8 text-center"
               >
                 <p className="text-sm text-gray-600">
-                  Don't have an organization account?{' '}
+                  Don&apos;t have an organization account?{' '}
                   <a 
                     href="/organization/signup" 
                     className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200"
@@ -569,5 +569,13 @@ export default function OrganizationLoginPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function OrganizationLoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OrganizationLoginContent />
+    </Suspense>
   );
 }

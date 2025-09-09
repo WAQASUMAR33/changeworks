@@ -207,7 +207,7 @@ export default function OrganizationSignupPage() {
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
             <motion.div variants={itemVariants} className="text-center mb-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-2">Basic Information</h2>
-              <p className="text-gray-600">Let's start with your organization details</p>
+              <p className="text-gray-600">Let&apos;s start with your organization details</p>
             </motion.div>
 
             <motion.div variants={itemVariants}>
@@ -729,8 +729,8 @@ export default function OrganizationSignupPage() {
                 <h3 className="text-lg font-semibold text-green-900">Account Setup Complete</h3>
               </div>
               <p className="text-green-800 text-sm">
-                Your organization account will be created with all the information you've provided. 
-                You'll be able to access your dashboard immediately after signup.
+                Your organization account will be created with all the information you&apos;ve provided. 
+                You&apos;ll be able to access your dashboard immediately after signup.
               </p>
             </motion.div>
           </motion.div>

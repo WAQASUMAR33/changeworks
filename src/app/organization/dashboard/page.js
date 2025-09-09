@@ -219,7 +219,7 @@ export default function OrganizationDashboard() {
                                 </div>
                                 <div className="flex-1">
                                     <p className="font-medium text-gray-900">GHL account created</p>
-                                    <p className="text-sm text-gray-600">New GoHighLevel sub-account "Education Fund" created</p>
+                                    <p className="text-sm text-gray-600">New GoHighLevel sub-account &quot;Education Fund&quot; created</p>
                                 </div>
                                 <span className="text-sm text-gray-500">1 day ago</span>
                             </div>
