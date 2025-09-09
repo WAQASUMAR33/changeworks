@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../lib/prisma";
 import { hash } from "bcryptjs";
 import { z } from "zod";
+import GHLClient from "../../lib/ghl-client";
 
 // Validation schema
 const organizationSchema = z.object({
@@ -18,6 +19,9 @@ const organizationSchema = z.object({
   postalCode: z.string().optional(),
   ghlId: z.string().optional(),
   imageUrl: z.string().optional(),
+  // Organization Login Details
+  orgPassword: z.string().min(6, "Organization password must be at least 6 characters"),
+  confirmOrgPassword: z.string(),
 });
 
 export async function POST(req) {
@@ -33,18 +37,108 @@ export async function POST(req) {
       return NextResponse.json({ error: "Email already exists" }, { status: 400 });
     }
 
-    const hashedPassword = await hash(input.password, 10);
+    // Validate organization password confirmation
+    if (input.orgPassword !== input.confirmOrgPassword) {
+      return NextResponse.json({ 
+        error: "Organization passwords do not match" 
+      }, { status: 400 });
+    }
 
+    const hashedPassword = await hash(input.password, 10);
+    const hashedOrgPassword = await hash(input.orgPassword, 10);
+
+    // Create organization first
     const organization = await prisma.organization.create({
       data: {
-        ...input,
+        name: input.name,
+        email: input.email,
         password: hashedPassword,
+        phone: input.phone,
+        company: input.company,
+        address: input.address,
+        website: input.website,
+        city: input.city,
+        state: input.state,
+        country: input.country,
+        postalCode: input.postalCode,
+        ghlId: input.ghlId,
+        imageUrl: input.imageUrl,
+        orgPassword: hashedOrgPassword, // Store organization password
       },
     });
 
+    let ghlAccount = null;
+    let ghlLocationId = null;
+
+    // Automatically create GHL account using organization information
+    try {
+      const ghlClient = new GHLClient();
+      
+      const ghlData = {
+        businessName: input.company || input.name, // Use company name or organization name
+        firstName: input.name.split(' ')[0] || input.name,
+        lastName: input.name.split(' ').slice(1).join(' ') || '',
+        email: input.email,
+        phone: input.phone || '',
+        address: input.address || '',
+        city: input.city || '',
+        state: input.state || '',
+        country: input.country || 'GB',
+        postalCode: input.postalCode || '',
+        website: input.website || '',
+        timezone: 'Europe/London', // Default timezone
+        companyId: process.env.GHL_COMPANY_ID
+      };
+
+      console.log('Creating GHL account for organization:', organization.id);
+      const ghlResult = await ghlClient.createSubAccount(ghlData);
+
+      if (ghlResult.success) {
+        ghlLocationId = ghlResult.locationId;
+        
+        // Save GHL account details to database
+        ghlAccount = await prisma.gHLAccount.create({
+          data: {
+            organization_id: organization.id,
+            ghl_location_id: ghlLocationId,
+            business_name: input.company || input.name,
+            email: input.email,
+            phone: input.phone,
+            address: input.address,
+            city: input.city,
+            state: input.state,
+            country: input.country,
+            postal_code: input.postalCode,
+            website: input.website,
+            timezone: 'Europe/London',
+            ghl_data: JSON.stringify(ghlResult.data),
+            status: 'active'
+          }
+        });
+
+        // Update organization with GHL location ID
+        await prisma.organization.update({
+          where: { id: organization.id },
+          data: { ghlId: ghlLocationId }
+        });
+
+        console.log('GHL account created successfully:', ghlLocationId);
+      } else {
+        console.error('GHL account creation failed:', ghlResult.error);
+      }
+    } catch (ghlError) {
+      console.error('GHL integration error:', ghlError);
+      // Don't fail the entire signup if GHL creation fails
+    }
+
     return NextResponse.json({
       message: "Organization registered successfully",
-      organization
+      organization: {
+        ...organization,
+        ghlId: ghlLocationId
+      },
+      ghlAccount: ghlAccount,
+      ghlLocationId: ghlLocationId
     }, { status: 201 });
 
   } catch (error) {

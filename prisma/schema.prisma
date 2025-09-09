@@ -7,14 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  SUPERADMIN
-  MANAGER
-  ADMIN
-  DONOR
-  ORGANIZATION
-}
-
 model User {
   id            Int       @id @default(autoincrement())
   name          String?   @db.VarChar(255)
@@ -22,15 +14,15 @@ model User {
   emailVerified DateTime? @map("email_verified")
   password      String?   @db.VarChar(255)
   role          Role      @default(DONOR)
-  created_at     DateTime  @default(now())
-  updated_at     DateTime  @updatedAt
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
 
   @@map("users")
 }
 
 model VerificationToken {
   id         Int      @id @default(autoincrement())
-  identifier String   @db.VarChar(100) // Just an email, no FK
+  identifier String   @db.VarChar(100)
   token      String   @unique @db.VarChar(100)
   expires    DateTime
 
@@ -38,11 +30,9 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-
-
 model DonorVerificationToken {
   id         Int      @id @default(autoincrement())
-  identifier String   @db.VarChar(100) // Donor email
+  identifier String   @db.VarChar(100)
   token      String   @unique @db.VarChar(100)
   expires    DateTime
 
@@ -52,7 +42,7 @@ model DonorVerificationToken {
 
 model PasswordResetToken {
   id         Int      @id @default(autoincrement())
-  identifier String   @db.VarChar(100) // User email
+  identifier String   @db.VarChar(100)
   token      String   @unique @db.VarChar(100)
   expires    DateTime
 
@@ -60,86 +50,148 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
-
-
-
 model Organization {
-  id         Int      @id @default(autoincrement())
-  name       String   @db.VarChar(255)
-  email      String   @unique @db.VarChar(100)
-  password   String?  @db.VarChar(255)
-  imageUrl   String?  @db.VarChar(255)
-  phone      String?  @db.VarChar(20)
-  company    String?  @db.VarChar(255)
-  address    String?  @db.VarChar(255)
-  website    String?  @db.VarChar(255)
-  city       String?  @db.VarChar(100)
-  state      String?  @db.VarChar(100)
-  country    String?  @db.VarChar(100)
-  postalCode String?  @db.VarChar(20)
-  ghlId      String?  @db.VarChar(100)
-  balance    Float    @default(0) 
-  status     Boolean  @default(true)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  donors         Donor[]  @relation
-  transactions   DonorTransaction[] @relation("OrganizationTransactions")
-  fundTransfers  FundTransfer[] @relation("OrganizationFundTransfers")
+  id            Int                @id @default(autoincrement())
+  name          String             @db.VarChar(255)
+  email         String             @unique @db.VarChar(100)
+  password      String?            @db.VarChar(255)
+  imageUrl      String?            @db.VarChar(255)
+  phone         String?            @db.VarChar(20)
+  company       String?            @db.VarChar(255)
+  address       String?            @db.VarChar(255)
+  website       String?            @db.VarChar(255)
+  city          String?            @db.VarChar(100)
+  state         String?            @db.VarChar(100)
+  country       String?            @db.VarChar(100)
+  postalCode    String?            @db.VarChar(20)
+  ghlId         String?            @db.VarChar(100)
+  balance       Float              @default(0)
+  status        Boolean            @default(true)
+  created_at    DateTime           @default(now())
+  updated_at    DateTime           @updatedAt
+  orgPassword   String?            @db.VarChar(255)
+  transactions  DonorTransaction[] @relation("OrganizationTransactions")
+  saveTrRecords SaveTrRecord[]     @relation("OrganizationTransactions")
+  donors        Donor[]
+  fundTransfers FundTransfer[]     @relation("OrganizationFundTransfers")
+  ghlAccounts   GHLAccount[]       @relation("OrganizationGHLAccounts")
 
   @@map("organizations")
 }
 
 model Donor {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique @db.VarChar(100)
-  password  String   @db.VarChar(255)
-  name      String   @db.VarChar(255)
-  phone     String?  @db.VarChar(20)
-  city      String?  @db.VarChar(100)
-  address   String?  @db.VarChar(255)
-  imageUrl  String?  @db.VarChar(255)
-  status    Boolean  @default(true)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id              Int                @id @default(autoincrement())
+  email           String             @unique @db.VarChar(100)
+  password        String             @db.VarChar(255)
+  name            String             @db.VarChar(255)
+  phone           String?            @db.VarChar(20)
+  city            String?            @db.VarChar(100)
+  address         String?            @db.VarChar(255)
+  imageUrl        String?            @db.VarChar(255)
+  status          Boolean            @default(true)
+  created_at      DateTime           @default(now())
+  updated_at      DateTime           @updatedAt
   organization_id Int
-  organization   Organization @relation(fields: [organization_id], references: [id])
-  transactions   DonorTransaction[] @relation("DonorTransactions")
+  transactions    DonorTransaction[] @relation("DonorTransactions")
+  saveTrRecords   SaveTrRecord[]     @relation("DonorTransactions")
+  organization    Organization       @relation(fields: [organization_id], references: [id])
+
+  @@index([organization_id], map: "donors_organization_id_fkey")
   @@map("donors")
 }
 
-
 model DonorTransaction {
-  id                Int         @id @default(autoincrement())
-  donor_id          Int
-  organization_id    Int
-  status            String      @db.VarChar(50)
-  amount            Float
-  currency          String      @db.VarChar(3)
-  receipt_url       String?     @db.VarChar(255)
-  trnx_id           String      @unique @db.VarChar(100)
-  transaction_type  String      @db.VarChar(50)
-  payment_method    String      @db.VarChar(50)
-  created_at        DateTime    @default(now())
-  updated_at        DateTime    @updatedAt
-  donor             Donor       @relation("DonorTransactions", fields: [donor_id], references: [id])
-  organization      Organization @relation("OrganizationTransactions", fields: [organization_id], references: [id])
+  id               Int          @id @default(autoincrement())
+  donor_id         Int
+  organization_id  Int
+  status           String       @db.VarChar(50)
+  amount           Float
+  currency         String       @db.VarChar(3)
+  receipt_url      String?      @db.VarChar(255)
+  trnx_id          String       @unique @db.VarChar(100)
+  transaction_type String       @db.VarChar(50)
+  payment_method   String       @db.VarChar(50)
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  donor            Donor        @relation("DonorTransactions", fields: [donor_id], references: [id])
+  organization     Organization @relation("OrganizationTransactions", fields: [organization_id], references: [id])
 
+  @@index([donor_id], map: "donor_transactions_donor_id_fkey")
+  @@index([organization_id], map: "donor_transactions_organization_id_fkey")
   @@map("donor_transactions")
 }
 
 model FundTransfer {
-  id                Int         @id @default(autoincrement())
-  trnx_id           String      @unique @db.VarChar(100)
-  organization_id   Int
-  amount            Float
-  status            String      @db.VarChar(50)
-  receipt_url       String?     @db.VarChar(255)
-  transfer_date     DateTime
-  transfer_time     String      @db.VarChar(20)
-  description       String?     @db.Text
-  created_at        DateTime    @default(now())
-  updated_at        DateTime    @updatedAt
-  organization      Organization @relation("OrganizationFundTransfers", fields: [organization_id], references: [id])
+  id              Int          @id @default(autoincrement())
+  trnx_id         String       @unique @db.VarChar(100)
+  organization_id Int
+  amount          Float
+  status          String       @db.VarChar(50)
+  receipt_url     String?      @db.VarChar(255)
+  transfer_date   DateTime
+  transfer_time   String       @db.VarChar(20)
+  description     String?      @db.Text
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+  organization    Organization @relation("OrganizationFundTransfers", fields: [organization_id], references: [id])
 
+  @@index([organization_id], map: "fund_transfers_organization_id_fkey")
   @@map("fund_transfers")
+}
+
+model GHLAccount {
+  id              Int          @id @default(autoincrement())
+  organization_id Int
+  ghl_location_id String       @unique @db.VarChar(100)
+  business_name   String       @db.VarChar(255)
+  email           String       @db.VarChar(100)
+  phone           String?      @db.VarChar(20)
+  address         String?      @db.VarChar(255)
+  city            String?      @db.VarChar(100)
+  state           String?      @db.VarChar(100)
+  country         String?      @db.VarChar(100)
+  postal_code     String?      @db.VarChar(20)
+  website         String?      @db.VarChar(255)
+  timezone        String?      @db.VarChar(50)
+  ghl_data        String?      @db.Text
+  status          String       @default("active") @db.VarChar(20)
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+  organization    Organization @relation("OrganizationGHLAccounts", fields: [organization_id], references: [id])
+
+  @@index([organization_id], map: "ghl_accounts_organization_id_fkey")
+  @@map("ghl_accounts")
+}
+
+model SaveTrRecord {
+  id                  Int      @id @default(autoincrement())
+  trx_id              String   @unique @db.VarChar(100)
+  trx_date            DateTime
+  trx_amount          Float
+  trx_method          String   @db.VarChar(50)
+  trx_recipt_url      String?  @db.VarChar(500)
+  trx_donor_id        Int
+  trx_ghl_id          String?  @db.VarChar(100)
+  trx_details         String?  @db.Text
+  trx_organization_id Int
+  pay_status          String   @default("pending") @db.VarChar(20)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  // Relations
+  donor               Donor       @relation("DonorTransactions", fields: [trx_donor_id], references: [id])
+  organization        Organization @relation("OrganizationTransactions", fields: [trx_organization_id], references: [id])
+
+  @@index([trx_ghl_id], map: "save_tr_record_trx_ghl_id_idx")
+  @@index([trx_donor_id], map: "save_tr_record_trx_donor_id_idx")
+  @@index([trx_organization_id], map: "save_tr_record_trx_organization_id_idx")
+  @@map("save_tr_record")
+}
+
+enum Role {
+  SUPERADMIN
+  MANAGER
+  ADMIN
+  DONOR
+  ORGANIZATION
 }
