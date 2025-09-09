@@ -52,24 +52,24 @@ model PasswordResetToken {
 
 model Organization {
   id            Int                @id @default(autoincrement())
-  name          String             @db.VarChar(255)
-  email         String             @unique @db.VarChar(100)
-  password      String?            @db.VarChar(255)
-  imageUrl      String?            @db.VarChar(255)
-  phone         String?            @db.VarChar(20)
-  company       String?            @db.VarChar(255)
-  address       String?            @db.VarChar(255)
-  website       String?            @db.VarChar(255)
-  city          String?            @db.VarChar(100)
-  state         String?            @db.VarChar(100)
-  country       String?            @db.VarChar(100)
-  postalCode    String?            @db.VarChar(20)
-  ghlId         String?            @db.VarChar(100)
+  name          String   @db.VarChar(255)
+  email         String   @unique @db.VarChar(100)
+  password      String?  @db.VarChar(255)
+  imageUrl      String?  @db.VarChar(500)
+  phone         String?  @db.VarChar(50)
+  company       String?  @db.VarChar(255)
+  address       String?  @db.VarChar(500)
+  website       String?  @db.VarChar(255)
+  city          String?  @db.VarChar(100)
+  state         String?  @db.VarChar(100)
+  country       String?  @db.VarChar(100)
+  postalCode    String?  @db.VarChar(20)
+  ghlId         String?  @db.VarChar(100)
   balance       Float              @default(0)
   status        Boolean            @default(true)
   created_at    DateTime           @default(now())
   updated_at    DateTime           @updatedAt
-  orgPassword   String?            @db.VarChar(255)
+  orgPassword   String?  @db.VarChar(255)
   transactions  DonorTransaction[] @relation("OrganizationTransactions")
   saveTrRecords SaveTrRecord[]     @relation("OrganizationTransactions")
   donors        Donor[]
@@ -81,13 +81,13 @@ model Organization {
 
 model Donor {
   id              Int                @id @default(autoincrement())
-  email           String             @unique @db.VarChar(100)
-  password        String             @db.VarChar(255)
-  name            String             @db.VarChar(255)
-  phone           String?            @db.VarChar(20)
-  city            String?            @db.VarChar(100)
-  address         String?            @db.VarChar(255)
-  imageUrl        String?            @db.VarChar(255)
+  email           String   @unique @db.VarChar(100)
+  password        String   @db.VarChar(255)
+  name            String   @db.VarChar(255)
+  phone           String?  @db.VarChar(50)
+  city            String?  @db.VarChar(100)
+  address         String?  @db.VarChar(500)
+  imageUrl        String?  @db.VarChar(500)
   status          Boolean            @default(true)
   created_at      DateTime           @default(now())
   updated_at      DateTime           @updatedAt
@@ -96,70 +96,68 @@ model Donor {
   saveTrRecords   SaveTrRecord[]     @relation("DonorTransactions")
   organization    Organization       @relation(fields: [organization_id], references: [id])
 
-  @@index([organization_id], map: "donors_organization_id_fkey")
   @@map("donors")
 }
 
 model DonorTransaction {
-  id               Int          @id @default(autoincrement())
-  donor_id         Int
-  organization_id  Int
-  status           String       @db.VarChar(50)
-  amount           Float
-  currency         String       @db.VarChar(3)
-  receipt_url      String?      @db.VarChar(255)
-  trnx_id          String       @unique @db.VarChar(100)
-  transaction_type String       @db.VarChar(50)
-  payment_method   String       @db.VarChar(50)
-  created_at       DateTime     @default(now())
-  updated_at       DateTime     @updatedAt
-  donor            Donor        @relation("DonorTransactions", fields: [donor_id], references: [id])
-  organization     Organization @relation("OrganizationTransactions", fields: [organization_id], references: [id])
+  id              Int      @id @default(autoincrement())
+  organization_id Int
+  donor_id        Int
+  status          String   @db.VarChar(50)
+  amount          Float
+  currency        String   @db.VarChar(3)
+  receipt_url     String?  @db.VarChar(500)
+  trnx_id         String   @unique @db.VarChar(100)
+  transaction_type String  @db.VarChar(50)
+  payment_method   String  @db.VarChar(50)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
 
-  @@index([donor_id], map: "donor_transactions_donor_id_fkey")
-  @@index([organization_id], map: "donor_transactions_organization_id_fkey")
+  organization Organization @relation("OrganizationTransactions", fields: [organization_id], references: [id])
+  donor        Donor        @relation("DonorTransactions", fields: [donor_id], references: [id])
+
   @@map("donor_transactions")
 }
 
 model FundTransfer {
   id              Int          @id @default(autoincrement())
-  trnx_id         String       @unique @db.VarChar(100)
+  trnx_id         String   @unique @db.VarChar(100)
   organization_id Int
   amount          Float
-  status          String       @db.VarChar(50)
-  receipt_url     String?      @db.VarChar(255)
+  status          String   @db.VarChar(50)
+  receipt_url     String?  @db.VarChar(500)
   transfer_date   DateTime
-  transfer_time   String       @db.VarChar(20)
-  description     String?      @db.Text
+  transfer_time   String   @db.VarChar(50)
+  description     String?  @db.Text
   created_at      DateTime     @default(now())
   updated_at      DateTime     @updatedAt
-  organization    Organization @relation("OrganizationFundTransfers", fields: [organization_id], references: [id])
 
-  @@index([organization_id], map: "fund_transfers_organization_id_fkey")
+  organization Organization @relation("OrganizationFundTransfers", fields: [organization_id], references: [id])
+
   @@map("fund_transfers")
 }
 
 model GHLAccount {
-  id              Int          @id @default(autoincrement())
+  id              Int      @id @default(autoincrement())
   organization_id Int
-  ghl_location_id String       @unique @db.VarChar(100)
-  business_name   String       @db.VarChar(255)
-  email           String       @db.VarChar(100)
-  phone           String?      @db.VarChar(20)
-  address         String?      @db.VarChar(255)
-  city            String?      @db.VarChar(100)
-  state           String?      @db.VarChar(100)
-  country         String?      @db.VarChar(100)
-  postal_code     String?      @db.VarChar(20)
-  website         String?      @db.VarChar(255)
-  timezone        String?      @db.VarChar(50)
-  ghl_data        String?      @db.Text
-  status          String       @default("active") @db.VarChar(20)
-  created_at      DateTime     @default(now())
-  updated_at      DateTime     @updatedAt
-  organization    Organization @relation("OrganizationGHLAccounts", fields: [organization_id], references: [id])
+  ghl_location_id String   @unique @db.VarChar(100)
+  business_name   String   @db.VarChar(255)
+  email           String   @db.VarChar(100)
+  phone           String?  @db.VarChar(50)
+  address         String?  @db.VarChar(500)
+  city            String?  @db.VarChar(100)
+  state           String?  @db.VarChar(100)
+  country         String?  @db.VarChar(100)
+  postal_code     String?  @db.VarChar(20)
+  website         String?  @db.VarChar(255)
+  timezone        String?  @db.VarChar(100)
+  ghl_data        String?  @db.Text
+  status          String   @default("active") @db.VarChar(50)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
 
-  @@index([organization_id], map: "ghl_accounts_organization_id_fkey")
+  organization Organization @relation("OrganizationGHLAccounts", fields: [organization_id], references: [id])
+
   @@map("ghl_accounts")
 }
 
@@ -189,9 +187,6 @@ model SaveTrRecord {
 }
 
 enum Role {
-  SUPERADMIN
-  MANAGER
   ADMIN
   DONOR
-  ORGANIZATION
 }

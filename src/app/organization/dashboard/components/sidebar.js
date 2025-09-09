@@ -66,17 +66,13 @@ const OrgSidebar = () => {
       path: '/organization/dashboard',
     },
     {
-      name: 'Donors',
-      icon: Gift,
-      path: '/organization/dashboard/donors',
-      subItems: [
-        { name: 'List Donors', path: '/organization/dashboard/donors' },
-        { name: 'Add Donor', path: '/organization/dashboard/donors/add' },
-      ],
+      name: 'Transfers',
+      icon: ArrowRightLeft,
+      path: '/organization/dashboard/add-transfers',
     },
     {
       name: 'Transactions',
-      icon: ArrowRightLeft,
+      icon: ClipboardPlus,
       path: '/organization/dashboard/transactions',
     },
     {
