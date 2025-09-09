@@ -1,6 +1,69 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../../lib/prisma";
 import { z } from "zod";
+
+// Import mock data from the main packages route
+const mockPackages = [
+  {
+    id: 1,
+    name: "Basic Plan",
+    description: "Perfect for small organizations getting started with our platform",
+    price: 29.99,
+    currency: "USD",
+    features: [
+      "Up to 100 donors",
+      "Basic reporting",
+      "Email support",
+      "Standard templates"
+    ],
+    duration: "1 month",
+    isActive: true,
+    category: "basic",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 2,
+    name: "Premium Plan",
+    description: "Advanced features for growing organizations with more complex needs",
+    price: 79.99,
+    currency: "USD",
+    features: [
+      "Up to 500 donors",
+      "Advanced reporting & analytics",
+      "Priority support",
+      "Custom templates",
+      "API access",
+      "Advanced integrations"
+    ],
+    duration: "1 month",
+    isActive: true,
+    category: "premium",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 3,
+    name: "Enterprise Plan",
+    description: "Full-featured solution for large organizations with unlimited needs",
+    price: 199.99,
+    currency: "USD",
+    features: [
+      "Unlimited donors",
+      "Custom reporting & dashboards",
+      "24/7 dedicated support",
+      "White-label options",
+      "Full API access",
+      "All integrations",
+      "Custom development",
+      "Advanced security features"
+    ],
+    duration: "1 month",
+    isActive: true,
+    category: "enterprise",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
 
 const updatePackageSchema = z.object({
   name: z.string().min(1, "Package name is required").optional(),
@@ -22,9 +85,7 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: "Invalid package ID" }, { status: 400 });
     }
 
-    const packageData = await prisma.package.findUnique({
-      where: { id: packageId },
-    });
+    const packageData = mockPackages.find(pkg => pkg.id === packageId);
 
     if (!packageData) {
       return NextResponse.json({ error: "Package not found" }, { status: 404 });
@@ -32,10 +93,7 @@ export async function GET(req, { params }) {
 
     return NextResponse.json({
       success: true,
-      package: {
-        ...packageData,
-        features: JSON.parse(packageData.features || '[]'),
-      },
+      package: packageData,
     }, { status: 200 });
   } catch (error) {
     console.error("Error fetching package:", error);
@@ -55,33 +113,26 @@ export async function PUT(req, { params }) {
     const body = await req.json();
     const input = updatePackageSchema.parse(body);
 
-    // Check if package exists
-    const existingPackage = await prisma.package.findUnique({
-      where: { id: packageId },
-    });
+    // Find package index
+    const packageIndex = mockPackages.findIndex(pkg => pkg.id === packageId);
 
-    if (!existingPackage) {
+    if (packageIndex === -1) {
       return NextResponse.json({ error: "Package not found" }, { status: 404 });
     }
 
-    // Prepare update data
-    const updateData = { ...input };
-    if (input.features) {
-      updateData.features = JSON.stringify(input.features);
-    }
+    // Update package
+    const updatedPackage = {
+      ...mockPackages[packageIndex],
+      ...input,
+      updated_at: new Date().toISOString()
+    };
 
-    const updatedPackage = await prisma.package.update({
-      where: { id: packageId },
-      data: updateData,
-    });
+    mockPackages[packageIndex] = updatedPackage;
 
     return NextResponse.json({
       success: true,
       message: "Package updated successfully",
-      package: {
-        ...updatedPackage,
-        features: JSON.parse(updatedPackage.features || '[]'),
-      },
+      package: updatedPackage,
     }, { status: 200 });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -101,18 +152,15 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ error: "Invalid package ID" }, { status: 400 });
     }
 
-    // Check if package exists
-    const existingPackage = await prisma.package.findUnique({
-      where: { id: packageId },
-    });
+    // Find package index
+    const packageIndex = mockPackages.findIndex(pkg => pkg.id === packageId);
 
-    if (!existingPackage) {
+    if (packageIndex === -1) {
       return NextResponse.json({ error: "Package not found" }, { status: 404 });
     }
 
-    await prisma.package.delete({
-      where: { id: packageId },
-    });
+    // Remove package from mock data
+    mockPackages.splice(packageIndex, 1);
 
     return NextResponse.json({
       success: true,

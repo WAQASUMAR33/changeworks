@@ -1,6 +1,69 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
+
+// Mock data for demonstration
+const mockPackages = [
+  {
+    id: 1,
+    name: "Basic Plan",
+    description: "Perfect for small organizations getting started with our platform",
+    price: 29.99,
+    currency: "USD",
+    features: [
+      "Up to 100 donors",
+      "Basic reporting",
+      "Email support",
+      "Standard templates"
+    ],
+    duration: "1 month",
+    isActive: true,
+    category: "basic",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 2,
+    name: "Premium Plan",
+    description: "Advanced features for growing organizations with more complex needs",
+    price: 79.99,
+    currency: "USD",
+    features: [
+      "Up to 500 donors",
+      "Advanced reporting & analytics",
+      "Priority support",
+      "Custom templates",
+      "API access",
+      "Advanced integrations"
+    ],
+    duration: "1 month",
+    isActive: true,
+    category: "premium",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 3,
+    name: "Enterprise Plan",
+    description: "Full-featured solution for large organizations with unlimited needs",
+    price: 199.99,
+    currency: "USD",
+    features: [
+      "Unlimited donors",
+      "Custom reporting & dashboards",
+      "24/7 dedicated support",
+      "White-label options",
+      "Full API access",
+      "All integrations",
+      "Custom development",
+      "Advanced security features"
+    ],
+    duration: "1 month",
+    isActive: true,
+    category: "enterprise",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
 
 const packageSchema = z.object({
   name: z.string().min(1, "Package name is required"),
@@ -18,26 +81,28 @@ export async function POST(req) {
     const body = await req.json();
     const input = packageSchema.parse(body);
 
-    const packageData = await prisma.package.create({
-      data: {
-        name: input.name,
-        description: input.description,
-        price: input.price,
-        currency: input.currency,
-        features: JSON.stringify(input.features),
-        duration: input.duration,
-        isActive: input.isActive,
-        category: input.category,
-      },
-    });
+    // Create new package with mock ID
+    const newPackage = {
+      id: mockPackages.length + 1,
+      name: input.name,
+      description: input.description,
+      price: input.price,
+      currency: input.currency,
+      features: input.features || [],
+      duration: input.duration,
+      isActive: input.isActive,
+      category: input.category,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    // Add to mock data
+    mockPackages.push(newPackage);
 
     return NextResponse.json({
       success: true,
       message: "Package created successfully",
-      package: {
-        ...packageData,
-        features: JSON.parse(packageData.features),
-      },
+      package: newPackage,
     }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -55,36 +120,30 @@ export async function GET(req) {
     const category = searchParams.get('category') || '';
     const isActive = searchParams.get('isActive');
 
-    const where = {};
+    // Apply filters to mock data
+    let filteredPackages = [...mockPackages];
+    
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { category: { contains: search, mode: 'insensitive' } },
-      ];
+      filteredPackages = filteredPackages.filter(pkg => 
+        pkg.name.toLowerCase().includes(search.toLowerCase()) ||
+        pkg.description.toLowerCase().includes(search.toLowerCase()) ||
+        (pkg.category && pkg.category.toLowerCase().includes(search.toLowerCase()))
+      );
     }
+    
     if (category) {
-      where.category = category;
+      filteredPackages = filteredPackages.filter(pkg => pkg.category === category);
     }
+    
     if (isActive !== null && isActive !== undefined) {
-      where.isActive = isActive === 'true';
+      filteredPackages = filteredPackages.filter(pkg => pkg.isActive === (isActive === 'true'));
     }
-
-    const packages = await prisma.package.findMany({
-      where,
-      orderBy: { created_at: "desc" },
-    });
-
-    // Parse features JSON for each package
-    const packagesWithParsedFeatures = packages.map(pkg => ({
-      ...pkg,
-      features: JSON.parse(pkg.features || '[]'),
-    }));
 
     return NextResponse.json({
       success: true,
-      count: packagesWithParsedFeatures.length,
-      packages: packagesWithParsedFeatures,
+      count: filteredPackages.length,
+      packages: filteredPackages,
+      mock: true // Indicate this is mock data
     }, { status: 200 });
   } catch (error) {
     console.error("Error fetching packages:", error);
