@@ -89,7 +89,7 @@ export default function GlobalError({ error, reset }) {
                 Critical Error
               </h1>
               <p className="text-lg text-gray-300 mb-6">
-                We've encountered a critical system error. This is unusual and our team has been automatically notified.
+                We&apos;ve encountered a critical system error. This is unusual and our team has been automatically notified.
               </p>
               <div className="bg-red-900 bg-opacity-50 border border-red-700 rounded-lg p-4 mb-6">
                 <p className="text-sm text-red-200">
@@ -144,7 +144,7 @@ export default function GlobalError({ error, reset }) {
                 Need Immediate Help?
               </h3>
               <p className="text-gray-300 text-sm mb-4">
-                If you're experiencing urgent issues or this error persists, please contact our emergency support.
+                If you&apos;re experiencing urgent issues or this error persists, please contact our emergency support.
               </p>
               <a
                 href="mailto:emergency@changeworksfund.org?subject=Critical System Error&body=I encountered a critical error on the ChangeWorks platform that prevents normal operation."
