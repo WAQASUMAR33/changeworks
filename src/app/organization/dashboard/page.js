@@ -1,5 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { 
   Users, 
   DollarSign, 
@@ -8,48 +9,10 @@ import {
   Activity,
   Target,
   ArrowRight,
-  Plus
+  Plus,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
-
-const stats = [
-    { 
-        title: 'Total Donors', 
-        value: '1,247', 
-        change: '+12.5%',
-        changeType: 'increase',
-        icon: Users,
-        color: 'blue',
-        path: '/organization/dashboard/donors'
-    },
-    { 
-        title: 'Total Donations', 
-        value: '$45,847', 
-        change: '+8.2%',
-        changeType: 'increase',
-        icon: DollarSign,
-        color: 'green',
-        path: '/organization/dashboard/transactions'
-    },
-    { 
-        title: 'GHL Accounts', 
-        value: '3', 
-        change: '+1',
-        changeType: 'increase',
-        icon: Building2,
-        color: 'purple',
-        path: '/organization/dashboard/ghl/manage'
-    },
-    { 
-        title: 'This Month', 
-        value: '$12,156', 
-        change: '+15.2%',
-        changeType: 'increase',
-        icon: TrendingUp,
-        color: 'orange',
-        path: '/organization/dashboard/reports'
-    },
-];
 
 const quickActions = [
     {
@@ -110,6 +73,111 @@ const getColorClasses = (color) => {
 };
 
 export default function OrganizationDashboard() {
+    const [stats, setStats] = useState([]);
+    const [recentActivity, setRecentActivity] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        fetchDashboardData();
+    }, []);
+
+    const fetchDashboardData = async () => {
+        try {
+            setLoading(true);
+            
+            // Get organization ID from localStorage
+            const orgUser = localStorage.getItem('orgUser');
+            if (!orgUser) {
+                setError('Organization not found');
+                return;
+            }
+            
+            const userData = JSON.parse(orgUser);
+            const organizationId = userData.id;
+            
+            const response = await fetch(`/api/organization/dashboard-stats?organizationId=${organizationId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                // Transform API data to match component structure
+                const transformedStats = [
+                    {
+                        title: 'Total Donors',
+                        value: data.stats.totalDonors.value,
+                        change: data.stats.totalDonors.change,
+                        changeType: data.stats.totalDonors.changeType,
+                        icon: Users,
+                        color: 'blue',
+                        path: '/organization/dashboard/donors'
+                    },
+                    {
+                        title: 'Total Donations',
+                        value: data.stats.totalDonations.value,
+                        change: data.stats.totalDonations.change,
+                        changeType: data.stats.totalDonations.changeType,
+                        icon: DollarSign,
+                        color: 'green',
+                        path: '/organization/dashboard/transactions'
+                    },
+                    {
+                        title: 'GHL Accounts',
+                        value: data.stats.ghlAccounts.value,
+                        change: data.stats.ghlAccounts.change,
+                        changeType: data.stats.ghlAccounts.changeType,
+                        icon: Building2,
+                        color: 'purple',
+                        path: '/organization/dashboard/ghl/manage'
+                    },
+                    {
+                        title: 'This Month',
+                        value: data.stats.thisMonth.value,
+                        change: data.stats.thisMonth.change,
+                        changeType: data.stats.thisMonth.changeType,
+                        icon: TrendingUp,
+                        color: 'orange',
+                        path: '/organization/dashboard/reports'
+                    }
+                ];
+                
+                setStats(transformedStats);
+                setRecentActivity(data.recentActivity || []);
+            } else {
+                setError(data.error || 'Failed to load dashboard data');
+            }
+        } catch (err) {
+            console.error('Error fetching dashboard data:', err);
+            setError('Failed to load dashboard data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+                    <p className="text-gray-600">Loading dashboard data...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center py-12">
+                <p className="text-red-600 mb-4">{error}</p>
+                <button
+                    onClick={fetchDashboardData}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -201,40 +269,49 @@ export default function OrganizationDashboard() {
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Activity</h2>
                     <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                        <div className="space-y-4">
-                            <div className="flex items-center space-x-4 p-4 bg-green-50 rounded-xl">
-                                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                                    <DollarSign className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-medium text-gray-900">New donation received</p>
-                                    <p className="text-sm text-gray-600">John Smith donated $500 to your cause</p>
-                                </div>
-                                <span className="text-sm text-gray-500">2 hours ago</span>
+                        {recentActivity.length > 0 ? (
+                            <div className="space-y-4">
+                                {recentActivity.map((activity, index) => {
+                                    const getActivityIcon = (type) => {
+                                        switch (type) {
+                                            case 'donation': return DollarSign;
+                                            case 'ghl': return Building2;
+                                            default: return Users;
+                                        }
+                                    };
+                                    
+                                    const getActivityColor = (color) => {
+                                        switch (color) {
+                                            case 'green': return { bg: 'bg-green-50', icon: 'bg-green-500' };
+                                            case 'blue': return { bg: 'bg-blue-50', icon: 'bg-blue-500' };
+                                            default: return { bg: 'bg-purple-50', icon: 'bg-purple-500' };
+                                        }
+                                    };
+                                    
+                                    const ActivityIcon = getActivityIcon(activity.type);
+                                    const colors = getActivityColor(activity.color);
+                                    
+                                    return (
+                                        <div key={activity.id || index} className={`flex items-center space-x-4 p-4 ${colors.bg} rounded-xl`}>
+                                            <div className={`w-10 h-10 ${colors.icon} rounded-full flex items-center justify-center`}>
+                                                <ActivityIcon className="w-5 h-5 text-white" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-medium text-gray-900">{activity.title}</p>
+                                                <p className="text-sm text-gray-600">{activity.description}</p>
+                                            </div>
+                                            <span className="text-sm text-gray-500">{activity.time}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
-                            
-                            <div className="flex items-center space-x-4 p-4 bg-blue-50 rounded-xl">
-                                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                                    <Building2 className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-medium text-gray-900">GHL account created</p>
-                                    <p className="text-sm text-gray-600">New GoHighLevel sub-account &quot;Education Fund&quot; created</p>
-                                </div>
-                                <span className="text-sm text-gray-500">1 day ago</span>
+                        ) : (
+                            <div className="text-center py-8">
+                                <Activity className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                                <p className="text-gray-500 mb-2">No recent activity</p>
+                                <p className="text-sm text-gray-400">Activity will appear here as you use the platform</p>
                             </div>
-                            
-                            <div className="flex items-center space-x-4 p-4 bg-purple-50 rounded-xl">
-                                <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
-                                    <Users className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-medium text-gray-900">New donor registered</p>
-                                    <p className="text-sm text-gray-600">Sarah Johnson joined your organization</p>
-                                </div>
-                                <span className="text-sm text-gray-500">3 days ago</span>
-                            </div>
-                        </div>
+                        )}
                         
                         <div className="mt-6 text-center">
                             <Link href="/organization/dashboard/transactions">

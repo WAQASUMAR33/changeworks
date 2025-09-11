@@ -1,5 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { 
   Users, 
   DollarSign, 
@@ -9,48 +10,10 @@ import {
   TrendingDown,
   Activity,
   Target,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
-
-const stats = [
-    { 
-        title: 'Total Donors', 
-        value: '1,247', 
-        change: '+12.5%',
-        changeType: 'increase',
-        icon: Users,
-        color: 'blue',
-        path: '/admin/donor-accounts'
-    },
-    { 
-        title: 'Today Donations', 
-        value: '$12,847', 
-        change: '+8.2%',
-        changeType: 'increase',
-        icon: DollarSign,
-        color: 'green',
-        path: '/admin/transactions_page'
-    },
-    { 
-        title: 'Organizations', 
-        value: '89', 
-        change: '+3.1%',
-        changeType: 'increase',
-        icon: Building2,
-        color: 'purple',
-        path: '/admin/organization'
-    },
-    { 
-        title: 'Fund Transfers', 
-        value: '156', 
-        change: '+5.2%',
-        changeType: 'increase',
-        icon: Gift,
-        color: 'orange',
-        path: '/admin/fund-transfer'
-    },
-];
 
 const quickActions = [
     {
@@ -107,6 +70,100 @@ const getColorClasses = (color) => {
 };
 
 export default function OverviewCards() {
+    const [stats, setStats] = useState([]);
+    const [recentActivity, setRecentActivity] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        fetchDashboardData();
+    }, []);
+
+    const fetchDashboardData = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch('/api/admin/dashboard-stats');
+            const data = await response.json();
+            
+            if (data.success) {
+                // Transform API data to match component structure
+                const transformedStats = [
+                    {
+                        title: 'Total Donors',
+                        value: data.stats.totalDonors.value,
+                        change: data.stats.totalDonors.change,
+                        changeType: data.stats.totalDonors.changeType,
+                        icon: Users,
+                        color: 'blue',
+                        path: '/admin/donor-accounts'
+                    },
+                    {
+                        title: 'Today Donations',
+                        value: data.stats.todayDonations.value,
+                        change: data.stats.todayDonations.change,
+                        changeType: data.stats.todayDonations.changeType,
+                        icon: DollarSign,
+                        color: 'green',
+                        path: '/admin/transactions_page'
+                    },
+                    {
+                        title: 'Organizations',
+                        value: data.stats.totalOrganizations.value,
+                        change: data.stats.totalOrganizations.change,
+                        changeType: data.stats.totalOrganizations.changeType,
+                        icon: Building2,
+                        color: 'purple',
+                        path: '/admin/organization'
+                    },
+                    {
+                        title: 'Fund Transfers',
+                        value: data.stats.fundTransfers.value,
+                        change: data.stats.fundTransfers.change,
+                        changeType: data.stats.fundTransfers.changeType,
+                        icon: Gift,
+                        color: 'orange',
+                        path: '/admin/fund-transfer'
+                    }
+                ];
+                
+                setStats(transformedStats);
+                setRecentActivity(data.recentActivity || []);
+            } else {
+                setError('Failed to load dashboard data');
+            }
+        } catch (err) {
+            console.error('Error fetching dashboard data:', err);
+            setError('Failed to load dashboard data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+                    <p className="text-gray-600">Loading dashboard data...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center py-12">
+                <p className="text-red-600 mb-4">{error}</p>
+                <button
+                    onClick={fetchDashboardData}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-8">
             {/* Header Section */}
@@ -201,32 +258,28 @@ export default function OverviewCards() {
                     <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
                 </div>
                 <div className="p-6">
-                    <div className="space-y-4">
-                        <div className="flex items-center space-x-4">
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            <div className="flex-1">
-                                <p className="text-sm font-medium text-gray-900">New donation received</p>
-                                <p className="text-sm text-gray-600">Josephine Thompson donated $500 to Education Fund</p>
-                            </div>
-                            <span className="text-xs text-gray-500">2 min ago</span>
+                    {recentActivity.length > 0 ? (
+                        <div className="space-y-4">
+                            {recentActivity.map((activity, index) => (
+                                <div key={activity.id || index} className="flex items-center space-x-4">
+                                    <div className={`w-2 h-2 rounded-full ${
+                                        activity.color === 'green' ? 'bg-green-500' : 
+                                        activity.color === 'blue' ? 'bg-blue-500' : 'bg-gray-500'
+                                    }`}></div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                                        <p className="text-sm text-gray-600">{activity.description}</p>
+                                    </div>
+                                    <span className="text-xs text-gray-500">{activity.time}</span>
+                                </div>
+                            ))}
                         </div>
-                        <div className="flex items-center space-x-4">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            <div className="flex-1">
-                                <p className="text-sm font-medium text-gray-900">Organization update</p>
-                                <p className="text-sm text-gray-600">Donoghue Susan updated their profile information</p>
-                            </div>
-                            <span className="text-xs text-gray-500">1 hour ago</span>
+                    ) : (
+                        <div className="text-center py-8">
+                            <Activity className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                            <p className="text-gray-500">No recent activity</p>
                         </div>
-                        <div className="flex items-center space-x-4">
-                            <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                            <div className="flex-1">
-                                <p className="text-sm font-medium text-gray-900">System maintenance</p>
-                                <p className="text-sm text-gray-600">Scheduled maintenance completed successfully</p>
-                            </div>
-                            <span className="text-xs text-gray-500">3 hours ago</span>
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>
