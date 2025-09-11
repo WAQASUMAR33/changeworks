@@ -10,17 +10,14 @@ export default function OrganizationSignupPage() {
   const [form, setForm] = useState({
     name: '',
     email: '',
-    password: '',
-    confirmPassword: '',
     phone: '',
-    company: '',
     address: '',
     city: '',
     state: '',
     country: 'GB', // Default to GB for UK
     postalCode: '',
     website: '',
-    // Organization Login Details
+    // Organization Login Details (single password set)
     orgPassword: '',
     confirmOrgPassword: '',
     // GHL Business Details (automatic - no checkbox needed)
@@ -36,14 +33,12 @@ export default function OrganizationSignupPage() {
   });
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showOrgPassword, setShowOrgPassword] = useState(false);
   const [showConfirmOrgPassword, setShowConfirmOrgPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 4; // Added GHL integration step
+  const totalSteps = 3; // Reduced steps: Basic Info, Contact/Address, Organization Login
 
   // Clear errors when component mounts
   useEffect(() => {
@@ -79,25 +74,11 @@ export default function OrganizationSignupPage() {
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
         newErrors.email = 'Please enter a valid email address';
       }
-      if (!form.password) {
-        newErrors.password = 'Password is required';
-      } else if (form.password.length < 6) {
-        newErrors.password = 'Password must be at least 6 characters long';
-      }
-      if (!form.confirmPassword) {
-        newErrors.confirmPassword = 'Please confirm your password';
-      } else if (form.password !== form.confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match';
-      }
-    } else if (step === 2) {
-      // Contact Information
       if (!form.phone.trim()) {
         newErrors.phone = 'Phone number is required';
       }
-      if (!form.company.trim()) {
-        newErrors.company = 'Company name is required';
-      }
-    } else if (step === 3) {
+      // Company name is now optional - no validation needed
+    } else if (step === 2) {
       // Address Information
       if (!form.address.trim()) {
         newErrors.address = 'Address is required';
@@ -111,7 +92,7 @@ export default function OrganizationSignupPage() {
       if (!form.postalCode.trim()) {
         newErrors.postalCode = 'Postal code is required';
       }
-    } else if (step === 4) {
+    } else if (step === 3) {
       // Organization Login Details
       if (!form.orgPassword) {
         newErrors.orgPassword = 'Organization password is required';
@@ -282,102 +263,6 @@ export default function OrganizationSignupPage() {
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Password *
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Create a password"
-                  value={form.password}
-                  onChange={handleChange}
-                  className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.password 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
-                  disabled={isSubmitting}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                  disabled={isSubmitting}
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-              <AnimatePresence>
-                {errors.password && (
-                  <motion.p 
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
-                  >
-                    <AlertCircle className="w-3 h-3" />
-                    <span>{errors.password}</span>
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Confirm Password *
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  name="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="Confirm your password"
-                  value={form.confirmPassword}
-                  onChange={handleChange}
-                  className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.confirmPassword 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
-                  disabled={isSubmitting}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                  disabled={isSubmitting}
-                >
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-              <AnimatePresence>
-                {errors.confirmPassword && (
-                  <motion.p 
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
-                  >
-                    <AlertCircle className="w-3 h-3" />
-                    <span>{errors.confirmPassword}</span>
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          </motion.div>
-        );
-
-      case 2:
-        return (
-          <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-            <motion.div variants={itemVariants} className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Contact Information</h2>
-              <p className="text-gray-600">Tell us how to reach you</p>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Phone Number *
               </label>
               <div className="relative">
@@ -411,40 +296,6 @@ export default function OrganizationSignupPage() {
               </AnimatePresence>
             </motion.div>
 
-            <motion.div variants={itemVariants}>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Company Name *
-              </label>
-              <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  name="company"
-                  type="text"
-                  placeholder="Enter company name"
-                  value={form.company}
-                  onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.company 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
-                  disabled={isSubmitting}
-                />
-              </div>
-              <AnimatePresence>
-                {errors.company && (
-                  <motion.p 
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
-                  >
-                    <AlertCircle className="w-3 h-3" />
-                    <span>{errors.company}</span>
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </motion.div>
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -466,7 +317,7 @@ export default function OrganizationSignupPage() {
           </motion.div>
         );
 
-      case 3:
+      case 2:
         return (
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
             <motion.div variants={itemVariants} className="text-center mb-8">
@@ -629,7 +480,7 @@ export default function OrganizationSignupPage() {
           </motion.div>
         );
 
-      case 4:
+      case 3:
         return (
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
             <motion.div variants={itemVariants} className="text-center mb-8">

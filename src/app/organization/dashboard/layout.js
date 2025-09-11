@@ -9,9 +9,16 @@ export default function OrganizationLayout({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if organization is logged in
-    const token = localStorage.getItem('orgToken');
-    const user = localStorage.getItem('orgUser');
+    // Check if organization is logged in with session-based storage
+    const token = sessionStorage.getItem('orgToken');
+    const user = sessionStorage.getItem('orgUser');
+    
+    // Also check if there's any old localStorage data and clear it
+    if (localStorage.getItem('orgToken') || localStorage.getItem('orgUser')) {
+      localStorage.removeItem('orgToken');
+      localStorage.removeItem('orgUser');
+      localStorage.removeItem('orgRememberMe');
+    }
     
     if (!token || !user) {
       router.push('/organization/login');

@@ -12,7 +12,6 @@ function OrganizationLoginContent() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -97,13 +96,14 @@ function OrganizationLoginContent() {
         return;
       }
 
-      // Store user data
-      localStorage.setItem('orgToken', data.token);
-      localStorage.setItem('orgUser', JSON.stringify(data.organization));
+      // Store user data in sessionStorage (expires when browser closes)
+      sessionStorage.setItem('orgToken', data.token);
+      sessionStorage.setItem('orgUser', JSON.stringify(data.organization));
       
-      if (rememberMe) {
-        localStorage.setItem('orgRememberMe', 'true');
-      }
+      // Clear any old localStorage data
+      localStorage.removeItem('orgToken');
+      localStorage.removeItem('orgUser');
+      localStorage.removeItem('orgRememberMe');
 
       // Redirect to organization dashboard
       router.push('/organization/dashboard');
@@ -330,7 +330,7 @@ function OrganizationLoginContent() {
                       placeholder="Enter your email"
                       value={form.email}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                      className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
                         errors.email 
                           ? 'border-red-300 bg-red-50' 
                           : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -365,7 +365,7 @@ function OrganizationLoginContent() {
                       placeholder="Enter your password"
                       value={form.password}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                      className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
                         errors.password 
                           ? 'border-red-300 bg-red-50' 
                           : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -396,17 +396,7 @@ function OrganizationLoginContent() {
                   </AnimatePresence>
                 </motion.div>
 
-                <motion.div variants={itemVariants} className="flex items-center justify-between">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      disabled={isSubmitting}
-                    />
-                    <span className="text-sm text-gray-600">Remember me</span>
-                  </label>
+                <motion.div variants={itemVariants} className="flex justify-end">
                   <button 
                     type="button"
                     onClick={() => setShowForgotPassword(true)}
@@ -533,7 +523,7 @@ function OrganizationLoginContent() {
                       placeholder="Enter your email"
                       value={forgotPasswordEmail}
                       onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
                       disabled={forgotPasswordLoading}
                     />
                   </div>

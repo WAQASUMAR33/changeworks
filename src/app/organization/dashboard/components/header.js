@@ -23,7 +23,7 @@ export default function OrgHeader() {
     const profileRef = useRef(null);
 
     useEffect(() => {
-        const org = JSON.parse(localStorage.getItem('orgUser'));
+        const org = JSON.parse(sessionStorage.getItem('orgUser'));
         if (org) {
             setOrgName(org.name || 'Organization');
             setOrgEmail(org.email || 'org@changeworks.com');
@@ -44,8 +44,16 @@ export default function OrgHeader() {
     }, []);
 
     const handleLogout = () => {
+        // Clear session storage
+        sessionStorage.removeItem('orgToken');
+        sessionStorage.removeItem('orgUser');
+        
+        // Also clear any old localStorage data
         localStorage.removeItem('orgToken');
         localStorage.removeItem('orgUser');
+        localStorage.removeItem('orgRememberMe');
+        
+        // Redirect to login
         window.location.href = '/organization/login';
     };
 

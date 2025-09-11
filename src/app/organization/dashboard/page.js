@@ -2,41 +2,15 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { 
-  Users, 
   DollarSign, 
   Building2, 
   TrendingUp, 
   Activity,
-  Target,
   ArrowRight,
-  Plus,
   Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 
-const quickActions = [
-    {
-        title: 'Create GHL Account',
-        description: 'Set up a new GoHighLevel sub-account',
-        icon: Plus,
-        color: 'blue',
-        path: '/organization/dashboard/ghl/create'
-    },
-    {
-        title: 'Recent Donations',
-        description: 'View latest donor contributions',
-        icon: Activity,
-        color: 'green',
-        path: '/organization/dashboard/transactions'
-    },
-    {
-        title: 'Analytics',
-        description: 'View detailed performance reports',
-        icon: Target,
-        color: 'purple',
-        path: '/organization/dashboard/reports'
-    },
-];
 
 const getColorClasses = (color) => {
     const colors = {
@@ -86,8 +60,8 @@ export default function OrganizationDashboard() {
         try {
             setLoading(true);
             
-            // Get organization ID from localStorage
-            const orgUser = localStorage.getItem('orgUser');
+            // Get organization ID from sessionStorage
+            const orgUser = sessionStorage.getItem('orgUser');
             if (!orgUser) {
                 setError('Organization not found');
                 return;
@@ -103,15 +77,6 @@ export default function OrganizationDashboard() {
                 // Transform API data to match component structure
                 const transformedStats = [
                     {
-                        title: 'Total Donors',
-                        value: data.stats.totalDonors.value,
-                        change: data.stats.totalDonors.change,
-                        changeType: data.stats.totalDonors.changeType,
-                        icon: Users,
-                        color: 'blue',
-                        path: '/organization/dashboard/donors'
-                    },
-                    {
                         title: 'Total Donations',
                         value: data.stats.totalDonations.value,
                         change: data.stats.totalDonations.change,
@@ -119,15 +84,6 @@ export default function OrganizationDashboard() {
                         icon: DollarSign,
                         color: 'green',
                         path: '/organization/dashboard/transactions'
-                    },
-                    {
-                        title: 'GHL Accounts',
-                        value: data.stats.ghlAccounts.value,
-                        change: data.stats.ghlAccounts.change,
-                        changeType: data.stats.ghlAccounts.changeType,
-                        icon: Building2,
-                        color: 'purple',
-                        path: '/organization/dashboard/ghl/manage'
                     },
                     {
                         title: 'This Month',
@@ -197,7 +153,7 @@ export default function OrganizationDashboard() {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
                     {stats.map((stat, index) => {
                         const colors = getColorClasses(stat.color);
                         return (
@@ -231,39 +187,6 @@ export default function OrganizationDashboard() {
                     })}
                 </div>
 
-                {/* Quick Actions */}
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {quickActions.map((action, index) => {
-                            const colors = getColorClasses(action.color);
-                            return (
-                                <Link key={action.title} href={action.path}>
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.4 + index * 0.1, duration: 0.5 }}
-                                        className={`${colors.bg} ${colors.border} border-2 rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg group`}
-                                    >
-                                        <div className="flex items-center space-x-4 mb-4">
-                                            <div className={`p-3 rounded-xl bg-white ${colors.icon}`}>
-                                                <action.icon className="w-6 h-6" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-gray-900 text-lg">{action.title}</h3>
-                                                <p className="text-gray-600 text-sm">{action.description}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center text-sm text-gray-500 group-hover:text-gray-700 transition-colors duration-200">
-                                            <span>Get started</span>
-                                            <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-200" />
-                                        </div>
-                                    </motion.div>
-                                </Link>
-                            );
-                        })}
-                    </div>
-                </div>
 
                 {/* Recent Activity */}
                 <div>

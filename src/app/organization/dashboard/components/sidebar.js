@@ -48,8 +48,15 @@ const OrgSidebar = () => {
   };
 
   const handleLogout = () => {
+    // Clear session storage
+    sessionStorage.removeItem('orgToken');
+    sessionStorage.removeItem('orgUser');
+    
+    // Also clear any old localStorage data
     localStorage.removeItem('orgToken');
     localStorage.removeItem('orgUser');
+    localStorage.removeItem('orgRememberMe');
+    
     router.push('/organization/login');
   };
 
@@ -66,9 +73,9 @@ const OrgSidebar = () => {
       path: '/organization/dashboard',
     },
     {
-      name: 'Transfers',
+      name: 'Fund Transfers',
       icon: ArrowRightLeft,
-      path: '/organization/dashboard/add-transfers',
+      path: '/organization/dashboard/fund-transfers',
     },
     {
       name: 'Transactions',

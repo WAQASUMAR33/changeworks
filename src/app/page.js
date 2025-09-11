@@ -2,29 +2,17 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { clearAllAuthData } from './lib/auth-utils';
 
 export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if organization is already logged in first
-    const orgToken = localStorage.getItem('orgToken');
-    const orgUser = localStorage.getItem('orgUser');
+    // Clear all authentication data on page load to force fresh login
+    clearAllAuthData();
     
-    // Check if admin user is logged in
-    const adminToken = localStorage.getItem('token');
-    const adminUser = localStorage.getItem('user');
-
-    if (orgToken && orgUser) {
-      // Organization is logged in, redirect to organization dashboard
-      router.push('/organization/dashboard');
-    } else if (adminToken && adminUser) {
-      // Admin user is logged in, redirect to admin dashboard
-      router.push('/admin');
-    } else {
-      // No one is logged in, redirect to organization login page
-      router.push('/organization/login');
-    }
+    // Always redirect to organization login page (no auto-login)
+    router.push('/organization/login');
   }, [router]);
 
   // Show loading while redirecting

@@ -8,7 +8,6 @@ import GHLClient from "../../lib/ghl-client";
 const organizationSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email").max(100),
-  password: z.string().min(6, "Password must be at least 6 characters"),
   phone: z.string().optional(),
   company: z.string().optional(),
   address: z.string().optional(),
@@ -19,7 +18,7 @@ const organizationSchema = z.object({
   postalCode: z.string().optional(),
   ghlId: z.string().optional(),
   imageUrl: z.string().optional(),
-  // Organization Login Details
+  // Organization Login Details (single password)
   orgPassword: z.string().min(6, "Organization password must be at least 6 characters"),
   confirmOrgPassword: z.string(),
 });
@@ -44,7 +43,6 @@ export async function POST(req) {
       }, { status: 400 });
     }
 
-    const hashedPassword = await hash(input.password, 10);
     const hashedOrgPassword = await hash(input.orgPassword, 10);
 
     // Create organization first
@@ -52,9 +50,9 @@ export async function POST(req) {
       data: {
         name: input.name,
         email: input.email,
-        password: hashedPassword,
+        password: hashedOrgPassword, // Use orgPassword as main password
         phone: input.phone,
-        company: input.company,
+        company: input.name, // Use organization name as company name
         address: input.address,
         website: input.website,
         city: input.city,
@@ -63,7 +61,7 @@ export async function POST(req) {
         postalCode: input.postalCode,
         ghlId: input.ghlId,
         imageUrl: input.imageUrl,
-        orgPassword: hashedOrgPassword, // Store organization password
+        orgPassword: hashedOrgPassword, // Store same password in orgPassword field
       },
     });
 
@@ -75,7 +73,7 @@ export async function POST(req) {
       const ghlClient = new GHLClient();
       
       const ghlData = {
-        businessName: input.company || input.name, // Use company name or organization name
+        businessName: input.name, // Use organization name as business name
         firstName: input.name.split(' ')[0] || input.name,
         lastName: input.name.split(' ').slice(1).join(' ') || '',
         email: input.email,
@@ -101,7 +99,7 @@ export async function POST(req) {
           data: {
             organization_id: organization.id,
             ghl_location_id: ghlLocationId,
-            business_name: input.company || input.name,
+            business_name: input.name, // Use organization name as business name
             email: input.email,
             phone: input.phone,
             address: input.address,

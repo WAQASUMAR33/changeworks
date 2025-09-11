@@ -253,7 +253,7 @@ export default function CreateGHLAccountPage() {
                       placeholder="Enter business name"
                       value={form.businessName}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                      className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
                         errors.businessName 
                           ? 'border-red-300 bg-red-50' 
                           : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -288,7 +288,7 @@ export default function CreateGHLAccountPage() {
                       placeholder="https://your-website.com"
                       value={form.website}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
                       disabled={loading}
                     />
                   </div>
@@ -313,7 +313,7 @@ export default function CreateGHLAccountPage() {
                     placeholder="Enter first name"
                     value={form.firstName}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
                       errors.firstName 
                         ? 'border-red-300 bg-red-50' 
                         : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -345,7 +345,7 @@ export default function CreateGHLAccountPage() {
                     placeholder="Enter last name"
                     value={form.lastName}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
                       errors.lastName 
                         ? 'border-red-300 bg-red-50' 
                         : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -379,7 +379,7 @@ export default function CreateGHLAccountPage() {
                       placeholder="Enter email address"
                       value={form.email}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                      className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
                         errors.email 
                           ? 'border-red-300 bg-red-50' 
                           : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -414,7 +414,7 @@ export default function CreateGHLAccountPage() {
                       placeholder="Enter phone number"
                       value={form.phone}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                      className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
                         errors.phone 
                           ? 'border-red-300 bg-red-50' 
                           : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -456,7 +456,7 @@ export default function CreateGHLAccountPage() {
                     placeholder="Enter street address"
                     value={form.address}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
                       errors.address 
                         ? 'border-red-300 bg-red-50' 
                         : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -489,7 +489,7 @@ export default function CreateGHLAccountPage() {
                       placeholder="Enter city"
                       value={form.city}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                      className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
                         errors.city 
                           ? 'border-red-300 bg-red-50' 
                           : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -521,7 +521,7 @@ export default function CreateGHLAccountPage() {
                       placeholder="Enter state"
                       value={form.state}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                      className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
                         errors.state 
                           ? 'border-red-300 bg-red-50' 
                           : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -553,7 +553,7 @@ export default function CreateGHLAccountPage() {
                       placeholder="Enter postal code"
                       value={form.postalCode}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                      className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
                         errors.postalCode 
                           ? 'border-red-300 bg-red-50' 
                           : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -585,7 +585,7 @@ export default function CreateGHLAccountPage() {
                       name="country"
                       value={form.country}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
                       disabled={loading}
                     >
                       <option value="US">United States</option>
@@ -603,7 +603,7 @@ export default function CreateGHLAccountPage() {
                       name="timezone"
                       value={form.timezone}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
                       disabled={loading}
                     >
                       <option value="America/New_York">Eastern Time (ET)</option>
