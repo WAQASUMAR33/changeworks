@@ -1,13 +1,36 @@
 import { NextResponse } from "next/server";
 import Stripe from 'stripe';
 
-// Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16',
-});
+// Initialize Stripe with proper error handling
+let stripe;
+try {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.warn('STRIPE_SECRET_KEY environment variable is not set');
+  } else {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2023-10-16',
+    });
+  }
+} catch (error) {
+  console.error('Failed to initialize Stripe:', error);
+}
 
 export async function GET() {
   try {
+    // Check if Stripe is properly initialized
+    if (!stripe) {
+      return NextResponse.json({
+        success: false,
+        error: "Stripe integration test failed",
+        details: "STRIPE_SECRET_KEY environment variable is not set",
+        suggestions: [
+          "Set STRIPE_SECRET_KEY in your environment variables",
+          "Verify that the Stripe secret key is valid",
+          "Check your deployment environment configuration"
+        ]
+      }, { status: 503 });
+    }
+
     // Test Stripe connection by retrieving account information
     const account = await stripe.accounts.retrieve();
     
@@ -43,6 +66,15 @@ export async function GET() {
 
 export async function POST() {
   try {
+    // Check if Stripe is properly initialized
+    if (!stripe) {
+      return NextResponse.json({
+        success: false,
+        error: "Payment service not available",
+        details: "Stripe configuration is missing"
+      }, { status: 503 });
+    }
+
     // Create a test payment intent with minimal amount
     const testPaymentIntent = await stripe.paymentIntents.create({
       amount: 100, // $1.00 in cents

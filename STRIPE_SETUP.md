@@ -4,6 +4,7 @@ This document explains how to set up Stripe payments for the ChangeWorks applica
 
 ## Environment Variables Required
 
+### For Local Development
 Add these environment variables to your `.env.local` file:
 
 ```env
@@ -15,6 +16,25 @@ STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
 # Application Base URL
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
 ```
+
+### For Production/Deployment
+Make sure to set these environment variables in your deployment platform:
+
+**Vercel:**
+- Go to your project settings
+- Navigate to "Environment Variables"
+- Add each variable with your production Stripe keys
+
+**Netlify:**
+- Go to Site settings > Environment variables
+- Add each variable
+
+**Other platforms:**
+- Set environment variables through your platform's dashboard or CLI
+
+⚠️ **Important:** Use your **live** Stripe keys for production:
+- `STRIPE_SECRET_KEY=sk_live_...`
+- `STRIPE_PUBLISHABLE_KEY=pk_live_...`
 
 ## API Endpoints Created
 

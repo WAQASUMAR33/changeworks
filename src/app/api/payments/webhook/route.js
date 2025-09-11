@@ -2,15 +2,44 @@ import { NextResponse } from "next/server";
 import Stripe from 'stripe';
 import { prisma } from "../../../lib/prisma";
 
-// Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16',
-});
+// Initialize Stripe with proper error handling
+let stripe;
+let endpointSecret;
 
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+try {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.warn('STRIPE_SECRET_KEY environment variable is not set');
+  } else {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2023-10-16',
+    });
+  }
+  
+  endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!endpointSecret) {
+    console.warn('STRIPE_WEBHOOK_SECRET environment variable is not set');
+  }
+} catch (error) {
+  console.error('Failed to initialize Stripe:', error);
+}
 
 export async function POST(request) {
   try {
+    // Check if Stripe is properly initialized
+    if (!stripe) {
+      console.error('Stripe not initialized - webhook cannot be processed');
+      return NextResponse.json({
+        error: 'Payment service not available'
+      }, { status: 503 });
+    }
+
+    if (!endpointSecret) {
+      console.error('Webhook secret not configured');
+      return NextResponse.json({
+        error: 'Webhook configuration missing'
+      }, { status: 503 });
+    }
+
     const body = await request.text();
     const sig = request.headers.get('stripe-signature');
 

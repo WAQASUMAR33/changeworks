@@ -3,10 +3,19 @@ import { z } from "zod";
 import Stripe from 'stripe';
 import { prisma } from "../../../lib/prisma";
 
-// Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16',
-});
+// Initialize Stripe with proper error handling
+let stripe;
+try {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.warn('STRIPE_SECRET_KEY environment variable is not set');
+  } else {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2023-10-16',
+    });
+  }
+} catch (error) {
+  console.error('Failed to initialize Stripe:', error);
+}
 
 // Validation schema for saving payment record
 const savePaymentSchema = z.object({
@@ -21,6 +30,15 @@ const savePaymentSchema = z.object({
 
 export async function POST(request) {
   try {
+    // Check if Stripe is properly initialized
+    if (!stripe) {
+      return NextResponse.json({
+        success: false,
+        error: "Payment service not available",
+        details: "Stripe configuration is missing"
+      }, { status: 503 });
+    }
+
     const body = await request.json();
     const { payment_intent_id, amount, currency, donor_id, organization_id, status, payment_method } = savePaymentSchema.parse(body);
 
