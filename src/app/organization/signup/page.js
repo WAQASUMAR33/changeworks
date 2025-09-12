@@ -14,7 +14,7 @@ export default function OrganizationSignupPage() {
     address: '',
     city: '',
     state: '',
-    country: 'GB', // Default to GB for UK
+    country: 'US', // Default to US
     postalCode: '',
     website: '',
     // Organization Login Details (single password set)
@@ -26,11 +26,12 @@ export default function OrganizationSignupPage() {
     businessAddress: '',
     businessCity: '',
     businessState: '',
-    businessCountry: 'GB',
+    businessCountry: 'US',
     businessPostalCode: '',
     businessWebsite: '',
-    businessTimezone: 'Europe/London'
+    businessTimezone: 'America/New_York'
   });
+  const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showOrgPassword, setShowOrgPassword] = useState(false);
@@ -40,11 +41,40 @@ export default function OrganizationSignupPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3; // Reduced steps: Basic Info, Contact/Address, Organization Login
 
-  // Clear errors when component mounts
+  // Clear errors when component mounts and fetch countries
   useEffect(() => {
     setErrors({});
     setErrorMsg('');
+    fetchCountries();
   }, []);
+
+  const fetchCountries = async () => {
+    try {
+      const response = await fetch('/api/countries?format=grouped');
+      const data = await response.json();
+      
+      if (data.success) {
+        // Combine popular countries first, then others
+        const allCountries = [
+          ...data.countries.popular,
+          { code: 'separator', name: '──────────────' }, // Visual separator
+          ...data.countries.others
+        ];
+        setCountries(allCountries);
+      }
+    } catch (error) {
+      console.error('Error fetching countries:', error);
+      // Fallback to basic countries if API fails
+      setCountries([
+        { code: "US", name: "United States", flag: "🇺🇸" },
+        { code: "GB", name: "United Kingdom", flag: "🇬🇧" },
+        { code: "CA", name: "Canada", flag: "🇨🇦" },
+        { code: "AU", name: "Australia", flag: "🇦🇺" },
+        { code: "DE", name: "Germany", flag: "🇩🇪" },
+        { code: "FR", name: "France", flag: "🇫🇷" }
+      ]);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -438,10 +468,17 @@ export default function OrganizationSignupPage() {
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
                   disabled={isSubmitting}
                 >
-                  <option value="US">United States</option>
-                  <option value="CA">Canada</option>
-                  <option value="GB">United Kingdom</option>
-                  <option value="AU">Australia</option>
+                  {countries.map((country) => (
+                    country.code === 'separator' ? (
+                      <option key="separator" disabled className="text-gray-400">
+                        {country.name}
+                      </option>
+                    ) : (
+                      <option key={country.code} value={country.code}>
+                        {country.flag} {country.name}
+                      </option>
+                    )
+                  ))}
                 </select>
               </motion.div>
 

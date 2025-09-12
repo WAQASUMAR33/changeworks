@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Building2, 
@@ -32,10 +32,35 @@ export default function CreateGHLAccountPage() {
     website: '',
     timezone: 'Europe/London' // Correct timezone for UK
   });
+  const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    fetchCountries();
+  }, []);
+
+  const fetchCountries = async () => {
+    try {
+      const response = await fetch('/api/countries?popular=true');
+      const data = await response.json();
+      
+      if (data.success) {
+        setCountries(data.countries);
+      }
+    } catch (error) {
+      console.error('Error fetching countries:', error);
+      // Fallback to basic countries
+      setCountries([
+        { code: "US", name: "United States", flag: "🇺🇸" },
+        { code: "GB", name: "United Kingdom", flag: "🇬🇧" },
+        { code: "CA", name: "Canada", flag: "🇨🇦" },
+        { code: "AU", name: "Australia", flag: "🇦🇺" }
+      ]);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -588,10 +613,11 @@ export default function CreateGHLAccountPage() {
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
                       disabled={loading}
                     >
-                      <option value="US">United States</option>
-                      <option value="CA">Canada</option>
-                      <option value="GB">United Kingdom</option>
-                      <option value="AU">Australia</option>
+                      {countries.map((country) => (
+                        <option key={country.code} value={country.code}>
+                          {country.flag} {country.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
