@@ -65,28 +65,61 @@ export async function POST(request) {
       },
     });
 
-    // Send email
-    const transport = nodemailer.createTransport({
-      host: process.env.EMAIL_SERVER_HOST,
-      port: Number(process.env.EMAIL_SERVER_PORT),
-      auth: {
-        user: process.env.EMAIL_SERVER_USER,
-        pass: process.env.EMAIL_SERVER_PASSWORD,
-      },
-    });
+    // Try to send email (but don't fail if email service is down)
+    let emailSent = false;
+    let emailError = null;
 
-    const verificationUrl = `https://changeworks-seven.vercel.app/api/verify-donor?token=${token}`;
+    try {
+      // Check if email server is configured
+      if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD) {
+        const transport = nodemailer.createTransport({
+          host: process.env.EMAIL_SERVER_HOST,
+          port: Number(process.env.EMAIL_SERVER_PORT),
+          auth: {
+            user: process.env.EMAIL_SERVER_USER,
+            pass: process.env.EMAIL_SERVER_PASSWORD,
+          },
+        });
 
-    await transport.sendMail({
-      to: email,
-      from: process.env.EMAIL_FROM,
-      subject: "Verify Your Donor Account",
-      text: `Please verify your email by clicking: ${verificationUrl}`,
-      html: `<p>Please verify your email by clicking: <a href="${verificationUrl}">${verificationUrl}</a></p>`,
-    });
+        const verificationUrl = `https://changeworks-seven.vercel.app/api/verify-donor?token=${token}`;
+
+        await transport.sendMail({
+          to: email,
+          from: process.env.EMAIL_FROM,
+          subject: "Verify Your Donor Account",
+          text: `Please verify your email by clicking: ${verificationUrl}`,
+          html: `<p>Please verify your email by clicking: <a href="${verificationUrl}">${verificationUrl}</a></p>`,
+        });
+
+        emailSent = true;
+        console.log('✅ Verification email sent successfully');
+      } else {
+        console.log('⚠️ Email server not configured, skipping email verification');
+      }
+    } catch (emailErr) {
+      emailError = emailErr.message;
+      console.error('❌ Email sending failed:', emailErr.message);
+      // Don't throw error - continue with success response
+    }
 
     return NextResponse.json(
-      { message: "Donor registered. Please check your email to verify your account.", donor },
+      { 
+        message: emailSent 
+          ? "Donor registered. Please check your email to verify your account." 
+          : "Donor registered successfully. Email verification skipped (email service not configured).",
+        donor: {
+          id: donor.id,
+          name: donor.name,
+          email: donor.email,
+          organization: donor.organization,
+          status: donor.status
+        },
+        email_status: {
+          sent: emailSent,
+          error: emailError,
+          verification_token: emailSent ? undefined : token // Include token if email failed
+        }
+      },
       { status: 201 }
     );
   } catch (error) {
