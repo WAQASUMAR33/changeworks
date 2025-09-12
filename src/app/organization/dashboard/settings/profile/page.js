@@ -51,6 +51,7 @@ const ProfilePage = () => {
     confirmPassword: '',
   });
 
+  // Password validation errors
   const [passwordErrors, setPasswordErrors] = useState({});
 
   useEffect(() => {
@@ -60,7 +61,7 @@ const ProfilePage = () => {
   const fetchProfileData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('orgToken');
+      const token = sessionStorage.getItem('orgToken');
       if (!token) {
         setError('No authentication token found');
         return;
@@ -112,7 +113,7 @@ const ProfilePage = () => {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('orgToken');
+      const token = sessionStorage.getItem('orgToken');
       
       const response = await fetch('/api/organization/change-password', {
         method: 'POST',

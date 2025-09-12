@@ -12,7 +12,7 @@ const loginSchema = z.object({
 
 export async function POST(request) {
   try {
-    console.log('🔍 Organization login attempt');
+    console.log('🔍 Test organization login attempt');
     const body = await request.json();
     const { email, password } = loginSchema.parse(body);
     console.log('📧 Login email:', email);
@@ -32,19 +32,27 @@ export async function POST(request) {
       },
     });
 
+    console.log('🔍 Organization found:', !!organization);
+
     if (!organization) {
+      console.log('❌ Organization not found');
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
     // Compare password (check both password fields)
     const isPasswordCorrect = await compare(password, organization.password || '') || 
                               await compare(password, organization.orgPassword || '');
+    
+    console.log('🔍 Password correct:', isPasswordCorrect);
+    
     if (!isPasswordCorrect) {
+      console.log('❌ Password incorrect');
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
     // Check organization status
     if (organization.status !== true) {
+      console.log('❌ Organization inactive');
       return NextResponse.json({ error: "Organization account is inactive" }, { status: 403 });
     }
 
@@ -55,22 +63,31 @@ export async function POST(request) {
       type: "organization",
     };
 
+    console.log('🔍 Token payload:', tokenPayload);
+
     // Sign token
     const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
-      expiresIn: "7d", // Adjust expiration as needed
+      expiresIn: "7d",
     });
+
+    console.log('✅ Login successful for organization:', organization.name);
 
     return NextResponse.json({
       message: "Login successful",
       token,
-      organization
+      organization: {
+        id: organization.id,
+        name: organization.name,
+        email: organization.email
+      }
     }, { status: 200 });
   } catch (error) {
+    console.error('❌ Organization login error:', error);
+    
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 });
     }
 
-    console.error("Organization login error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
