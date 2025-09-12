@@ -25,7 +25,9 @@ const TransactionsPage = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [methodFilter, setMethodFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+  const [organizationInfo, setOrganizationInfo] = useState(null);
 
   useEffect(() => {
     fetchTransactions();
@@ -34,11 +36,24 @@ const TransactionsPage = () => {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/transactions');
+      
+      // Get organization ID from sessionStorage
+      const orgUser = sessionStorage.getItem('orgUser');
+      if (!orgUser) {
+        setError('Organization not found');
+        return;
+      }
+      
+      const userData = JSON.parse(orgUser);
+      const organizationId = userData.id;
+      
+      // Fetch transactions for this organization only
+      const response = await fetch(`/api/transactions/by-organization/${organizationId}`);
       const data = await response.json();
 
       if (data.success) {
         setTransactions(data.transactions);
+        setOrganizationInfo(data.organization);
       } else {
         setError(data.error || 'Failed to fetch transactions');
       }
@@ -99,15 +114,18 @@ const TransactionsPage = () => {
 
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = 
-      transaction.trx_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.donor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.donor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.organization.name.toLowerCase().includes(searchTerm.toLowerCase());
+      transaction.transaction_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.donor?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.donor?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.amount.toString().includes(searchTerm) ||
+      transaction.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'all' || transaction.pay_status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || transaction.status === statusFilter;
+    
+    const matchesMethod = methodFilter === 'all' || transaction.method === methodFilter;
 
     const matchesDate = dateFilter === 'all' || (() => {
-      const transactionDate = new Date(transaction.trx_date);
+      const transactionDate = new Date(transaction.transaction_date);
       const now = new Date();
       
       switch (dateFilter) {
@@ -124,11 +142,11 @@ const TransactionsPage = () => {
       }
     })();
 
-    return matchesSearch && matchesStatus && matchesDate;
+    return matchesSearch && matchesStatus && matchesMethod && matchesDate;
   });
 
   const totalAmount = filteredTransactions.reduce((sum, transaction) => {
-    return transaction.pay_status === 'completed' ? sum + transaction.trx_amount : sum;
+    return transaction.status === 'completed' ? sum + transaction.amount : sum;
   }, 0);
 
   if (loading) {
@@ -163,7 +181,12 @@ const TransactionsPage = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Transactions</h1>
-          <p className="text-gray-600 mt-1">Manage and track all transaction records</p>
+          <p className="text-gray-600 mt-1">
+            {organizationInfo ? 
+              `View and track transactions for ${organizationInfo.name}` : 
+              'View and track your organization&apos;s transaction records'
+            }
+          </p>
         </div>
         <div className="flex items-center space-x-3">
           <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
@@ -218,7 +241,7 @@ const TransactionsPage = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Pending</p>
               <p className="text-2xl font-bold text-gray-900">
-                {filteredTransactions.filter(t => t.pay_status === 'pending').length}
+                {filteredTransactions.filter(t => t.status === 'pending').length}
               </p>
             </div>
             <div className="p-3 bg-yellow-100 rounded-lg">
@@ -237,7 +260,7 @@ const TransactionsPage = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Completed</p>
               <p className="text-2xl font-bold text-gray-900">
-                {filteredTransactions.filter(t => t.pay_status === 'completed').length}
+                {filteredTransactions.filter(t => t.status === 'completed').length}
               </p>
             </div>
             <div className="p-3 bg-green-100 rounded-lg">
@@ -273,6 +296,15 @@ const TransactionsPage = () => {
               <option value="completed">Completed</option>
               <option value="failed">Failed</option>
               <option value="cancelled">Cancelled</option>
+            </select>
+            <select
+              value={methodFilter}
+              onChange={(e) => setMethodFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+            >
+              <option value="all">All Methods</option>
+              <option value="stripe">💳 Stripe</option>
+              <option value="plaid">🏦 Plaid</option>
             </select>
             <select
               value={dateFilter}
@@ -329,11 +361,11 @@ const TransactionsPage = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        {transaction.trx_id}
+                        {transaction.transaction_id}
                       </div>
-                      {transaction.trx_ghl_id && (
+                      {transaction.ghl_id && (
                         <div className="text-xs text-gray-500">
-                          GHL: {transaction.trx_ghl_id}
+                          GHL: {transaction.ghl_id}
                         </div>
                       )}
                     </div>
@@ -355,36 +387,33 @@ const TransactionsPage = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      {formatCurrency(transaction.trx_amount)}
+                      {formatCurrency(transaction.amount)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <CreditCard className="w-4 h-4 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-900 capitalize">
-                        {transaction.trx_method === 'stripe' ? 'Stripe' : 
-                         transaction.trx_method === 'plaid' ? 'Plaid' : 
-                         transaction.trx_method}
-                      </span>
-                    </div>
+                    <span className="text-sm text-gray-900 capitalize">
+                      {transaction.method === 'stripe' ? '💳 Stripe' : 
+                       transaction.method === 'plaid' ? '🏦 Plaid' : 
+                       `💳 ${transaction.method || 'Unknown'}`}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(transaction.pay_status)}`}>
-                      {getStatusIcon(transaction.pay_status)}
-                      <span className="ml-1 capitalize">{transaction.pay_status}</span>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}>
+                      {getStatusIcon(transaction.status)}
+                      <span className="ml-1 capitalize">{transaction.status}</span>
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(transaction.trx_date)}
+                    {formatDate(transaction.transaction_date)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <button className="text-blue-600 hover:text-blue-900">
                         <Eye className="w-4 h-4" />
                       </button>
-                      {transaction.trx_recipt_url && (
+                      {transaction.receipt_url && (
                         <a
-                          href={transaction.trx_recipt_url}
+                          href={transaction.receipt_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-green-600 hover:text-green-900"
