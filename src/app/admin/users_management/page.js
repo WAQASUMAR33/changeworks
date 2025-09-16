@@ -409,7 +409,7 @@ export default function UserManagementPage() {
                 placeholder="Search users by name or email..."
                 value={filterNameEmail}
                 onChange={(e) => setFilterNameEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900"
               />
             </div>
           </div>
@@ -623,7 +623,7 @@ export default function UserManagementPage() {
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                    className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                       formErrors.name ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="Enter full name"
@@ -643,7 +643,7 @@ export default function UserManagementPage() {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                    className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                       formErrors.email ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="Enter email address"
@@ -665,7 +665,7 @@ export default function UserManagementPage() {
                         name="password"
                         value={formData.password}
                         onChange={handleInputChange}
-                        className={`w-full px-3 py-3 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                        className={`w-full px-3 py-3 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                           formErrors.password ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="Enter password"

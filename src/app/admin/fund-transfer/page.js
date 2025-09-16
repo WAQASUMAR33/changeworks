@@ -309,7 +309,7 @@ export default function FundTransferPage() {
                 placeholder="Search transfers by ID, organization, or description..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900"
               />
             </div>
           </div>
@@ -317,7 +317,7 @@ export default function FundTransferPage() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900"
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
@@ -479,7 +479,7 @@ export default function FundTransferPage() {
                       name="trnx_id"
                       value={formData.trnx_id}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                         formErrors.trnx_id ? 'border-red-300' : 'border-gray-300'
                       }`}
                       placeholder="Enter transaction ID"
@@ -498,7 +498,7 @@ export default function FundTransferPage() {
                       name="organization_id"
                       value={formData.organization_id}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                         formErrors.organization_id ? 'border-red-300' : 'border-gray-300'
                       }`}
                     >
@@ -528,7 +528,7 @@ export default function FundTransferPage() {
                         onChange={handleInputChange}
                         step="0.01"
                         min="0"
-                        className={`w-full pl-8 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                        className={`w-full pl-8 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                           formErrors.amount ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="0.00"
@@ -548,7 +548,7 @@ export default function FundTransferPage() {
                       name="status"
                       value={formData.status}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                         formErrors.status ? 'border-red-300' : 'border-gray-300'
                       }`}
                     >
@@ -571,7 +571,7 @@ export default function FundTransferPage() {
                       name="transfer_date"
                       value={formData.transfer_date}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                         formErrors.transfer_date ? 'border-red-300' : 'border-gray-300'
                       }`}
                     />
@@ -590,7 +590,7 @@ export default function FundTransferPage() {
                       name="transfer_time"
                       value={formData.transfer_time}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                         formErrors.transfer_time ? 'border-red-300' : 'border-gray-300'
                       }`}
                     />
@@ -610,7 +610,7 @@ export default function FundTransferPage() {
                     name="receipt_url"
                     value={formData.receipt_url}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900"
                     placeholder="https://example.com/receipt"
                   />
                 </div>
@@ -625,7 +625,7 @@ export default function FundTransferPage() {
                     value={formData.description}
                     onChange={handleInputChange}
                     rows={3}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900"
                     placeholder="Enter transfer description..."
                   />
                 </div>

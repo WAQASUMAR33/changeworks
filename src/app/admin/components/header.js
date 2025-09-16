@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { 
   Bell, 
   Settings, 
@@ -12,6 +13,7 @@ import {
   Activity
 } from 'lucide-react';
 import Image from 'next/image';
+import { getAdminUser, clearAdminAuth } from '../../lib/admin-auth';
 
 export default function Header() {
     const [userName, setUserName] = useState('');
@@ -22,13 +24,14 @@ export default function Header() {
     const [searchQuery, setSearchQuery] = useState('');
     const notifRef = useRef(null);
     const profileRef = useRef(null);
+    const router = useRouter();
 
     useEffect(() => {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (user) {
-            setUserName(user.name || 'Admin');
-            setUserRole(user.role || 'ADMIN');
-            setUserEmail(user.email || 'admin@changeworks.com');
+        const adminUser = getAdminUser();
+        if (adminUser) {
+            setUserName(adminUser.name || 'Admin');
+            setUserRole(adminUser.role || 'ADMIN');
+            setUserEmail(adminUser.email || 'admin@changeworks.com');
         }
     }, []);
 
@@ -46,9 +49,8 @@ export default function Header() {
     }, []);
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        clearAdminAuth();
+        router.push('/admin/login');
     };
 
     const notifications = [

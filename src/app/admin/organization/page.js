@@ -377,6 +377,7 @@ export default function OrganizationManagementPage() {
           variant="outlined"
           size="small"
           className="min-w-[200px]"
+          sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
         />
         <TextField
           label="Filter by Email"
@@ -385,6 +386,7 @@ export default function OrganizationManagementPage() {
           variant="outlined"
           size="small"
           className="min-w-[200px]"
+          sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
         />
         <TextField
           label="Filter by City"
@@ -393,6 +395,7 @@ export default function OrganizationManagementPage() {
           variant="outlined"
           size="small"
           className="min-w-[200px]"
+          sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
         />
         <FormControl className="min-w-[200px]" size="small">
           <InputLabel>Filter by Status</InputLabel>
@@ -646,6 +649,7 @@ export default function OrganizationManagementPage() {
                     margin="normal"
                     required
                     disabled={modalMode === 'view'}
+                    sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
                     label="Email"
@@ -657,6 +661,7 @@ export default function OrganizationManagementPage() {
                     margin="normal"
                     required
                     disabled={modalMode === 'view'}
+                    sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   {modalMode === 'add' && (
                     <TextField
@@ -668,6 +673,7 @@ export default function OrganizationManagementPage() {
                       fullWidth
                       margin="normal"
                       required
+                      sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                     />
                   )}
                   <TextField
@@ -678,6 +684,7 @@ export default function OrganizationManagementPage() {
                     fullWidth
                     margin="normal"
                     disabled={modalMode === 'view'}
+                    sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
                     label="Company"
@@ -687,6 +694,7 @@ export default function OrganizationManagementPage() {
                     fullWidth
                     margin="normal"
                     disabled={modalMode === 'view'}
+                    sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
                     label="Website"
@@ -696,6 +704,7 @@ export default function OrganizationManagementPage() {
                     fullWidth
                     margin="normal"
                     disabled={modalMode === 'view'}
+                    sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
                     label="Address"
@@ -707,6 +716,7 @@ export default function OrganizationManagementPage() {
                     multiline
                     rows={2}
                     disabled={modalMode === 'view'}
+                    sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
                     label="City"
@@ -716,6 +726,7 @@ export default function OrganizationManagementPage() {
                     fullWidth
                     margin="normal"
                     disabled={modalMode === 'view'}
+                    sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
                     label="State"
@@ -725,6 +736,7 @@ export default function OrganizationManagementPage() {
                     fullWidth
                     margin="normal"
                     disabled={modalMode === 'view'}
+                    sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
                     label="Country"
@@ -734,6 +746,7 @@ export default function OrganizationManagementPage() {
                     fullWidth
                     margin="normal"
                     disabled={modalMode === 'view'}
+                    sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
                     label="Postal Code"
@@ -743,6 +756,7 @@ export default function OrganizationManagementPage() {
                     fullWidth
                     margin="normal"
                     disabled={modalMode === 'view'}
+                    sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
                     label="GHL ID"
@@ -752,6 +766,7 @@ export default function OrganizationManagementPage() {
                     fullWidth
                     margin="normal"
                     disabled={modalMode === 'view'}
+                    sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   {modalMode !== 'view' && (
                     <TextField
@@ -763,6 +778,7 @@ export default function OrganizationManagementPage() {
                       fullWidth
                       margin="normal"
                       inputProps={{ accept: 'image/*' }}
+                      sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                     />
                   )}
                   {(imagePreview || formData.imageUrl) && (

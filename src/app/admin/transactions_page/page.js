@@ -141,6 +141,7 @@ export default function TransactionManagementPage() {
           variant="outlined"
           size="small"
           className="min-w-[200px]"
+          sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
         />
         <FormControl className="min-w-[200px]" size="small">
           <InputLabel>Filter by Status</InputLabel>

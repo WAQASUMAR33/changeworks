@@ -89,21 +89,26 @@ export default function LoginPage() {
         return;
       }
 
-      // Store user data
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // Store user data based on role
+      if (data.user.role === 'SUPERADMIN' || data.user.role === 'MANAGER' || data.user.role === 'ADMIN') {
+        // Store as admin user
+        localStorage.setItem('adminToken', data.token);
+        localStorage.setItem('adminUser', JSON.stringify(data.user));
+        router.push('/admin');
+      } else if (data.user.role === 'DONOR') {
+        // Store as regular user for donors
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        router.push('/'); // Redirect donors to home page instead of admin
+      } else {
+        // Store as regular user
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        router.push('/');
+      }
       
       if (rememberMe) {
         localStorage.setItem('rememberMe', 'true');
-      }
-
-      // Redirect based on user role
-      if (data.user.role === 'SUPERADMIN' || data.user.role === 'MANAGER' || data.user.role === 'ADMIN') {
-        router.push('/admin');
-      } else if (data.user.role === 'DONOR') {
-        router.push('/admin');
-      } else {
-        router.push('/');
       }
     } catch (err) {
       console.error('Login error:', err);

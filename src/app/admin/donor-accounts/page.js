@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 
 // Constants
-const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
+const ROWS_PER_PAGE_OPTIONS = [10, 25, 50, 100, { value: 'all', label: 'All' }];
 const STATUS_OPTIONS = [
   { value: true, label: 'Active', color: 'green', bgColor: 'bg-green-50', textColor: 'text-green-700', borderColor: 'border-green-200' },
   { value: false, label: 'Inactive', color: 'red', bgColor: 'bg-red-50', textColor: 'text-red-700', borderColor: 'border-red-200' },
@@ -96,7 +96,7 @@ export default function DonorManagementPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [filterName, setFilterName] = useState('');
   const [filterEmail, setFilterEmail] = useState('');
   const [filterCity, setFilterCity] = useState('');
@@ -127,7 +127,7 @@ export default function DonorManagementPage() {
       setLoading(true);
       setError('');
       
-      const response = await fetch('/api/donor', {
+      const response = await fetch('/api/donor?limit=all', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -330,16 +330,21 @@ export default function DonorManagementPage() {
   };
 
   // Pagination
-  const startIndex = page * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const paginatedDonors = filteredDonors.slice(startIndex, endIndex);
+  const startIndex = rowsPerPage === 'all' ? 0 : page * rowsPerPage;
+  const endIndex = rowsPerPage === 'all' ? filteredDonors.length : startIndex + rowsPerPage;
+  const paginatedDonors = rowsPerPage === 'all' ? filteredDonors : filteredDonors.slice(startIndex, endIndex);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+    const value = event.target.value;
+    if (value === 'all') {
+      setRowsPerPage('all');
+    } else {
+      setRowsPerPage(parseInt(value, 10));
+    }
     setPage(0);
   };
 
@@ -432,7 +437,7 @@ export default function DonorManagementPage() {
                 placeholder="Search by name..."
                 value={filterName}
                 onChange={(e) => setFilterName(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900"
               />
             </div>
           </div>
@@ -444,7 +449,7 @@ export default function DonorManagementPage() {
                 placeholder="Search by email..."
                 value={filterEmail}
                 onChange={(e) => setFilterEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900"
               />
             </div>
           </div>
@@ -456,7 +461,7 @@ export default function DonorManagementPage() {
                 placeholder="Search by city..."
                 value={filterCity}
                 onChange={(e) => setFilterCity(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900"
               />
             </div>
           </div>
@@ -464,7 +469,7 @@ export default function DonorManagementPage() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="flex-1 px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="flex-1 px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900"
             >
               <option value="">All Status</option>
               <option value="true">Active</option>
@@ -626,26 +631,30 @@ export default function DonorManagementPage() {
                 onChange={handleChangeRowsPerPage}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
               >
-                {ROWS_PER_PAGE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option} per page
-                  </option>
-                ))}
+                {ROWS_PER_PAGE_OPTIONS.map((option) => {
+                  const value = typeof option === 'object' ? option.value : option;
+                  const label = typeof option === 'object' ? option.label : option;
+                  return (
+                    <option key={value} value={value}>
+                      {label === 'All' ? 'All' : `${label} per page`}
+                    </option>
+                  );
+                })}
               </select>
               <div className="flex items-center space-x-1">
                 <button
                   onClick={() => handleChangePage(null, page - 1)}
-                  disabled={page === 0}
+                  disabled={page === 0 || rowsPerPage === 'all'}
                   className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 >
                   Previous
                 </button>
                 <span className="px-3 py-2 text-sm text-gray-700">
-                  Page {page + 1} of {Math.ceil(filteredDonors.length / rowsPerPage)}
+                  Page {page + 1} of {rowsPerPage === 'all' ? 1 : Math.ceil(filteredDonors.length / rowsPerPage)}
                 </span>
                 <button
                   onClick={() => handleChangePage(null, page + 1)}
-                  disabled={endIndex >= filteredDonors.length}
+                  disabled={endIndex >= filteredDonors.length || rowsPerPage === 'all'}
                   className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 >
                   Next
@@ -699,7 +708,7 @@ export default function DonorManagementPage() {
                       value={formData.name}
                       onChange={handleInputChange}
                       disabled={modalMode === 'view'}
-                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                         formErrors.name ? 'border-red-300' : 'border-gray-300'
                       } ${modalMode === 'view' ? 'bg-gray-50' : ''}`}
                       placeholder="Enter full name"
@@ -720,7 +729,7 @@ export default function DonorManagementPage() {
                       value={formData.email}
                       onChange={handleInputChange}
                       disabled={modalMode === 'view'}
-                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                         formErrors.email ? 'border-red-300' : 'border-gray-300'
                       } ${modalMode === 'view' ? 'bg-gray-50' : ''}`}
                       placeholder="Enter email address"
@@ -742,7 +751,7 @@ export default function DonorManagementPage() {
                           name="password"
                           value={formData.password}
                           onChange={handleInputChange}
-                          className={`w-full px-3 py-3 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                          className={`w-full px-3 py-3 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                             formErrors.password ? 'border-red-300' : 'border-gray-300'
                           }`}
                           placeholder={modalMode === 'add' ? 'Enter password' : 'Leave blank to keep current'}
@@ -772,7 +781,7 @@ export default function DonorManagementPage() {
                       value={formData.phone}
                       onChange={handleInputChange}
                       disabled={modalMode === 'view'}
-                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                         formErrors.phone ? 'border-red-300' : 'border-gray-300'
                       } ${modalMode === 'view' ? 'bg-gray-50' : ''}`}
                       placeholder="Enter phone number"
@@ -793,7 +802,7 @@ export default function DonorManagementPage() {
                       value={formData.city}
                       onChange={handleInputChange}
                       disabled={modalMode === 'view'}
-                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                         formErrors.city ? 'border-red-300' : 'border-gray-300'
                       } ${modalMode === 'view' ? 'bg-gray-50' : ''}`}
                       placeholder="Enter city"
@@ -813,7 +822,7 @@ export default function DonorManagementPage() {
                         name="status"
                         value={formData.status}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900"
                       >
                         <option value={true}>Active</option>
                         <option value={false}>Inactive</option>
@@ -833,7 +842,7 @@ export default function DonorManagementPage() {
                     onChange={handleInputChange}
                     disabled={modalMode === 'view'}
                     rows={3}
-                    className={`w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                    className={`w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-gray-900 ${
                       modalMode === 'view' ? 'bg-gray-50' : ''
                     }`}
                     placeholder="Enter address"

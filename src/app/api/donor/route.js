@@ -137,8 +137,9 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '10', 10);
-    const skip = (page - 1) * limit;
+    const limitParam = searchParams.get('limit');
+    const limit = limitParam === 'all' ? undefined : parseInt(limitParam || '10', 10);
+    const skip = limit ? (page - 1) * limit : 0;
 
     const [donors, totalCount] = await Promise.all([
       prisma.donor.findMany({
