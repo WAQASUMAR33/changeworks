@@ -146,6 +146,127 @@
           }
         },
         {
+          "name": "Check Customer Subscription (by donor_id)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/check-customer?donor_id=58",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subscriptions", "check-customer"],
+              "query": [
+                {
+                  "key": "donor_id",
+                  "value": "58"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check Customer Subscription (by email)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/check-customer?customer_email=test@example.com",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subscriptions", "check-customer"],
+              "query": [
+                {
+                  "key": "customer_email",
+                  "value": "test@example.com"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check Customer Subscription (with organization)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/check-customer?donor_id=58&organization_id=17",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subscriptions", "check-customer"],
+              "query": [
+                {
+                  "key": "donor_id",
+                  "value": "58"
+                },
+                {
+                  "key": "organization_id",
+                  "value": "17"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check Customer Subscription (include inactive)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/check-customer?donor_id=58&include_inactive=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subscriptions", "check-customer"],
+              "query": [
+                {
+                  "key": "donor_id",
+                  "value": "58"
+                },
+                {
+                  "key": "include_inactive",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check Multiple Customer Subscriptions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customers\": [\n    {\n      \"donor_id\": 58\n    },\n    {\n      \"customer_email\": \"test@example.com\"\n    },\n    {\n      \"donor_id\": 59,\n      \"customer_email\": \"another@example.com\"\n    }\n  ],\n  \"organization_id\": 17,\n  \"include_inactive\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/check-customer",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subscriptions", "check-customer"]
+            }
+          }
+        },
+        {
           "name": "Create Subscription (Direct)",
           "request": {
             "method": "POST",
