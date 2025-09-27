@@ -13,7 +13,7 @@ export async function GET(request) {
     const organizationId = searchParams.get('organization_id');
     const includeInactive = searchParams.get('include_inactive') === 'true';
 
-    // Validate required parameters
+    // Validate required parameters - prioritize donor_id
     if (!donorId && !customerEmail) {
       return NextResponse.json({
         success: false,
@@ -21,11 +21,91 @@ export async function GET(request) {
       }, { status: 400 });
     }
 
-    // Build where clause
+    // If donor_id is provided, validate that the donor exists
+    let donor = null;
+    if (donorId) {
+      try {
+        donor = await prisma.donor.findUnique({
+          where: { id: parseInt(donorId) },
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        });
+
+        if (!donor) {
+          return NextResponse.json({
+            success: false,
+            error: `Donor with ID ${donorId} not found`
+          }, { status: 404 });
+        }
+      } catch (error) {
+        console.error('Error validating donor:', error);
+        return NextResponse.json({
+          success: false,
+          error: 'Failed to validate donor'
+        }, { status: 500 });
+      }
+    }
+
+    // Build where clause - prioritize donor_id
     const where = {};
     
     if (donorId) {
       where.donor_id = parseInt(donorId);
+    } else if (customerEmail) {
+      // If no donor_id but customer_email provided, find donor by email first
+      try {
+        const donorByEmail = await prisma.donor.findFirst({
+          where: { 
+            email: customerEmail
+          },
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        });
+
+        if (donorByEmail) {
+          where.donor_id = donorByEmail.id;
+          donor = donorByEmail;
+        } else {
+          // No donor found with this email, return empty result
+          return NextResponse.json({
+            success: true,
+            customer: {
+              donor_id: null,
+              customer_email: customerEmail,
+              organization_id: organizationId ? parseInt(organizationId) : null
+            },
+            subscription_status: {
+              has_subscription: false,
+              has_active_subscription: false,
+              total_subscriptions: 0,
+              active_subscriptions: 0,
+              inactive_subscriptions: 0,
+              latest_subscription: null,
+              active_subscription: null
+            },
+            revenue: {
+              monthly_revenue: 0,
+              currency: 'USD'
+            },
+            next_billing_date: null,
+            subscriptions: [],
+            stripe_subscriptions: [],
+            message: 'No donor found with this email address'
+          });
+        }
+      } catch (error) {
+        console.error('Error finding donor by email:', error);
+        return NextResponse.json({
+          success: false,
+          error: 'Failed to find donor by email'
+        }, { status: 500 });
+      }
     }
     
     if (organizationId) {
@@ -77,20 +157,15 @@ export async function GET(request) {
       }
     });
 
-    // If customer_email is provided, filter by email
+    // Since we've already validated the donor, we can use subscriptions directly
     let filteredSubscriptions = subscriptions;
-    if (customerEmail) {
-      filteredSubscriptions = subscriptions.filter(sub => 
-        sub.donor.email.toLowerCase() === customerEmail.toLowerCase()
-      );
-    }
 
     // Check Stripe for additional subscription data
     let stripeSubscriptions = [];
     if (filteredSubscriptions.length > 0) {
       try {
-        // Get Stripe customer by email
-        const customerEmail = filteredSubscriptions[0].donor.email;
+        // Get Stripe customer by email - use the validated donor's email
+        const customerEmail = donor ? donor.email : filteredSubscriptions[0].donor.email;
         const customers = await stripe.customers.list({
           email: customerEmail,
           limit: 1
@@ -167,8 +242,8 @@ export async function GET(request) {
     return NextResponse.json({
       success: true,
       customer: {
-        donor_id: donorId ? parseInt(donorId) : null,
-        customer_email: customerEmail || (filteredSubscriptions[0]?.donor?.email),
+        donor_id: donor ? donor.id : null,
+        customer_email: donor ? donor.email : customerEmail,
         organization_id: organizationId ? parseInt(organizationId) : null
       },
       subscription_status: subscriptionSummary,
@@ -243,11 +318,79 @@ export async function POST(request) {
             };
           }
 
-          // Build where clause
+          // Validate donor if donor_id is provided
+          let donor = null;
+          if (donor_id) {
+            try {
+              donor = await prisma.donor.findUnique({
+                where: { id: parseInt(donor_id) },
+                select: {
+                  id: true,
+                  name: true,
+                  email: true
+                }
+              });
+
+              if (!donor) {
+                return {
+                  customer,
+                  success: false,
+                  error: `Donor with ID ${donor_id} not found`
+                };
+              }
+            } catch (error) {
+              return {
+                customer,
+                success: false,
+                error: 'Failed to validate donor'
+              };
+            }
+          }
+
+          // Build where clause - prioritize donor_id
           const where = {};
           
           if (donor_id) {
             where.donor_id = parseInt(donor_id);
+          } else if (customer_email) {
+            // If no donor_id but customer_email provided, find donor by email first
+            try {
+              const donorByEmail = await prisma.donor.findFirst({
+                where: { 
+                  email: customer_email
+                },
+                select: {
+                  id: true,
+                  name: true,
+                  email: true
+                }
+              });
+
+              if (donorByEmail) {
+                where.donor_id = donorByEmail.id;
+                donor = donorByEmail;
+              } else {
+                // No donor found with this email, return empty result
+                return {
+                  customer,
+                  success: true,
+                  subscription_status: {
+                    has_subscription: false,
+                    has_active_subscription: false,
+                    total_subscriptions: 0,
+                    active_subscriptions: 0
+                  },
+                  subscriptions: [],
+                  message: 'No donor found with this email address'
+                };
+              }
+            } catch (error) {
+              return {
+                customer,
+                success: false,
+                error: 'Failed to find donor by email'
+              };
+            }
           }
           
           if (organization_id) {
@@ -293,13 +436,8 @@ export async function POST(request) {
             }
           });
 
-          // If customer_email is provided, filter by email
+          // Since we've already validated the donor, we can use subscriptions directly
           let filteredSubscriptions = subscriptions;
-          if (customer_email) {
-            filteredSubscriptions = subscriptions.filter(sub => 
-              sub.donor.email.toLowerCase() === customer_email.toLowerCase()
-            );
-          }
 
           // Determine subscription status
           const hasActiveSubscription = filteredSubscriptions.some(sub => sub.status === 'ACTIVE');
