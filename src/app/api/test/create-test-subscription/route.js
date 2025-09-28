@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../lib/prisma";
+import { prisma } from "../../../../lib/prisma";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// POST /api/subscriptions/create-complete - Create customer, subscription, and complete payment in one step
+// POST /api/test/create-test-subscription - Create a test subscription with test payment method
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -14,14 +14,13 @@ export async function POST(request) {
       package_id,
       customer_email,
       customer_name,
-      payment_method_id,
-      trial_period_days = 0
+      test_card = "4242424242424242"
     } = body;
 
     // Validate required fields
-    if (!donor_id || !organization_id || !package_id || !payment_method_id) {
+    if (!donor_id || !organization_id || !package_id) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields: donor_id, organization_id, package_id, payment_method_id' },
+        { success: false, error: 'Missing required fields: donor_id, organization_id, package_id' },
         { status: 400 }
       );
     }
@@ -57,7 +56,7 @@ export async function POST(request) {
       );
     }
 
-    // Step 1: Create or retrieve Stripe customer
+    // Create or retrieve Stripe customer
     let customer;
     try {
       const existingCustomers = await stripe.customers.list({
@@ -69,8 +68,8 @@ export async function POST(request) {
         customer = existingCustomers.data[0];
       } else {
         customer = await stripe.customers.create({
-          email: donor.email,
-          name: donor.name,
+          email: customer_email || donor.email,
+          name: customer_name || donor.name,
           metadata: {
             donor_id: donor_id.toString(),
             organization_id: organization_id.toString()
@@ -80,48 +79,65 @@ export async function POST(request) {
     } catch (stripeError) {
       console.error('Stripe customer creation error:', stripeError);
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Failed to create Stripe customer',
           details: {
             type: stripeError.type,
             code: stripeError.code,
-            message: stripeError.message
+            message: stripeError.message,
+            param: stripeError.param
           }
         },
         { status: 500 }
       );
     }
 
-    // Step 2: Attach payment method to customer
+    // Create a test payment method using Stripe's test approach
+    // We'll create a payment method using Stripe's test card data
+    let paymentMethod;
     try {
-      await stripe.paymentMethods.attach(payment_method_id, {
+      // Create a payment method using Stripe's test card
+      paymentMethod = await stripe.paymentMethods.create({
+        type: 'card',
+        card: {
+          number: test_card,
+          exp_month: 12,
+          exp_year: 2025,
+          cvc: '123',
+        },
+      });
+
+      // Attach the payment method to the customer
+      await stripe.paymentMethods.attach(paymentMethod.id, {
         customer: customer.id,
       });
 
       // Set as default payment method
       await stripe.customers.update(customer.id, {
         invoice_settings: {
-          default_payment_method: payment_method_id,
+          default_payment_method: paymentMethod.id,
         },
       });
+
     } catch (stripeError) {
-      console.error('Payment method attachment error:', stripeError);
+      console.error('Payment method creation error:', stripeError);
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to attach payment method',
+        {
+          success: false,
+          error: 'Failed to create payment method',
           details: {
             type: stripeError.type,
             code: stripeError.code,
-            message: stripeError.message
+            message: stripeError.message,
+            param: stripeError.param
           }
         },
         { status: 500 }
       );
     }
 
-    // Step 3: Create subscription with immediate payment
+    // Create subscription directly
     let stripeSubscription;
     try {
       const subscriptionData = {
@@ -139,7 +155,6 @@ export async function POST(request) {
             },
           },
         }],
-        collection_method: 'charge_automatically',
         payment_behavior: 'default_incomplete',
         payment_settings: { save_default_payment_method: 'on_subscription' },
         expand: ['latest_invoice.payment_intent'],
@@ -150,55 +165,38 @@ export async function POST(request) {
         }
       };
 
-      // Add trial period if specified
-      if (trial_period_days > 0) {
-        subscriptionData.trial_period_days = trial_period_days;
+      stripeSubscription = await stripe.subscriptions.create(subscriptionData);
+
+      // Confirm the payment intent if it exists and is required
+      if (stripeSubscription.latest_invoice && stripeSubscription.latest_invoice.payment_intent) {
+        const paymentIntent = stripeSubscription.latest_invoice.payment_intent;
+        if (paymentIntent.status === 'requires_action' || paymentIntent.status === 'requires_confirmation') {
+          // In a real scenario, this would involve client-side confirmation
+          // For this API, we assume the payment method is valid and can be confirmed
+          await stripe.paymentIntents.confirm(paymentIntent.id, {
+            payment_method: paymentMethod.id,
+          });
+        }
       }
 
-      stripeSubscription = await stripe.subscriptions.create(subscriptionData);
     } catch (stripeError) {
       console.error('Stripe subscription creation error:', stripeError);
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Failed to create Stripe subscription',
           details: {
             type: stripeError.type,
             code: stripeError.code,
-            message: stripeError.message
+            message: stripeError.message,
+            param: stripeError.param
           }
         },
         { status: 500 }
       );
     }
 
-    // Step 4: Confirm the payment intent to complete payment
-    let paymentIntent;
-    try {
-      paymentIntent = await stripe.paymentIntents.confirm(
-        stripeSubscription.latest_invoice.payment_intent.id,
-        {
-          payment_method: payment_method_id,
-          return_url: `https://app.changeworksfund.org/subscription/success?session_id=${stripeSubscription.id}`
-        }
-      );
-    } catch (stripeError) {
-      console.error('Payment confirmation error:', stripeError);
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to confirm payment',
-          details: {
-            type: stripeError.type,
-            code: stripeError.code,
-            message: stripeError.message
-          }
-        },
-        { status: 500 }
-      );
-    }
-
-    // Step 5: Save subscription to database
+    // Save subscription to database
     const subscription = await prisma.subscription.create({
       data: {
         stripe_subscription_id: stripeSubscription.id,
@@ -218,8 +216,8 @@ export async function POST(request) {
         interval_count: 1,
         metadata: JSON.stringify({
           stripe_customer_id: customer.id,
-          payment_method_id: payment_method_id,
-          created_via: 'api_complete'
+          payment_method_id: paymentMethod.id,
+          created_via: 'test_api'
         })
       },
       include: {
@@ -250,7 +248,6 @@ export async function POST(request) {
       }
     });
 
-    // Return complete subscription details
     return NextResponse.json({
       success: true,
       subscription,
@@ -259,25 +256,28 @@ export async function POST(request) {
         email: customer.email,
         name: customer.name
       },
-      package: {
-        id: packageData.id,
-        name: packageData.name,
-        price: packageData.price,
-        currency: packageData.currency
+      payment_method: {
+        id: paymentMethod.id,
+        type: paymentMethod.type,
+        card: {
+          brand: paymentMethod.card.brand,
+          last4: paymentMethod.card.last4,
+          exp_month: paymentMethod.card.exp_month,
+          exp_year: paymentMethod.card.exp_year,
+        }
       },
       payment: {
-        status: paymentIntent.status,
-        amount: paymentIntent.amount,
-        currency: paymentIntent.currency
+        status: stripeSubscription.latest_invoice?.payment_intent?.status || 'unknown',
+        amount: stripeSubscription.latest_invoice?.payment_intent?.amount || 0,
+        currency: stripeSubscription.latest_invoice?.payment_intent?.currency || 'usd'
       },
-      stripe_subscription_id: stripeSubscription.id,
-      message: 'Subscription created and payment completed successfully'
+      message: 'Test subscription created successfully with test payment method'
     });
 
   } catch (error) {
-    console.error('Error creating complete subscription:', error);
+    console.error('Error creating test subscription:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create complete subscription' },
+      { success: false, error: 'Failed to create test subscription', details: error },
       { status: 500 }
     );
   }

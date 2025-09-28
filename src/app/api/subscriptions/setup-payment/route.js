@@ -62,17 +62,27 @@ export async function POST(request) {
     // Create or retrieve Stripe customer
     let customer;
     try {
+      // Use provided customer email or fall back to donor email
+      const customerEmail = customer_email || donor.email;
+      const customerName = customer_name || donor.name;
+      
       const existingCustomers = await stripe.customers.list({
-        email: donor.email,
+        email: customerEmail,
         limit: 1
       });
 
       if (existingCustomers.data.length > 0) {
         customer = existingCustomers.data[0];
+        // Update customer name if provided
+        if (customer_name && customer.name !== customer_name) {
+          customer = await stripe.customers.update(customer.id, {
+            name: customer_name
+          });
+        }
       } else {
         customer = await stripe.customers.create({
-          email: donor.email,
-          name: donor.name,
+          email: customerEmail,
+          name: customerName,
           metadata: {
             donor_id: donor_id.toString(),
             organization_id: organization_id.toString()
@@ -134,6 +144,7 @@ export async function POST(request) {
               },
             },
           }],
+          collection_method: 'charge_automatically',
           payment_behavior: 'default_incomplete',
           payment_settings: { save_default_payment_method: 'on_subscription' },
           expand: ['latest_invoice.payment_intent'],
@@ -243,6 +254,7 @@ export async function POST(request) {
           customer: customer.id,
           payment_method_types: ['card'],
           mode: 'subscription',
+          payment_method_collection: 'always',
           line_items: [{
             price_data: {
               currency: packageData.currency.toLowerCase(),

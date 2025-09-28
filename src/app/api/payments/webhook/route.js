@@ -239,23 +239,59 @@ async function handleSubscriptionCreated(subscription) {
     const organizationId = parseInt(subscription.metadata.organization_id);
     const packageId = parseInt(subscription.metadata.package_id);
 
-    // Update subscription record if it exists
-    await prisma.subscription.updateMany({
+    // Get package details for amount and currency
+    const packageData = await prisma.package.findUnique({
+      where: { id: packageId }
+    });
+
+    if (!packageData) {
+      console.error(`Package ${packageId} not found for subscription ${subscription.id}`);
+      return;
+    }
+
+    // Create or update subscription record
+    const subscriptionData = {
+      stripe_subscription_id: subscription.id,
+      donor_id: donorId,
+      organization_id: organizationId,
+      package_id: packageId,
+      status: subscription.status.toUpperCase(),
+      current_period_start: new Date(subscription.current_period_start * 1000),
+      current_period_end: new Date(subscription.current_period_end * 1000),
+      cancel_at_period_end: subscription.cancel_at_period_end,
+      canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
+      trial_start: subscription.trial_start ? new Date(subscription.trial_start * 1000) : null,
+      trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
+      amount: packageData.price,
+      currency: packageData.currency,
+      interval: 'month', // Default to monthly
+      interval_count: 1,
+      metadata: JSON.stringify({
+        stripe_customer_id: subscription.customer,
+        created_via: 'webhook',
+        webhook_processed_at: new Date()
+      })
+    };
+
+    // Use upsert to create or update
+    const dbSubscription = await prisma.subscription.upsert({
       where: {
         stripe_subscription_id: subscription.id
       },
-      data: {
+      update: {
         status: subscription.status.toUpperCase(),
         current_period_start: new Date(subscription.current_period_start * 1000),
         current_period_end: new Date(subscription.current_period_end * 1000),
         cancel_at_period_end: subscription.cancel_at_period_end,
+        canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
         trial_start: subscription.trial_start ? new Date(subscription.trial_start * 1000) : null,
         trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
         updated_at: new Date()
-      }
+      },
+      create: subscriptionData
     });
 
-    console.log(`Updated subscription ${subscription.id} status to ${subscription.status}`);
+    console.log(`✅ Subscription ${subscription.id} created/updated in database with ID: ${dbSubscription.id}`);
 
   } catch (error) {
     console.error('Error handling customer.subscription.created:', error);
