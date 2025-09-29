@@ -22,9 +22,7 @@ export async function POST(request) {
       select: { 
         id: true, 
         name: true, 
-        email: true,
-        first_name: true,
-        last_name: true
+        email: true
       }
     });
 
@@ -58,7 +56,7 @@ export async function POST(request) {
     // Send welcome email
     const emailResult = await emailService.sendWelcomeEmail({
       donor: {
-        name: donor.first_name || donor.name,
+        name: donor.name,
         email: donor.email
       },
       organization: organization,
