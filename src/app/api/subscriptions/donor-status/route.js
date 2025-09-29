@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../lib/prisma";
+import { prisma } from "../../../lib/prisma.jsx";
 
 // GET /api/subscriptions/donor-status - Get donor status with just donor_id
 export async function GET(request) {

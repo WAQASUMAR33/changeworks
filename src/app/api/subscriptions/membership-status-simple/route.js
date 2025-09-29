@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../lib/prisma";
+import { prisma } from "../../../lib/prisma.jsx";
 
 // GET /api/subscriptions/membership-status-simple - Simple test version
 export async function GET(request) {
