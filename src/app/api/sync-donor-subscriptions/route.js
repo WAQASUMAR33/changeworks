@@ -8,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { donor_id, customer_email } = body;
+    const { donor_id, customer_email, organization_id } = body;
 
     if (!donor_id && !customer_email) {
       return NextResponse.json(

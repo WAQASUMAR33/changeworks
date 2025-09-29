@@ -8,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { session_id } = body;
+    const { session_id, donor_id, organization_id } = body;
 
     if (!session_id) {
       return NextResponse.json(
@@ -63,16 +63,16 @@ export async function POST(request) {
     const customer = checkoutSession.customer;
     const lineItems = checkoutSession.line_items?.data || [];
 
-    // Extract metadata from checkout session
-    const donorId = parseInt(checkoutSession.metadata?.donor_id);
-    const organizationId = parseInt(checkoutSession.metadata?.organization_id);
+    // Use provided donor_id and organization_id, or fall back to metadata
+    const donorId = donor_id || parseInt(checkoutSession.metadata?.donor_id);
+    const organizationId = organization_id || parseInt(checkoutSession.metadata?.organization_id);
     const packageId = parseInt(checkoutSession.metadata?.package_id);
 
     if (!donorId || !organizationId || !packageId) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Missing required metadata in checkout session' 
+          error: 'Missing required donor_id, organization_id, or package_id' 
         },
         { status: 400 }
       );

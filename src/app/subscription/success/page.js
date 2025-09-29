@@ -12,25 +12,32 @@ export default function SubscriptionSuccessPage() {
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
+    const donorId = searchParams.get('donor_id');
+    const organizationId = searchParams.get('organization_id');
     
-    if (sessionId) {
-      verifySubscription(sessionId);
+    if (sessionId && donorId && organizationId) {
+      verifySubscription(sessionId, donorId, organizationId);
     } else {
       setVerificationStatus('error');
-      setError('No session ID found in URL');
+      setError('Missing required parameters: session_id, donor_id, or organization_id');
     }
   }, [searchParams]);
 
-  const verifySubscription = async (sessionId) => {
+  const verifySubscription = async (sessionId, donorId, organizationId) => {
     try {
       setVerificationStatus('loading');
       
+      // First, try to verify and create subscription record
       const response = await fetch('/api/verify-subscription-success', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ session_id: sessionId }),
+        body: JSON.stringify({ 
+          session_id: sessionId,
+          donor_id: parseInt(donorId),
+          organization_id: parseInt(organizationId)
+        }),
       });
 
       const result = await response.json();
@@ -39,13 +46,47 @@ export default function SubscriptionSuccessPage() {
         setVerificationStatus('success');
         setSubscriptionData(result.subscription);
       } else {
-        setVerificationStatus('error');
-        setError(result.error || 'Failed to verify subscription');
+        // If verify API fails, try manual sync
+        console.log('Verify API failed, trying manual sync...');
+        await manualSync(donorId, organizationId);
       }
     } catch (err) {
+      console.log('Verify API error, trying manual sync...');
+      await manualSync(donorId, organizationId);
+    }
+  };
+
+  const manualSync = async (donorId, organizationId) => {
+    try {
+      const syncResponse = await fetch('/api/sync-donor-subscriptions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          donor_id: parseInt(donorId),
+          organization_id: parseInt(organizationId)
+        }),
+      });
+
+      const syncResult = await syncResponse.json();
+
+      if (syncResult.success && syncResult.synced_subscriptions > 0) {
+        setVerificationStatus('success');
+        setSubscriptionData({
+          donor_id: parseInt(donorId),
+          organization_id: parseInt(organizationId),
+          status: 'ACTIVE',
+          message: 'Subscription synced successfully'
+        });
+      } else {
+        setVerificationStatus('error');
+        setError('Payment completed but subscription record could not be created. Please contact support.');
+      }
+    } catch (syncErr) {
       setVerificationStatus('error');
-      setError('Network error occurred while verifying subscription');
-      console.error('Verification error:', err);
+      setError('Network error occurred while creating subscription record');
+      console.error('Sync error:', syncErr);
     }
   };
 
