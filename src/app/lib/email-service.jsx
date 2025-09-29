@@ -67,83 +67,129 @@ class EmailService {
         <title>Welcome to ${organization.name}</title>
         <style>
           body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f4f4f4;
+            background-color: #f8f9fa;
           }
           .container {
             background-color: #ffffff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
           }
           .header {
             text-align: center;
-            border-bottom: 3px solid #007bff;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
+            border-bottom: 3px solid #28a745;
+            padding-bottom: 25px;
+            margin-bottom: 35px;
           }
           .header h1 {
-            color: #007bff;
+            color: #28a745;
             margin: 0;
-            font-size: 28px;
+            font-size: 32px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
           .content {
-            margin-bottom: 30px;
+            margin-bottom: 35px;
           }
           .content p {
-            margin-bottom: 15px;
+            margin-bottom: 18px;
             font-size: 16px;
+            color: #495057;
+          }
+          .greeting {
+            font-size: 18px;
+            font-weight: 500;
+            color: #212529;
+            margin-bottom: 25px;
           }
           .features {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            border-left: 4px solid #28a745;
           }
           .features h3 {
-            color: #007bff;
+            color: #28a745;
             margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
           }
           .features ul {
             margin: 0;
             padding-left: 20px;
           }
           .features li {
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            color: #495057;
+            font-size: 15px;
           }
           .cta-button {
             display: inline-block;
-            background-color: #007bff;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
             color: white;
-            padding: 12px 24px;
+            padding: 15px 30px;
             text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            margin: 20px 0;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 25px 0;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            transition: all 0.3s ease;
+          }
+          .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
           }
           .footer {
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-            margin-top: 30px;
+            border-top: 2px solid #e9ecef;
+            padding-top: 25px;
+            margin-top: 35px;
             text-align: center;
-            color: #666;
+            color: #6c757d;
             font-size: 14px;
           }
           .signature {
             margin-top: 30px;
             font-style: italic;
+            color: #495057;
           }
           .ps {
-            background-color: #fff3cd;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
             border: 1px solid #ffeaa7;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            border-left: 4px solid #ffc107;
+          }
+          .ps p {
+            margin: 0;
+            color: #856404;
+            font-weight: 500;
+          }
+          .contact-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 25px;
+            text-align: center;
+          }
+          .contact-info h4 {
+            color: #28a745;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+          }
+          .contact-info p {
+            margin: 5px 0;
+            color: #495057;
+            font-size: 14px;
           }
         </style>
       </head>
@@ -154,7 +200,7 @@ class EmailService {
           </div>
           
           <div class="content">
-            <p>Hello ${donor.name},</p>
+            <p class="greeting">Hello ${donor.name},</p>
             
             <p>Thank you for joining <strong>${organization.name}</strong>'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
             
@@ -186,14 +232,17 @@ class EmailService {
           </div>
           
           <div class="footer">
-            <p><strong>ChangeWorks Fund</strong><br>
-            Your trusted platform partner for charitable giving</p>
-            
-            <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
-            
-            <p><strong>RapidTechPro</strong><br>
-            Punjab Center Mandi Bahauddin<br>
-            +923474308859</p>
+            <div class="contact-info">
+              <h4>ChangeWorks Fund</h4>
+              <p>Your trusted platform partner for charitable giving</p>
+              
+              <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
+              
+              <h4>Contact Information</h4>
+              <p><strong>Email:</strong> info@rapidtechpro.com</p>
+              <p><strong>Phone:</strong> +923474308859</p>
+              <p><strong>Address:</strong> NY-123 Younkers, New York</p>
+            </div>
           </div>
         </div>
       </body>
@@ -226,9 +275,10 @@ P.S. At the end of each month, we'll send you an update with your 30-day total, 
 ChangeWorks Fund
 Your trusted platform partner for charitable giving
 
-RapidTechPro
-Punjab Center Mandi Bahauddin
-+923474308859
+Contact Information:
+Email: info@rapidtechpro.com
+Phone: +923474308859
+Address: NY-123 Younkers, New York
     `;
 
     return await this.sendEmail({

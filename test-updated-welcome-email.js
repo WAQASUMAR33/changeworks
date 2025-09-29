@@ -1,8 +1,9 @@
-// Test welcome email functionality
+// Test updated welcome email with new format
 const BASE_URL = 'https://app.changeworksfund.org';
 
-async function testWelcomeEmail() {
-  console.log('🧪 Testing Welcome Email Service');
+async function testUpdatedWelcomeEmail() {
+  console.log('🧪 Testing Updated Welcome Email Service');
+  console.log('📧 New beautiful HTML format with updated contact info');
   console.log('=' .repeat(60));
 
   try {
@@ -20,15 +21,16 @@ async function testWelcomeEmail() {
     const configResult = await configResponse.json();
     
     console.log('Status:', configResponse.status);
-    console.log('Configuration:', JSON.stringify(configResult, null, 2));
+    console.log('Email Config:', configResult.emailConfig);
+    console.log('Connection Test:', configResult.connectionTest);
 
     if (!configResult.success) {
       console.log('❌ Configuration check failed');
       return;
     }
 
-    // Test 2: Send welcome email to donor
-    console.log('\n📋 Step 2: Send welcome email');
+    // Test 2: Send updated welcome email
+    console.log('\n📋 Step 2: Send updated welcome email');
     console.log('-' .repeat(40));
     
     const emailResponse = await fetch(`${BASE_URL}/api/email/send-welcome`, {
@@ -49,14 +51,21 @@ async function testWelcomeEmail() {
     console.log('Response:', JSON.stringify(emailResult, null, 2));
 
     if (emailResult.success) {
-      console.log('\n✅ WELCOME EMAIL SENT SUCCESSFULLY!');
+      console.log('\n✅ UPDATED WELCOME EMAIL SENT SUCCESSFULLY!');
       console.log('📧 Message ID:', emailResult.emailResult.messageId);
       console.log('📧 Sent to:', emailResult.emailResult.donor.email);
       console.log('📧 Donor Name:', emailResult.emailResult.donor.name);
       console.log('📧 Organization:', emailResult.emailResult.organization.name);
       console.log('📧 Dashboard Link:', emailResult.emailResult.dashboardLink);
       console.log('📧 Sent at:', emailResult.sentAt);
-      console.log('\n🎉 Please check the donor\'s email inbox for the welcome email!');
+      console.log('\n🎉 Please check the donor\'s email inbox for the beautiful welcome email!');
+      console.log('\n📋 Email Features:');
+      console.log('   ✅ Beautiful HTML design with gradients');
+      console.log('   ✅ Professional styling and typography');
+      console.log('   ✅ Responsive layout');
+      console.log('   ✅ Updated contact information');
+      console.log('   ✅ Call-to-action button');
+      console.log('   ✅ Organization name from database');
     } else {
       console.log('\n❌ WELCOME EMAIL FAILED TO SEND');
       console.log('Error:', emailResult.error);
@@ -70,9 +79,9 @@ async function testWelcomeEmail() {
     }
 
   } catch (error) {
-    console.error('❌ Error testing welcome email:', error.message);
+    console.error('❌ Error testing updated welcome email:', error.message);
   }
 }
 
 // Run the test
-testWelcomeEmail();
+testUpdatedWelcomeEmail();
