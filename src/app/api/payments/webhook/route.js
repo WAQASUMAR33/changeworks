@@ -180,6 +180,19 @@ async function handlePaymentIntentFailed(paymentIntent) {
       }
     });
 
+    // Send card failure alert email if donor and organization info available
+    try {
+      const donorId = parseInt(paymentIntent.metadata.donor_id);
+      const organizationId = parseInt(paymentIntent.metadata.organization_id);
+      
+      if (donorId && organizationId) {
+        await sendCardFailureAlertEmail(donorId, organizationId);
+      }
+    } catch (emailError) {
+      console.error('Failed to send card failure alert email:', emailError);
+      // Don't fail the webhook if email fails
+    }
+
   } catch (error) {
     console.error('Error handling payment_intent.payment_failed:', error);
   }
@@ -474,6 +487,14 @@ async function handleInvoicePaymentFailed(invoice) {
 
     console.log(`Recorded failed payment for subscription ${subscription.id}`);
 
+    // Send card failure alert email for subscription payment failure
+    try {
+      await sendCardFailureAlertEmail(subscription.donor_id, subscription.organization_id);
+    } catch (emailError) {
+      console.error('Failed to send card failure alert email:', emailError);
+      // Don't fail the webhook if email fails
+    }
+
   } catch (error) {
     console.error('Error handling invoice.payment_failed:', error);
   }
@@ -582,5 +603,49 @@ async function sendMonthlyImpactEmail(donorId, organizationId, amount) {
 
   } catch (error) {
     console.error('Error sending monthly impact email:', error);
+  }
+}
+
+// Helper function to send card failure alert email
+async function sendCardFailureAlertEmail(donorId, organizationId) {
+  try {
+    // Fetch donor and organization information
+    const [donor, organization] = await Promise.all([
+      prisma.donor.findUnique({
+        where: { id: donorId },
+        select: { id: true, name: true, email: true }
+      }),
+      prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { id: true, name: true, email: true }
+      })
+    ]);
+
+    if (!donor || !organization) {
+      console.log('Donor or organization not found for card failure alert email');
+      return;
+    }
+
+    // Generate dashboard link
+    const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
+
+    // Send card failure alert email
+    const emailResult = await emailService.sendCardFailureAlertEmail({
+      donor: {
+        name: donor.name,
+        email: donor.email
+      },
+      organization: organization,
+      dashboardLink: dashboardLink
+    });
+
+    if (emailResult.success) {
+      console.log(`✅ Card failure alert email sent to ${donor.email} for ${organization.name}`);
+    } else {
+      console.error(`❌ Failed to send card failure alert email to ${donor.email}:`, emailResult.error);
+    }
+
+  } catch (error) {
+    console.error('Error sending card failure alert email:', error);
   }
 }

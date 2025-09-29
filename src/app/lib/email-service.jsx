@@ -505,6 +505,464 @@ Address: NY-123 Younkers, New York
     });
   }
 
+  // Send card failure alert email to donor
+  async sendCardFailureAlertEmail({ donor, organization, dashboardLink }) {
+    const subject = `ACTION NEEDED: Please update your ${organization.name} round-up card`;
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Card Update Required - ${organization.name}</title>
+        <style>
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+          }
+          .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+          }
+          .header {
+            text-align: center;
+            border-bottom: 3px solid #dc3545;
+            padding-bottom: 25px;
+            margin-bottom: 35px;
+          }
+          .header h1 {
+            color: #dc3545;
+            margin: 0;
+            font-size: 32px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .logo {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 20px;
+          }
+          .content {
+            margin-bottom: 35px;
+          }
+          .content p {
+            margin-bottom: 18px;
+            font-size: 16px;
+            color: #495057;
+          }
+          .greeting {
+            font-size: 18px;
+            font-weight: 500;
+            color: #212529;
+            margin-bottom: 25px;
+          }
+          .alert-box {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 1px solid #f5c6cb;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            border-left: 4px solid #dc3545;
+            text-align: center;
+          }
+          .alert-box h3 {
+            color: #721c24;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: 600;
+          }
+          .alert-box p {
+            margin: 0;
+            color: #721c24;
+            font-weight: 500;
+          }
+          .update-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 25px 0;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+            transition: all 0.3s ease;
+          }
+          .update-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+          }
+          .footer {
+            border-top: 2px solid #e9ecef;
+            padding-top: 25px;
+            margin-top: 35px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+          }
+          .signature {
+            margin-top: 30px;
+            font-style: italic;
+            color: #495057;
+          }
+          .ps-section {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffeaa7;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            border-left: 4px solid #ffc107;
+          }
+          .ps-section p {
+            margin: 0;
+            color: #856404;
+            font-weight: 500;
+          }
+          .contact-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 25px;
+            text-align: center;
+          }
+          .contact-info h4 {
+            color: #dc3545;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+          }
+          .contact-info p {
+            margin: 5px 0;
+            color: #495057;
+            font-size: 14px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo">
+            <h1>Card Update Required</h1>
+          </div>
+          
+          <div class="content">
+            <p class="greeting">Hello ${donor.name},</p>
+            
+            <div class="alert-box">
+              <h3>⚠️ Card Not Working Alert</h3>
+              <p>We noticed your round-up card on file isn't working right now. It's an easy fix — simply update your card details in your Donor Portal on ChangeWorks, our platform partner.</p>
+            </div>
+            
+            <p>When you update your card, your purchases will keep rounding up automatically, and your ongoing support for <strong>${organization.name}</strong> will keep making a difference in the community.</p>
+            
+            <div style="text-align: center;">
+              <a href="${dashboardLink}" class="update-button">Update Your Card Now</a>
+            </div>
+            
+            <p>Thank you for being part of our round-up community. Every swipe, tap, and purchase you make helps carry our mission forward — and we don't want you to miss a single moment of impact.</p>
+            
+            <div class="signature">
+              <p>With gratitude,<br>
+              <strong>${organization.name} Team</strong></p>
+            </div>
+            
+            <div class="ps-section">
+              <p><strong>P.S.</strong> If you have any questions or need assistance, reply to this email and we'll be glad to help.</p>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <div class="contact-info">
+              <h4>ChangeWorks Fund</h4>
+              <p>Your trusted platform partner for charitable giving</p>
+              
+              <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
+              
+              <h4>Contact Information</h4>
+              <p><strong>Email:</strong> info@rapidtechpro.com</p>
+              <p><strong>Phone:</strong> +923474308859</p>
+              <p><strong>Address:</strong> NY-123 Younkers, New York</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+ACTION NEEDED: Please update your ${organization.name} round-up card
+
+Hello ${donor.name},
+
+We noticed your round-up card on file isn't working right now. It's an easy fix — simply update your card details in your Donor Portal on ChangeWorks, our platform partner.
+
+When you update your card, your purchases will keep rounding up automatically, and your ongoing support for ${organization.name} will keep making a difference in the community.
+
+Update Your Card: ${dashboardLink}
+
+Thank you for being part of our round-up community. Every swipe, tap, and purchase you make helps carry our mission forward — and we don't want you to miss a single moment of impact.
+
+With gratitude,
+${organization.name} Team
+
+P.S. If you have any questions or need assistance, reply to this email and we'll be glad to help.
+
+---
+ChangeWorks Fund
+Your trusted platform partner for charitable giving
+
+Contact Information:
+Email: info@rapidtechpro.com
+Phone: +923474308859
+Address: NY-123 Younkers, New York
+    `;
+
+    return await this.sendEmail({
+      to: donor.email,
+      subject: subject,
+      html: html,
+      text: text
+    });
+  }
+
+  // Send final reminder email for card failure
+  async sendCardFailureFinalReminderEmail({ donor, organization, dashboardLink }) {
+    const subject = `LAST REMINDER: Please update your ${organization.name} round-up card`;
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Final Reminder - Card Update Required</title>
+        <style>
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+          }
+          .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+          }
+          .header {
+            text-align: center;
+            border-bottom: 3px solid #fd7e14;
+            padding-bottom: 25px;
+            margin-bottom: 35px;
+          }
+          .header h1 {
+            color: #fd7e14;
+            margin: 0;
+            font-size: 32px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .logo {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 20px;
+          }
+          .content {
+            margin-bottom: 35px;
+          }
+          .content p {
+            margin-bottom: 18px;
+            font-size: 16px;
+            color: #495057;
+          }
+          .greeting {
+            font-size: 18px;
+            font-weight: 500;
+            color: #212529;
+            margin-bottom: 25px;
+          }
+          .urgent-box {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffeaa7;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            border-left: 4px solid #fd7e14;
+            text-align: center;
+          }
+          .urgent-box h3 {
+            color: #856404;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: 600;
+          }
+          .urgent-box p {
+            margin: 0;
+            color: #856404;
+            font-weight: 500;
+          }
+          .update-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 25px 0;
+            box-shadow: 0 4px 15px rgba(253, 126, 20, 0.3);
+            transition: all 0.3s ease;
+          }
+          .update-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(253, 126, 20, 0.4);
+          }
+          .footer {
+            border-top: 2px solid #e9ecef;
+            padding-top: 25px;
+            margin-top: 35px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+          }
+          .signature {
+            margin-top: 30px;
+            font-style: italic;
+            color: #495057;
+          }
+          .impact-message {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            border: 1px solid #bee5eb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            border-left: 4px solid #17a2b8;
+          }
+          .impact-message p {
+            margin: 0;
+            color: #0c5460;
+            font-weight: 500;
+          }
+          .contact-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 25px;
+            text-align: center;
+          }
+          .contact-info h4 {
+            color: #fd7e14;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+          }
+          .contact-info p {
+            margin: 5px 0;
+            color: #495057;
+            font-size: 14px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo">
+            <h1>Final Reminder</h1>
+          </div>
+          
+          <div class="content">
+            <p class="greeting">Hello ${donor.name},</p>
+            
+            <div class="urgent-box">
+              <h3>🚨 LAST REMINDER</h3>
+              <p>Right now, your round-up card on file still isn't working, which means your spare change isn't reaching us — and not reaching the people that together we serve.</p>
+            </div>
+            
+            <p>Please take a moment today to update your card details in your Donor Portal on ChangeWorks, our platform partner.</p>
+            
+            <div style="text-align: center;">
+              <a href="${dashboardLink}" class="update-button">Update Your Card Today</a>
+            </div>
+            
+            <div class="impact-message">
+              <p>Your continued support helps us plan ahead and deliver on our mission. Your pennies matter — and when they pause, so does the change you help us make happen.</p>
+            </div>
+            
+            <p>Thank you for updating your card and for being such an important part of our community.</p>
+            
+            <div class="signature">
+              <p>With appreciation,<br>
+              <strong>${organization.name} Team</strong></p>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <div class="contact-info">
+              <h4>ChangeWorks Fund</h4>
+              <p>Your trusted platform partner for charitable giving</p>
+              
+              <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
+              
+              <h4>Contact Information</h4>
+              <p><strong>Email:</strong> info@rapidtechpro.com</p>
+              <p><strong>Phone:</strong> +923474308859</p>
+              <p><strong>Address:</strong> NY-123 Younkers, New York</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+LAST REMINDER: Please update your ${organization.name} round-up card
+
+Hello ${donor.name},
+
+Right now, your round-up card on file still isn't working, which means your spare change isn't reaching us — and not reaching the people that together we serve.
+
+Please take a moment today to update your card details in your Donor Portal on ChangeWorks, our platform partner.
+
+Update Your Card: ${dashboardLink}
+
+Your continued support helps us plan ahead and deliver on our mission. Your pennies matter — and when they pause, so does the change you help us make happen.
+
+Thank you for updating your card and for being such an important part of our community.
+
+With appreciation,
+${organization.name} Team
+
+---
+ChangeWorks Fund
+Your trusted platform partner for charitable giving
+
+Contact Information:
+Email: info@rapidtechpro.com
+Phone: +923474308859
+Address: NY-123 Younkers, New York
+    `;
+
+    return await this.sendEmail({
+      to: donor.email,
+      subject: subject,
+      html: html,
+      text: text
+    });
+  }
+
   // Send welcome/thank you email to donor
   async sendWelcomeEmail({ donor, organization, dashboardLink }) {
     const subject = `Welcome to ${organization.name}'s round-up community`;
