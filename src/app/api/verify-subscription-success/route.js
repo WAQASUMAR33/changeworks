@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../lib/prisma";
 import Stripe from "stripe";
+import emailService from "../../lib/email-service.jsx";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -230,6 +231,50 @@ export async function POST(request) {
       });
 
       console.log(`✅ Created new subscription ${stripeSubscription.id} in database with ID: ${subscription.id}`);
+    }
+
+    // Send welcome email and monthly impact email for new subscription
+    try {
+      const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
+      
+      // Send welcome email
+      const welcomeResult = await emailService.sendWelcomeEmail({
+        donor: {
+          name: donor.name,
+          email: donor.email
+        },
+        organization: organization,
+        dashboardLink: dashboardLink
+      });
+
+      if (welcomeResult.success) {
+        console.log(`✅ Welcome email sent to ${donor.email} for new subscription`);
+      } else {
+        console.error(`❌ Failed to send welcome email to ${donor.email}:`, welcomeResult.error);
+      }
+
+      // Send monthly impact email for the subscription
+      const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+      const monthlyImpactResult = await emailService.sendMonthlyImpactEmail({
+        donor: {
+          name: donor.name,
+          email: donor.email
+        },
+        organization: organization,
+        dashboardLink: dashboardLink,
+        month: currentMonth,
+        totalAmount: packageData.price
+      });
+
+      if (monthlyImpactResult.success) {
+        console.log(`✅ Monthly impact email sent to ${donor.email} for $${packageData.price} in ${currentMonth}`);
+      } else {
+        console.error(`❌ Failed to send monthly impact email to ${donor.email}:`, monthlyImpactResult.error);
+      }
+
+    } catch (emailError) {
+      console.error('Error sending subscription emails:', emailError);
+      // Don't fail the API if email sending fails
     }
 
     return NextResponse.json({
