@@ -25,7 +25,7 @@ export default function SubscriptionSuccessPage() {
     try {
       setVerificationStatus('loading');
       
-      const response = await fetch('/api/subscriptions/verify-success', {
+      const response = await fetch('/api/verify-subscription-success', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
