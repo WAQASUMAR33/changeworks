@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../lib/prisma";
 import { hash } from "bcryptjs";
 import { z } from "zod";
-import nodemailer from "nodemailer";
 import crypto from "crypto";
 import GHLClient from "../../lib/ghl-client";
+import emailService from "../../lib/email-service";
 
 const donorSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -185,48 +185,75 @@ export async function POST(request) {
       },
     });
 
-    // Try to send email (but don't fail if email service is down)
-    let emailSent = false;
-    let emailError = null;
+    // Send beautiful verification email using our email service
+    let verificationEmailSent = false;
+    let verificationEmailError = null;
+    let welcomeEmailSent = false;
+    let welcomeEmailError = null;
 
     try {
       // Check if email server is configured
       if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD) {
-        const transport = nodemailer.createTransport({
-          host: process.env.EMAIL_SERVER_HOST,
-          port: Number(process.env.EMAIL_SERVER_PORT),
-          auth: {
-            user: process.env.EMAIL_SERVER_USER,
-            pass: process.env.EMAIL_SERVER_PASSWORD,
+        const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/api/verify-donor?token=${token}&donor_id=${donor.id}`;
+
+        // Send beautiful verification email
+        const verificationResult = await emailService.sendVerificationEmail({
+          donor: {
+            name: donor.name,
+            email: donor.email
           },
+          verificationToken: token,
+          verificationLink: verificationUrl
         });
 
-        const verificationUrl = `https://changeworks-seven.vercel.app/api/verify-donor?token=${token}`;
+        if (verificationResult.success) {
+          verificationEmailSent = true;
+          console.log('✅ Beautiful verification email sent successfully');
+        } else {
+          verificationEmailError = verificationResult.error;
+          console.error('❌ Verification email failed:', verificationResult.error);
+        }
 
-        await transport.sendMail({
-          to: email,
-          from: process.env.EMAIL_FROM,
-          subject: "Verify Your Donor Account",
-          text: `Please verify your email by clicking: ${verificationUrl}`,
-          html: `<p>Please verify your email by clicking: <a href="${verificationUrl}">${verificationUrl}</a></p>`,
+        // Send welcome email immediately after verification email
+        const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
+        
+        const welcomeResult = await emailService.sendWelcomeEmail({
+          donor: {
+            name: donor.name,
+            email: donor.email
+          },
+          organization: {
+            name: organization.name,
+            email: organization.email
+          },
+          dashboardLink: dashboardLink
         });
 
-        emailSent = true;
-        console.log('✅ Verification email sent successfully');
+        if (welcomeResult.success) {
+          welcomeEmailSent = true;
+          console.log('✅ Beautiful welcome email sent successfully');
+        } else {
+          welcomeEmailError = welcomeResult.error;
+          console.error('❌ Welcome email failed:', welcomeResult.error);
+        }
+
       } else {
-        console.log('⚠️ Email server not configured, skipping email verification');
+        console.log('⚠️ Email server not configured, skipping email sending');
+        verificationEmailError = 'Email server not configured';
+        welcomeEmailError = 'Email server not configured';
       }
     } catch (emailErr) {
-      emailError = emailErr.message;
+      verificationEmailError = emailErr.message;
+      welcomeEmailError = emailErr.message;
       console.error('❌ Email sending failed:', emailErr.message);
       // Don't throw error - continue with success response
     }
 
     return NextResponse.json(
       { 
-        message: emailSent 
-          ? "Donor registered. Please check your email to verify your account." 
-          : "Donor registered successfully. Email verification skipped (email service not configured).",
+        message: verificationEmailSent 
+          ? "Donor registered successfully! Beautiful verification and welcome emails sent to your inbox." 
+          : "Donor registered successfully. Email sending failed (check email configuration).",
         donor: {
           id: donor.id,
           name: donor.name,
@@ -235,9 +262,17 @@ export async function POST(request) {
           status: donor.status
         },
         email_status: {
-          sent: emailSent,
-          error: emailError,
-          verification_token: emailSent ? undefined : token // Include token if email failed
+          verification_email: {
+            sent: verificationEmailSent,
+            error: verificationEmailError,
+            type: "Beautiful HTML verification email"
+          },
+          welcome_email: {
+            sent: welcomeEmailSent,
+            error: welcomeEmailError,
+            type: "Beautiful HTML welcome email"
+          },
+          verification_token: verificationEmailSent ? undefined : token // Include token if email failed
         },
         ghl_contact_status: {
           created: ghlContactCreated,
