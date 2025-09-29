@@ -15,7 +15,7 @@ export async function POST(request) {
     }
 
     // Create transporter using Mailgun SMTP configuration
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_SERVER_HOST,
       port: parseInt(process.env.EMAIL_SERVER_PORT),
       secure: false, // true for 465, false for other ports
