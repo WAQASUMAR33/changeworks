@@ -113,7 +113,7 @@ export default function SubscriptionSuccessPage() {
             Subscription Successful!
           </h1>
           <p className="text-gray-600">
-            Your subscription has been activated and you're all set to start using our services.
+            Your subscription has been activated and you&apos;re all set to start using our services.
           </p>
         </div>
 
