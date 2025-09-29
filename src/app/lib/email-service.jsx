@@ -272,6 +272,239 @@ Address: NY-123 Younkers, New York
     });
   }
 
+  // Send monthly impact email to donor
+  async sendMonthlyImpactEmail({ donor, organization, dashboardLink, month, totalAmount }) {
+    const subject = `See what change your change made this month`;
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Your Monthly Impact - ${organization.name}</title>
+        <style>
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+          }
+          .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+          }
+          .header {
+            text-align: center;
+            border-bottom: 3px solid #6f42c1;
+            padding-bottom: 25px;
+            margin-bottom: 35px;
+          }
+          .header h1 {
+            color: #6f42c1;
+            margin: 0;
+            font-size: 32px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .logo {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 20px;
+          }
+          .content {
+            margin-bottom: 35px;
+          }
+          .content p {
+            margin-bottom: 18px;
+            font-size: 16px;
+            color: #495057;
+          }
+          .greeting {
+            font-size: 18px;
+            font-weight: 500;
+            color: #212529;
+            margin-bottom: 25px;
+          }
+          .impact-highlight {
+            background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 25px 0;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(111, 66, 193, 0.3);
+          }
+          .impact-highlight h2 {
+            margin: 0 0 15px 0;
+            font-size: 24px;
+            font-weight: 600;
+          }
+          .impact-amount {
+            font-size: 36px;
+            font-weight: 700;
+            margin: 10px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+          .impact-month {
+            font-size: 18px;
+            opacity: 0.9;
+            margin: 0;
+          }
+          .dashboard-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 25px 0;
+            box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+            transition: all 0.3s ease;
+          }
+          .dashboard-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
+          }
+          .footer {
+            border-top: 2px solid #e9ecef;
+            padding-top: 25px;
+            margin-top: 35px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+          }
+          .signature {
+            margin-top: 30px;
+            font-style: italic;
+            color: #495057;
+          }
+          .gratitude-section {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffeaa7;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            border-left: 4px solid #ffc107;
+          }
+          .gratitude-section p {
+            margin: 0;
+            color: #856404;
+            font-weight: 500;
+            font-size: 16px;
+          }
+          .contact-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 25px;
+            text-align: center;
+          }
+          .contact-info h4 {
+            color: #6f42c1;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+          }
+          .contact-info p {
+            margin: 5px 0;
+            color: #495057;
+            font-size: 14px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo">
+            <h1>Your Monthly Impact</h1>
+          </div>
+          
+          <div class="content">
+            <p class="greeting">Hello ${donor.name},</p>
+            
+            <div class="impact-highlight">
+              <h2>Your Impact This Month</h2>
+              <div class="impact-amount">$${totalAmount}</div>
+              <p class="impact-month">${month}</p>
+            </div>
+            
+            <p>Your everyday purchases made a difference in <strong>${month}</strong>. Altogether, your round-ups added up to <strong>$${totalAmount}</strong> for <strong>${organization.name}</strong>.</p>
+            
+            <p>If you want to see details of your round-up donations or make changes, log into your Donor Portal on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.</p>
+            
+            <div style="text-align: center;">
+              <a href="${dashboardLink}" class="dashboard-button">Access Your Donor Portal</a>
+            </div>
+            
+            <div class="gratitude-section">
+              <p>Thank you for carrying our mission forward with every swipe, tap, and purchase. Small change, month after month, can create lasting change in our community.</p>
+            </div>
+            
+            <div class="signature">
+              <p>With gratitude,<br>
+              <strong>${organization.name} Team</strong></p>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <div class="contact-info">
+              <h4>ChangeWorks Fund</h4>
+              <p>Your trusted platform partner for charitable giving</p>
+              
+              <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
+              
+              <h4>Contact Information</h4>
+              <p><strong>Email:</strong> info@rapidtechpro.com</p>
+              <p><strong>Phone:</strong> +923474308859</p>
+              <p><strong>Address:</strong> NY-123 Younkers, New York</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+See what change your change made this month
+
+Hello ${donor.name},
+
+Your everyday purchases made a difference in ${month}. Altogether, your round-ups added up to $${totalAmount} for ${organization.name}.
+
+If you want to see details of your round-up donations or make changes, log into your Donor Portal on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.
+
+Access Your Donor Portal: ${dashboardLink}
+
+Thank you for carrying our mission forward with every swipe, tap, and purchase. Small change, month after month, can create lasting change in our community.
+
+With gratitude,
+${organization.name} Team
+
+---
+ChangeWorks Fund
+Your trusted platform partner for charitable giving
+
+Contact Information:
+Email: info@rapidtechpro.com
+Phone: +923474308859
+Address: NY-123 Younkers, New York
+    `;
+
+    return await this.sendEmail({
+      to: donor.email,
+      subject: subject,
+      html: html,
+      text: text
+    });
+  }
+
   // Send welcome/thank you email to donor
   async sendWelcomeEmail({ donor, organization, dashboardLink }) {
     const subject = `Welcome to ${organization.name}'s round-up community`;

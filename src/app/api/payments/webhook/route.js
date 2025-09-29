@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from 'stripe';
 import { prisma } from "../../../lib/prisma";
+import emailService from "../../../lib/email-service";
 
 // Initialize Stripe with proper error handling
 let stripe;
@@ -142,6 +143,14 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
     });
 
     console.log(`Updated organization ${organizationId} balance by $${amount}`);
+
+    // Send monthly impact email to donor
+    try {
+      await sendMonthlyImpactEmail(donorId, organizationId, amount);
+    } catch (emailError) {
+      console.error('Failed to send monthly impact email:', emailError);
+      // Don't fail the webhook if email fails
+    }
 
   } catch (error) {
     console.error('Error handling payment_intent.succeeded:', error);
@@ -409,6 +418,14 @@ async function handleInvoicePaymentSucceeded(invoice) {
 
     console.log(`Updated organization ${subscription.organization_id} balance by $${amount} from subscription payment`);
 
+    // Send monthly impact email to donor
+    try {
+      await sendMonthlyImpactEmail(subscription.donor_id, subscription.organization_id, amount);
+    } catch (emailError) {
+      console.error('Failed to send monthly impact email:', emailError);
+      // Don't fail the webhook if email fails
+    }
+
   } catch (error) {
     console.error('Error handling invoice.payment_succeeded:', error);
   }
@@ -513,5 +530,57 @@ async function handleInvoiceCreated(invoice) {
 
   } catch (error) {
     console.error('Error handling invoice.created:', error);
+  }
+}
+
+// Helper function to send monthly impact email
+async function sendMonthlyImpactEmail(donorId, organizationId, amount) {
+  try {
+    // Get current month name
+    const currentDate = new Date();
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"];
+    const currentMonth = monthNames[currentDate.getMonth()];
+
+    // Fetch donor and organization information
+    const [donor, organization] = await Promise.all([
+      prisma.donor.findUnique({
+        where: { id: donorId },
+        select: { id: true, name: true, email: true }
+      }),
+      prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { id: true, name: true, email: true }
+      })
+    ]);
+
+    if (!donor || !organization) {
+      console.log('Donor or organization not found for monthly impact email');
+      return;
+    }
+
+    // Generate dashboard link
+    const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
+
+    // Send monthly impact email
+    const emailResult = await emailService.sendMonthlyImpactEmail({
+      donor: {
+        name: donor.name,
+        email: donor.email
+      },
+      organization: organization,
+      dashboardLink: dashboardLink,
+      month: currentMonth,
+      totalAmount: amount.toFixed(2)
+    });
+
+    if (emailResult.success) {
+      console.log(`✅ Monthly impact email sent to ${donor.email} for $${amount} in ${currentMonth}`);
+    } else {
+      console.error(`❌ Failed to send monthly impact email to ${donor.email}:`, emailResult.error);
+    }
+
+  } catch (error) {
+    console.error('Error sending monthly impact email:', error);
   }
 }
