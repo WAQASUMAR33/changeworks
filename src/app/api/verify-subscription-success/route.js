@@ -119,17 +119,23 @@ export async function POST(request) {
     let subscription;
 
     if (existingSubscription) {
-      // Update existing subscription
+      // Update existing subscription with proper date validation
+      const createValidDate = (timestamp) => {
+        if (!timestamp || timestamp === 0) return null;
+        const date = new Date(timestamp * 1000);
+        return isNaN(date.getTime()) ? null : date;
+      };
+
       subscription = await prisma.subscription.update({
         where: { id: existingSubscription.id },
         data: {
           status: stripeSubscription.status.toUpperCase(),
-          current_period_start: new Date(stripeSubscription.current_period_start * 1000),
-          current_period_end: new Date(stripeSubscription.current_period_end * 1000),
-          cancel_at_period_end: stripeSubscription.cancel_at_period_end,
-          canceled_at: stripeSubscription.canceled_at ? new Date(stripeSubscription.canceled_at * 1000) : null,
-          trial_start: stripeSubscription.trial_start ? new Date(stripeSubscription.trial_start * 1000) : null,
-          trial_end: stripeSubscription.trial_end ? new Date(stripeSubscription.trial_end * 1000) : null,
+          current_period_start: createValidDate(stripeSubscription.current_period_start) || existingSubscription.current_period_start,
+          current_period_end: createValidDate(stripeSubscription.current_period_end) || existingSubscription.current_period_end,
+          cancel_at_period_end: stripeSubscription.cancel_at_period_end || false,
+          canceled_at: createValidDate(stripeSubscription.canceled_at),
+          trial_start: createValidDate(stripeSubscription.trial_start),
+          trial_end: createValidDate(stripeSubscription.trial_end),
           updated_at: new Date()
         },
         include: {
@@ -162,19 +168,25 @@ export async function POST(request) {
 
       console.log(`✅ Updated existing subscription ${stripeSubscription.id} in database`);
     } else {
-      // Create new subscription record
+      // Create new subscription record with proper date validation
+      const createValidDate = (timestamp) => {
+        if (!timestamp || timestamp === 0) return null;
+        const date = new Date(timestamp * 1000);
+        return isNaN(date.getTime()) ? null : date;
+      };
+
       const subscriptionData = {
         stripe_subscription_id: stripeSubscription.id,
         donor_id: donorId,
         organization_id: organizationId,
         package_id: packageId,
         status: stripeSubscription.status.toUpperCase(),
-        current_period_start: new Date(stripeSubscription.current_period_start * 1000),
-        current_period_end: new Date(stripeSubscription.current_period_end * 1000),
-        cancel_at_period_end: stripeSubscription.cancel_at_period_end,
-        canceled_at: stripeSubscription.canceled_at ? new Date(stripeSubscription.canceled_at * 1000) : null,
-        trial_start: stripeSubscription.trial_start ? new Date(stripeSubscription.trial_start * 1000) : null,
-        trial_end: stripeSubscription.trial_end ? new Date(stripeSubscription.trial_end * 1000) : null,
+        current_period_start: createValidDate(stripeSubscription.current_period_start) || new Date(),
+        current_period_end: createValidDate(stripeSubscription.current_period_end) || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        cancel_at_period_end: stripeSubscription.cancel_at_period_end || false,
+        canceled_at: createValidDate(stripeSubscription.canceled_at),
+        trial_start: createValidDate(stripeSubscription.trial_start),
+        trial_end: createValidDate(stripeSubscription.trial_end),
         amount: packageData.price,
         currency: packageData.currency,
         interval: 'month', // Default to monthly
