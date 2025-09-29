@@ -91,7 +91,7 @@ export async function POST(request) {
           data: {
             cancel_at_period_end: !cancel_immediately,
             canceled_at: cancel_immediately ? new Date() : null,
-            status: cancel_immediately ? 'CANCELED' : subscription.status,
+            status: cancel_immediately ? 'CANCELED' : 'CANCELED_AT_PERIOD_END',
             updated_at: new Date()
           },
           include: {
@@ -240,7 +240,7 @@ export async function GET(request) {
       ['CANCELED', 'UNPAID'].includes(sub.status)
     );
     const scheduledForCancellation = subscriptions.filter(sub => 
-      sub.cancel_at_period_end === true
+      sub.cancel_at_period_end === true || sub.status === 'CANCELED_AT_PERIOD_END'
     );
 
     return NextResponse.json({

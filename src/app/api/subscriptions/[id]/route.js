@@ -295,7 +295,8 @@ export async function DELETE(request, { params }) {
       data: {
         cancel_at_period_end: !cancelImmediately,
         canceled_at: cancelImmediately ? new Date() : null,
-        status: cancelImmediately ? 'CANCELED' : subscription.status
+        status: cancelImmediately ? 'CANCELED' : 'CANCELED_AT_PERIOD_END',
+        updated_at: new Date()
       },
       include: {
         donor: {

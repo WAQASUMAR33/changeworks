@@ -324,13 +324,26 @@ async function handleSubscriptionUpdated(subscription) {
   try {
     console.log('Subscription updated:', subscription.id);
 
+    // Determine the correct status based on Stripe data
+    let status = subscription.status.toUpperCase();
+    
+    // If subscription is canceled at period end, set appropriate status
+    if (subscription.cancel_at_period_end && subscription.status === 'active') {
+      status = 'CANCELED_AT_PERIOD_END';
+    }
+    
+    // If subscription is canceled, ensure status is CANCELED
+    if (subscription.status === 'canceled') {
+      status = 'CANCELED';
+    }
+
     // Update subscription record
     await prisma.subscription.updateMany({
       where: {
         stripe_subscription_id: subscription.id
       },
       data: {
-        status: subscription.status.toUpperCase(),
+        status: status,
         current_period_start: new Date(subscription.current_period_start * 1000),
         current_period_end: new Date(subscription.current_period_end * 1000),
         cancel_at_period_end: subscription.cancel_at_period_end,
