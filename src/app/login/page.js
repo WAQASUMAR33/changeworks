@@ -99,7 +99,7 @@ export default function LoginPage() {
         // Store as regular user for donors
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        router.push('/'); // Redirect donors to home page instead of admin
+        router.push('/donor/dashboard'); // Redirect donors to donor dashboard
       } else {
         // Store as regular user
         localStorage.setItem('token', data.token);
