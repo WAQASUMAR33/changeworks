@@ -25,7 +25,7 @@ export default function VerifySuccessPage() {
 
           {note === 'email_not_sent' && (
             <div className="mt-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-4 py-2 inline-block">
-              Verification success email could not be sent. You're all set anyway!
+              Verification success email could not be sent. You&apos;re all set anyway!
             </div>
           )}
 
