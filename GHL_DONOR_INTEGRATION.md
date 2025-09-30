@@ -13,7 +13,7 @@ https://rest.gohighlevel.com/v1/contacts/
 
 ### Headers
 ```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2NhdGlvbl9pZCI6IkttcUdwY3ZON2Q4OVBGbXZOWXJHIiwidmVyc2lvbiI6MSwiaWF0IjoxNzU4NzQ1MjE1NzE4LCJzdWIiOiJLY0NGR21sSzJha2ltWUxJSU5ITCJ9.bbiir7VGC10JFlpepYIc1z0aoU7G-EKwzNSCxH4ogb4
+Authorization: Bearer YOUR_GHL_API_KEY_HERE
 Version: 2021-07-28
 Content-Type: application/json
 ```
@@ -194,7 +194,7 @@ The integration uses hardcoded GHL API credentials for now. To make it configura
 ```env
 # GHL API Configuration
 GHL_API_URL=https://rest.gohighlevel.com/v1/contacts/
-GHL_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+GHL_API_KEY=your_ghl_api_key_here
 GHL_LOCATION_ID=KmqGpcvN7d89PFmvNYrG
 ```
 

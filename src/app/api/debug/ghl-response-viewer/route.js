@@ -16,7 +16,7 @@ export async function POST() {
       postalCode: 'SW1A 1AA',
       website: 'https://testbusiness.com',
       timezone: 'Europe/London', // Correct timezone for UK
-      companyId: process.env.GHL_COMPANY_ID || 'BWID4bp77xwMfmzh1iud' // From environment or fallback
+      companyId: process.env.GHL_COMPANY_ID
     };
 
     // Create GHL client and make the request
