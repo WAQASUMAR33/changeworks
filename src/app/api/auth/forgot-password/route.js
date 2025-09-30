@@ -79,18 +79,18 @@ export async function POST(request) {
           text: `You requested a password reset. Click the following link to reset your password: ${resetUrl}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #2563eb; text-align: center;">ChangeWorks Password Reset</h2>
+              <h2 style="color: #302E56; text-align: center;">ChangeWorks Password Reset</h2>
               <p>Hello,</p>
               <p>You requested a password reset for your ChangeWorks account.</p>
               <p>Click the button below to reset your password:</p>
               <div style="text-align: center; margin: 30px 0;">
                 <a href="${resetUrl}" 
-                   style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                   style="background-color: #302E56; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
                   Reset Password
                 </a>
               </div>
               <p>If the button doesn't work, copy and paste this link into your browser:</p>
-              <p style="word-break: break-all; color: #6b7280;">${resetUrl}</p>
+              <p style="word-break: break-all; color: #302E56;">${resetUrl}</p>
               <p>This link will expire in 1 hour for security reasons.</p>
               <p>If you didn't request this password reset, please ignore this email.</p>
               <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">

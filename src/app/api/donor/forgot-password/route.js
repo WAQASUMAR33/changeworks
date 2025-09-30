@@ -85,12 +85,12 @@ export async function POST(request) {
           text: `Hello ${donor.name},\n\nYou requested a password reset for your donor account with ${donor.organization.name}.\n\nClick the link below to reset your password:\n${resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nChangeWorks Team`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #333;">Password Reset Request</h2>
+              <h2 style="color: #302E56;">Password Reset Request</h2>
               <p>Hello ${donor.name},</p>
               <p>You requested a password reset for your donor account with <strong>${donor.organization.name}</strong>.</p>
               <p>Click the button below to reset your password:</p>
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${resetUrl}" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a>
+                <a href="${resetUrl}" style="background-color: #302E56; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a>
               </div>
               <p><strong>This link will expire in 1 hour.</strong></p>
               <p>If you didn't request this password reset, please ignore this email.</p>

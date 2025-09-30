@@ -84,12 +84,12 @@ class EmailService {
           }
           .header {
             text-align: center;
-            border-bottom: 3px solid #007bff;
+            border-bottom: 3px solid #302E56;
             padding-bottom: 25px;
             margin-bottom: 35px;
           }
           .header h1 {
-            color: #007bff;
+            color: #302E56;
             margin: 0;
             font-size: 32px;
             font-weight: 600;
@@ -110,15 +110,15 @@ class EmailService {
             margin-bottom: 25px;
           }
           .verification-box {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            background: linear-gradient(135deg, #E6E6F0 0%, #D3D2E0 100%);
             padding: 25px;
             border-radius: 10px;
             margin: 25px 0;
-            border-left: 4px solid #2196f3;
+            border-left: 4px solid #302E56;
             text-align: center;
           }
           .verification-box h3 {
-            color: #1976d2;
+            color: #302E56;
             margin-top: 0;
             margin-bottom: 15px;
             font-size: 18px;
@@ -126,19 +126,19 @@ class EmailService {
           }
           .verify-button {
             display: inline-block;
-            background: linear-gradient(135deg, #2196f3 0%, #21cbf3 100%);
+            background: linear-gradient(135deg, #302E56 0%, #4A487A 100%);
             color: white;
             padding: 15px 30px;
             text-decoration: none;
             border-radius: 8px;
             font-weight: 600;
             margin: 20px 0;
-            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+            box-shadow: 0 4px 15px rgba(48, 46, 86, 0.3);
             transition: all 0.3s ease;
           }
           .verify-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+            box-shadow: 0 6px 20px rgba(48, 46, 86, 0.4);
           }
           .footer {
             border-top: 2px solid #e9ecef;
@@ -169,7 +169,7 @@ class EmailService {
             text-align: center;
           }
           .contact-info h4 {
-            color: #007bff;
+            color: #302E56;
             margin: 0 0 10px 0;
             font-size: 16px;
           }
@@ -199,7 +199,7 @@ class EmailService {
               
               <p style="margin-top: 15px; font-size: 14px; color: #666;">
                 Or copy and paste this link into your browser:<br>
-                <span style="word-break: break-all; color: #007bff;">${verificationLink}</span>
+                <span style="word-break: break-all; color: #302E56;">${verificationLink}</span>
               </p>
             </div>
             
@@ -302,12 +302,12 @@ Address: NY-123 Younkers, New York
           }
           .header {
             text-align: center;
-            border-bottom: 3px solid #6f42c1;
+            border-bottom: 3px solid #302E56;
             padding-bottom: 25px;
             margin-bottom: 35px;
           }
           .header h1 {
-            color: #6f42c1;
+            color: #302E56;
             margin: 0;
             font-size: 32px;
             font-weight: 600;
@@ -333,13 +333,13 @@ Address: NY-123 Younkers, New York
             margin-bottom: 25px;
           }
           .impact-highlight {
-            background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+            background: linear-gradient(135deg, #302E56 0%, #4A487A 100%);
             color: white;
             padding: 30px;
             border-radius: 15px;
             margin: 25px 0;
             text-align: center;
-            box-shadow: 0 8px 25px rgba(111, 66, 193, 0.3);
+            box-shadow: 0 8px 25px rgba(48, 46, 86, 0.3);
           }
           .impact-highlight h2 {
             margin: 0 0 15px 0;
@@ -359,19 +359,19 @@ Address: NY-123 Younkers, New York
           }
           .dashboard-button {
             display: inline-block;
-            background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+            background: linear-gradient(135deg, #302E56 0%, #4A487A 100%);
             color: white;
             padding: 15px 30px;
             text-decoration: none;
             border-radius: 8px;
             font-weight: 600;
             margin: 25px 0;
-            box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+            box-shadow: 0 4px 15px rgba(48, 46, 86, 0.3);
             transition: all 0.3s ease;
           }
           .dashboard-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
+            box-shadow: 0 6px 20px rgba(48, 46, 86, 0.4);
           }
           .footer {
             border-top: 2px solid #e9ecef;
@@ -408,7 +408,7 @@ Address: NY-123 Younkers, New York
             text-align: center;
           }
           .contact-info h4 {
-            color: #6f42c1;
+            color: #302E56;
             margin: 0 0 10px 0;
             font-size: 16px;
           }
@@ -535,12 +535,12 @@ Address: NY-123 Younkers, New York
           }
           .header {
             text-align: center;
-            border-bottom: 3px solid #dc3545;
+            border-bottom: 3px solid #302E56;
             padding-bottom: 25px;
             margin-bottom: 35px;
           }
           .header h1 {
-            color: #dc3545;
+            color: #302E56;
             margin: 0;
             font-size: 32px;
             font-weight: 600;
@@ -566,16 +566,16 @@ Address: NY-123 Younkers, New York
             margin-bottom: 25px;
           }
           .alert-box {
-            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-            border: 1px solid #f5c6cb;
+            background: linear-gradient(135deg, #E6E6F0 0%, #D3D2E0 100%);
+            border: 1px solid #D3D2E0;
             padding: 25px;
             border-radius: 10px;
             margin: 25px 0;
-            border-left: 4px solid #dc3545;
+            border-left: 4px solid #302E56;
             text-align: center;
           }
           .alert-box h3 {
-            color: #721c24;
+            color: #302E56;
             margin-top: 0;
             margin-bottom: 15px;
             font-size: 20px;
@@ -583,24 +583,24 @@ Address: NY-123 Younkers, New York
           }
           .alert-box p {
             margin: 0;
-            color: #721c24;
+            color: #302E56;
             font-weight: 500;
           }
           .update-button {
             display: inline-block;
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            background: linear-gradient(135deg, #302E56 0%, #4A487A 100%);
             color: white;
             padding: 15px 30px;
             text-decoration: none;
             border-radius: 8px;
             font-weight: 600;
             margin: 25px 0;
-            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+            box-shadow: 0 4px 15px rgba(48, 46, 86, 0.3);
             transition: all 0.3s ease;
           }
           .update-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+            box-shadow: 0 6px 20px rgba(48, 46, 86, 0.4);
           }
           .footer {
             border-top: 2px solid #e9ecef;
@@ -636,7 +636,7 @@ Address: NY-123 Younkers, New York
             text-align: center;
           }
           .contact-info h4 {
-            color: #dc3545;
+            color: #302E56;
             margin: 0 0 10px 0;
             font-size: 16px;
           }
@@ -764,12 +764,12 @@ Address: NY-123 Younkers, New York
           }
           .header {
             text-align: center;
-            border-bottom: 3px solid #fd7e14;
+            border-bottom: 3px solid #302E56;
             padding-bottom: 25px;
             margin-bottom: 35px;
           }
           .header h1 {
-            color: #fd7e14;
+            color: #302E56;
             margin: 0;
             font-size: 32px;
             font-weight: 600;
@@ -795,16 +795,16 @@ Address: NY-123 Younkers, New York
             margin-bottom: 25px;
           }
           .urgent-box {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 1px solid #ffeaa7;
+            background: linear-gradient(135deg, #E6E6F0 0%, #D3D2E0 100%);
+            border: 1px solid #D3D2E0;
             padding: 25px;
             border-radius: 10px;
             margin: 25px 0;
-            border-left: 4px solid #fd7e14;
+            border-left: 4px solid #302E56;
             text-align: center;
           }
           .urgent-box h3 {
-            color: #856404;
+            color: #302E56;
             margin-top: 0;
             margin-bottom: 15px;
             font-size: 20px;
@@ -812,24 +812,24 @@ Address: NY-123 Younkers, New York
           }
           .urgent-box p {
             margin: 0;
-            color: #856404;
+            color: #302E56;
             font-weight: 500;
           }
           .update-button {
             display: inline-block;
-            background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+            background: linear-gradient(135deg, #302E56 0%, #4A487A 100%);
             color: white;
             padding: 15px 30px;
             text-decoration: none;
             border-radius: 8px;
             font-weight: 600;
             margin: 25px 0;
-            box-shadow: 0 4px 15px rgba(253, 126, 20, 0.3);
+            box-shadow: 0 4px 15px rgba(48, 46, 86, 0.3);
             transition: all 0.3s ease;
           }
           .update-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(253, 126, 20, 0.4);
+            box-shadow: 0 6px 20px rgba(48, 46, 86, 0.4);
           }
           .footer {
             border-top: 2px solid #e9ecef;
@@ -865,7 +865,7 @@ Address: NY-123 Younkers, New York
             text-align: center;
           }
           .contact-info h4 {
-            color: #fd7e14;
+            color: #302E56;
             margin: 0 0 10px 0;
             font-size: 16px;
           }

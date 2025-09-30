@@ -22,7 +22,7 @@ export async function GET(req) {
       return NextResponse.json({ error: "Token has expired" }, { status: 400 });
     }
 
-    // Optional: mark email as verified (e.g., update Donor model)
+    // Mark donor as verified (set status true)
     await prisma.donor.update({
       where: { email: existingToken.identifier },
       data: {

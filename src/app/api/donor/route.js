@@ -38,7 +38,7 @@ export async function POST(request) {
     // Hash password
     const hashedPassword = await hash(password, 10);
 
-    // Create donor
+    // Create donor (start as unverified)
     const donor = await prisma.donor.create({
       data: {
         name,
@@ -49,7 +49,7 @@ export async function POST(request) {
         address,
         postal_code,
         imageUrl,
-        status: true,
+        status: false,
         organization: { connect: { id: organization_id } },
       },
       include: { organization: true },
@@ -177,7 +177,7 @@ export async function POST(request) {
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     // Store token in DonorVerificationToken
-    await prisma.DonorVerificationToken.create({
+    await prisma.donorVerificationToken.create({
       data: {
         identifier: email,
         token,
@@ -194,7 +194,7 @@ export async function POST(request) {
     try {
       // Check if email server is configured
       if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD) {
-        const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/api/verify-donor?token=${token}&donor_id=${donor.id}`;
+        const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/api/verify-donor?token=${token}`;
 
         // Send beautiful verification email
         const verificationResult = await emailService.sendVerificationEmail({
@@ -214,28 +214,7 @@ export async function POST(request) {
           console.error('❌ Verification email failed:', verificationResult.error);
         }
 
-        // Send welcome email immediately after verification email
-        const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
-        
-        const welcomeResult = await emailService.sendWelcomeEmail({
-          donor: {
-            name: donor.name,
-            email: donor.email
-          },
-          organization: {
-            name: organization.name,
-            email: organization.email
-          },
-          dashboardLink: dashboardLink
-        });
-
-        if (welcomeResult.success) {
-          welcomeEmailSent = true;
-          console.log('✅ Beautiful welcome email sent successfully');
-        } else {
-          welcomeEmailError = welcomeResult.error;
-          console.error('❌ Welcome email failed:', welcomeResult.error);
-        }
+        // Defer welcome email until after verification
 
       } else {
         console.log('⚠️ Email server not configured, skipping email sending');

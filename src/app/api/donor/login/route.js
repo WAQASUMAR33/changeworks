@@ -24,10 +24,10 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
-    // Optional: enforce email verification
-    // if (!donor.emailVerifiedAt) {
-    //   return NextResponse.json({ error: "Please verify your email first." }, { status: 401 });
-    // }
+    // Enforce email verification using donor.status flag
+    if (!donor.status) {
+      return NextResponse.json({ error: "Email is not verified. Please verify your email first." }, { status: 401 });
+    }
 
     // Compare password
     const isPasswordCorrect = await compare(password, donor.password);
