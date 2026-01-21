@@ -48,13 +48,7 @@ export async function GET(request) {
         id: true,
         name: true,
         email: true,
-        phone: true,
-        organization: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
+        phone: true
       },
       orderBy: {
         name: 'asc'

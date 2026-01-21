@@ -18,12 +18,7 @@ export async function GET(request) {
 
     // Get donor information
     const donor = await prisma.donor.findUnique({
-      where: { id: donorId },
-      include: {
-        organization: {
-          select: { id: true, name: true }
-        }
-      }
+      where: { id: donorId }
     });
 
     if (!donor) {

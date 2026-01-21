@@ -145,15 +145,7 @@ export async function GET(req) {
 
     // Get donor information for email
     const donor = await prisma.donor.findUnique({
-      where: { email: existingToken.identifier },
-      include: {
-        organization: {
-          select: {
-            name: true,
-            email: true
-          }
-        }
-      }
+      where: { email: existingToken.identifier }
     });
 
     if (!donor) {
@@ -186,14 +178,14 @@ export async function GET(req) {
 
     try {
       if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD) {
-        const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
+        const dashboardLink = 'https://app.changeworksfund.org/donor/dashboard?donor_id=' + donor.id;
         
         const emailResult = await emailService.sendVerificationSuccessEmail({
           donor: {
             name: donor.name,
             email: donor.email
           },
-          organization: donor.organization,
+          organization: null,
           dashboardLink: dashboardLink
         });
 

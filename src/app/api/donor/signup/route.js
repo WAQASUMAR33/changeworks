@@ -106,11 +106,6 @@ export async function POST(request) {
       status: false, // false means not verified yet
     };
 
-    // Only connect organization if valid and exists
-    if (validOrganizationId) {
-      donorData.organization = { connect: { id: validOrganizationId } };
-    }
-
     const donor = await prisma.donor.create({
       data: donorData,
       select: {
@@ -150,7 +145,18 @@ export async function POST(request) {
         });
       }
 
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+      let baseUrl = 'https://app.changeworksfund.org';
+      
+      // Ensure baseUrl has protocol
+      if (!baseUrl.startsWith('http')) {
+        baseUrl = `https://${baseUrl}`;
+      }
+      
+      // Remove trailing slash if present
+      if (baseUrl.endsWith('/')) {
+        baseUrl = baseUrl.slice(0, -1);
+      }
+
       const verificationUrl = `${baseUrl}/api/verify-donor?token=${verificationToken}`;
 
       const emailResult = await emailService.sendVerificationEmail({

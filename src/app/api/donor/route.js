@@ -48,9 +48,7 @@ export async function POST(request) {
         postal_code,
         imageUrl,
         status: false,
-        organization: { connect: { id: organization_id } },
       },
-      include: { organization: true },
     });
 
     // Create GHL contact for the donor using the specific GHL API configuration

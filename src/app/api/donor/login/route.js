@@ -26,14 +26,7 @@ export async function POST(request) {
         password: true,
         status: true,
         twoFactorEnabled: true,
-        twoFactorSecret: true,
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
-        }
+        twoFactorSecret: true
       }
     });
 
@@ -98,8 +91,7 @@ export async function POST(request) {
         id: donor.id,
         email: donor.email,
         name: donor.name,
-        role: 'DONOR',
-        organization: donor.organization
+        role: 'DONOR'
       },
     });
   } catch (error) {
