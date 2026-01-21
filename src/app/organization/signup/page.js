@@ -62,7 +62,7 @@ export default function OrganizationSignupPage() {
     try {
       const response = await fetch('/api/countries?format=grouped');
       const data = await response.json();
-      
+
       if (data.success) {
         // Combine popular countries first, then others
         const allCountries = [
@@ -89,12 +89,12 @@ export default function OrganizationSignupPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear specific field error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
-    
+
     // Clear general error message when user starts typing
     if (errorMsg) {
       setErrorMsg('');
@@ -103,7 +103,7 @@ export default function OrganizationSignupPage() {
 
   const validateStep = (step) => {
     const newErrors = {};
-    
+
     if (step === 1) {
       // Basic Information
       if (!form.name.trim()) {
@@ -180,14 +180,14 @@ export default function OrganizationSignupPage() {
   const uploadLogoToAPI = async (base64Data) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_IMAGE_UPLOAD_URL || process.env.IMAGE_UPLOAD_URL;
-      
+
       console.log('Logo upload attempt:', {
         hasApiUrl: !!apiUrl,
         apiUrl: apiUrl,
         hasBase64Data: !!base64Data,
         base64Length: base64Data?.length
       });
-      
+
       if (!apiUrl) {
         console.warn('Image upload API URL not configured, skipping upload');
         return null; // Return null instead of throwing error
@@ -241,7 +241,7 @@ export default function OrganizationSignupPage() {
 
       // Convert to base64 and store for later upload
       const base64Data = await convertToBase64(file);
-      
+
       // Update form with base64 data (will upload on submit)
       setForm(prev => ({
         ...prev,
@@ -270,7 +270,7 @@ export default function OrganizationSignupPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateStep(currentStep)) {
       return;
     }
@@ -292,7 +292,7 @@ export default function OrganizationSignupPage() {
         hasLogoUrl: !!form.logoUrl,
         logoLength: form.logo?.length
       });
-      
+
       if (form.logo && !form.logoUrl) {
         console.log('Starting logo upload...');
         setLogoUploading(true);
@@ -338,6 +338,15 @@ export default function OrganizationSignupPage() {
       setOrganizationData(data.organization);
       setOnboardingLink(data.stripeOnboardingLink);
       setSignupSuccess(true);
+
+      // If there was a warning (e.g. Stripe failed), show it but still keep success state
+      if (data.warning || data.stripeError) {
+        console.warn('Signup warning:', data.warning);
+        // You might want to show this to the user in the success step
+        // For now we'll store it in errorMsg so it can be displayed if needed, 
+        // or add a new state for specific warnings
+        setErrorMsg(data.warning);
+      }
     } catch (err) {
       console.error('Registration error:', err);
       const normalized = typeof err?.message === 'string' ? err.message : 'Network error. Please check your connection and try again.';
@@ -390,17 +399,16 @@ export default function OrganizationSignupPage() {
                   placeholder="Enter organization name"
                   value={form.name}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.name 
-                      ? 'border-red-300 bg-red-50' 
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.name
+                      ? 'border-red-300 bg-red-50'
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                    }`}
                   disabled={isSubmitting}
                 />
               </div>
               <AnimatePresence>
                 {errors.name && (
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
@@ -426,17 +434,16 @@ export default function OrganizationSignupPage() {
                   placeholder="Enter your email"
                   value={form.email}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.email 
-                      ? 'border-red-300 bg-red-50' 
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.email
+                      ? 'border-red-300 bg-red-50'
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                    }`}
                   disabled={isSubmitting}
                 />
               </div>
               <AnimatePresence>
                 {errors.email && (
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
@@ -461,17 +468,16 @@ export default function OrganizationSignupPage() {
                   placeholder="Enter phone number"
                   value={form.phone}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.phone 
-                      ? 'border-red-300 bg-red-50' 
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.phone
+                      ? 'border-red-300 bg-red-50'
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                    }`}
                   disabled={isSubmitting}
                 />
               </div>
               <AnimatePresence>
                 {errors.phone && (
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
@@ -525,17 +531,16 @@ export default function OrganizationSignupPage() {
                   placeholder="Enter street address"
                   value={form.address}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.address 
-                      ? 'border-red-300 bg-red-50' 
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.address
+                      ? 'border-red-300 bg-red-50'
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                    }`}
                   disabled={isSubmitting}
                 />
               </div>
               <AnimatePresence>
                 {errors.address && (
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
@@ -559,16 +564,15 @@ export default function OrganizationSignupPage() {
                   placeholder="Enter city"
                   value={form.city}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.city 
-                      ? 'border-red-300 bg-red-50' 
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.city
+                      ? 'border-red-300 bg-red-50'
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                    }`}
                   disabled={isSubmitting}
                 />
                 <AnimatePresence>
                   {errors.city && (
-                    <motion.p 
+                    <motion.p
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -5 }}
@@ -591,16 +595,15 @@ export default function OrganizationSignupPage() {
                   placeholder="Enter state"
                   value={form.state}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.state 
-                      ? 'border-red-300 bg-red-50' 
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.state
+                      ? 'border-red-300 bg-red-50'
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                    }`}
                   disabled={isSubmitting}
                 />
                 <AnimatePresence>
                   {errors.state && (
-                    <motion.p 
+                    <motion.p
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -5 }}
@@ -650,16 +653,15 @@ export default function OrganizationSignupPage() {
                   placeholder="Enter postal code"
                   value={form.postalCode}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.postalCode 
-                      ? 'border-red-300 bg-red-50' 
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.postalCode
+                      ? 'border-red-300 bg-red-50'
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                    }`}
                   disabled={isSubmitting}
                 />
                 <AnimatePresence>
                   {errors.postalCode && (
-                    <motion.p 
+                    <motion.p
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -5 }}
@@ -717,11 +719,10 @@ export default function OrganizationSignupPage() {
                   name="country"
                   value={form.country}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.country 
-                      ? 'border-red-300 bg-red-50' 
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.country
+                      ? 'border-red-300 bg-red-50'
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                    }`}
                   disabled={isSubmitting}
                 >
                   {countries.map((country) => (
@@ -738,7 +739,7 @@ export default function OrganizationSignupPage() {
                 </select>
                 <AnimatePresence>
                   {errors.country && (
-                    <motion.p 
+                    <motion.p
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -5 }}
@@ -777,11 +778,10 @@ export default function OrganizationSignupPage() {
                   placeholder="Create organization password"
                   value={form.orgPassword}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.orgPassword 
-                      ? 'border-red-300 bg-red-50' 
+                  className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.orgPassword
+                      ? 'border-red-300 bg-red-50'
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                    }`}
                   disabled={isSubmitting}
                 />
                 <button
@@ -795,7 +795,7 @@ export default function OrganizationSignupPage() {
               </div>
               <AnimatePresence>
                 {errors.orgPassword && (
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
@@ -820,11 +820,10 @@ export default function OrganizationSignupPage() {
                   placeholder="Confirm organization password"
                   value={form.confirmOrgPassword}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.confirmOrgPassword 
-                      ? 'border-red-300 bg-red-50' 
+                  className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.confirmOrgPassword
+                      ? 'border-red-300 bg-red-50'
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                    }`}
                   disabled={isSubmitting}
                 />
                 <button
@@ -838,7 +837,7 @@ export default function OrganizationSignupPage() {
               </div>
               <AnimatePresence>
                 {errors.confirmOrgPassword && (
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
@@ -939,22 +938,22 @@ export default function OrganizationSignupPage() {
               priority
             />
           </motion.div>
-          
-          <motion.h1 
+
+          <motion.h1
             variants={itemVariants}
             className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-4"
           >
             Join ChangeWorks
           </motion.h1>
-          
-          <motion.p 
+
+          <motion.p
             variants={itemVariants}
             className="text-lg text-gray-600 mb-8 leading-relaxed"
           >
             Create your organization account and start making a difference in the world
           </motion.p>
-          
-          <motion.div 
+
+          <motion.div
             variants={itemVariants}
             className="flex items-center justify-center space-x-4 text-sm text-gray-500"
           >
@@ -991,7 +990,7 @@ export default function OrganizationSignupPage() {
                 <span className="text-sm font-medium text-gray-600">{Math.round((currentStep / totalSteps) * 100)}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
+                <div
                   className="bg-[#0E0061] h-2 rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${(currentStep / totalSteps) * 100}%` }}
                 ></div>
@@ -1045,7 +1044,7 @@ export default function OrganizationSignupPage() {
                     <p className="text-sm text-gray-700 mb-4">
                       To start receiving payments, you need to complete your Stripe account setup. Click the link below or copy it to complete the onboarding process.
                     </p>
-                    
+
                     <div className="bg-white p-4 rounded-lg border-2 border-blue-300 mb-4">
                       <div className="flex items-center space-x-2 mb-2">
                         <span className="text-xs font-semibold text-gray-600">Onboarding Link:</span>
@@ -1131,46 +1130,46 @@ export default function OrganizationSignupPage() {
               <form onSubmit={handleSubmit}>
                 {renderStepContent()}
 
-              <div className="flex space-x-4 mt-8">
-                {currentStep > 1 && (
-                  <button
-                    type="button"
-                    onClick={handlePrevious}
-                    className="flex-1 py-3 px-4 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold hover:border-gray-300 transition-all duration-200"
-                    disabled={isSubmitting}
-                  >
-                    Previous
-                  </button>
-                )}
-                
-                  <button
-                  type="submit"
-                  disabled={isSubmitting || logoUploading}
-                  className="flex-1 bg-[#0E0061] text-white py-3 px-4 rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-[#0E0061]/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-                >
-                  {loading || logoUploading ? (
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span>{logoUploading ? 'Uploading Logo...' : 'Creating Account...'}</span>
-                    </div>
-                  ) : currentStep === totalSteps ? (
-                    'Create Account'
-                  ) : (
-                    'Next Step'
+                <div className="flex space-x-4 mt-8">
+                  {currentStep > 1 && (
+                    <button
+                      type="button"
+                      onClick={handlePrevious}
+                      className="flex-1 py-3 px-4 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold hover:border-gray-300 transition-all duration-200"
+                      disabled={isSubmitting}
+                    >
+                      Previous
+                    </button>
                   )}
-                </button>
-              </div>
-            </form>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || logoUploading}
+                    className="flex-1 bg-[#0E0061] text-white py-3 px-4 rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-[#0E0061]/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                  >
+                    {loading || logoUploading ? (
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>{logoUploading ? 'Uploading Logo...' : 'Creating Account...'}</span>
+                      </div>
+                    ) : currentStep === totalSteps ? (
+                      'Create Account'
+                    ) : (
+                      'Next Step'
+                    )}
+                  </button>
+                </div>
+              </form>
             )}
 
-            <motion.div 
+            <motion.div
               variants={itemVariants}
               className="mt-8 text-center"
             >
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}
-                <a 
-                  href="/organization/login" 
+                <a
+                  href="/organization/login"
                   className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200"
                 >
                   Sign in here

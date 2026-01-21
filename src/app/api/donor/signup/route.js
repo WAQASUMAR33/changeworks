@@ -10,18 +10,18 @@ import GHLClient from "../../../lib/ghl-client";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { 
-      name, 
-      email, 
-      password, 
-      phone, 
+    const {
+      name,
+      email,
+      password,
+      phone,
       postal_code,
       country = 'US',
       organization_id
     } = body;
 
-    // Validate required fields
-    if (!name || !email || !password || !phone || !postal_code || !organization_id) {
+    // Validate required fields (organization_id removed)
+    if (!name || !email || !password || !phone || !postal_code) {
       return NextResponse.json(
         { success: false, error: 'All required fields must be provided' },
         { status: 400 }
@@ -66,19 +66,25 @@ export async function POST(request) {
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     // Create donor
+    const donorData = {
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password: hashedPassword,
+      phone: phone.trim(),
+      address: null, // No longer required
+      city: null, // No longer required
+      postal_code: String(postal_code).trim(),
+      country: country,
+      status: false, // false means not verified yet
+    };
+
+    // Only connect organization if provided
+    if (organization_id) {
+      donorData.organization = { connect: { id: Number(organization_id) } };
+    }
+
     const donor = await prisma.donor.create({
-      data: {
-        name: name.trim(),
-        email: email.toLowerCase().trim(),
-        password: hashedPassword,
-        phone: phone.trim(),
-        address: null, // No longer required
-        city: null, // No longer required
-        postal_code: String(postal_code).trim(),
-        country: country,
-        status: false, // false means not verified yet
-        organization: { connect: { id: Number(organization_id) } }
-      },
+      data: donorData,
       select: {
         id: true,
         name: true,
@@ -107,11 +113,14 @@ export async function POST(request) {
     let emailError = null;
 
     try {
-      // Get organization details for the email
-      const organization = await prisma.organization.findUnique({
-        where: { id: Number(organization_id) },
-        select: { id: true, name: true, email: true }
-      });
+      // Get organization details for the email ONLY if organization_id exists
+      let organization = null;
+      if (organization_id) {
+        organization = await prisma.organization.findUnique({
+          where: { id: Number(organization_id) },
+          select: { id: true, name: true, email: true }
+        });
+      }
 
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
       const verificationUrl = `${baseUrl}/api/verify-donor?token=${verificationToken}`;
@@ -123,7 +132,7 @@ export async function POST(request) {
         },
         verificationToken,
         verificationLink: verificationUrl,
-        organization
+        organization // Pass null if no organization
       });
 
       if (emailResult.success) {
@@ -138,57 +147,57 @@ export async function POST(request) {
       console.error('❌ Verification email sending failed:', emailErr.message);
     }
 
-    // Create GHL contact if organization has GHL account
+    // Create GHL contact if organization has GHL account AND organization is selected
     let ghlContactResult = null;
     let ghlContactError = null;
 
     try {
-      // Get organization's GHL details directly from organization table
-      const organization = await prisma.organization.findUnique({
-        where: { id: Number(organization_id) },
-        select: { 
-          ghlId: true, 
-          ghlApiKey: true,
-          name: true
-        }
-      });
+      if (organization_id) {
+        // Get organization's GHL details directly from organization table
+        const organization = await prisma.organization.findUnique({
+          where: { id: Number(organization_id) },
+          select: {
+            ghlId: true,
+            ghlApiKey: true,
+            name: true
+          }
+        });
 
-      if (organization && organization.ghlId && organization.ghlApiKey) {
-        console.log(`🔗 Creating GHL contact for donor ${donor.name} in location ${organization.ghlId}`);
-        
-        // Initialize GHL client with organization's API key
-        const ghlClient = new GHLClient(organization.ghlApiKey);
-        
-        // Prepare contact data
-        const contactData = {
-          firstName: donor.name.split(' ')[0] || donor.name,
-          lastName: donor.name.split(' ').slice(1).join(' ') || '',
-          email: donor.email,
-          phone: donor.phone,
-          address: donor.address,
-          city: donor.city,
-          country: donor.country,
-          postalCode: donor.postal_code,
-          tags: ['donor', 'signup'],
-          source: 'website'
-        };
+        if (organization && organization.ghlId && organization.ghlApiKey) {
+          console.log(`🔗 Creating GHL contact for donor ${donor.name} in location ${organization.ghlId}`);
 
-        // Create GHL contact
-        ghlContactResult = await ghlClient.createContact(
-          organization.ghlId,
-          contactData
-        );
+          // Initialize GHL client with organization's API key
+          const ghlClient = new GHLClient(organization.ghlApiKey);
 
-        if (ghlContactResult.success) {
-          console.log(`✅ GHL contact created successfully: ${ghlContactResult.contactId}`);
+          // Prepare contact data
+          const contactData = {
+            firstName: donor.name.split(' ')[0] || donor.name,
+            lastName: donor.name.split(' ').slice(1).join(' ') || '',
+            email: donor.email,
+            phone: donor.phone,
+            address: donor.address,
+            city: donor.city,
+            country: donor.country,
+            postalCode: donor.postal_code,
+            tags: ['donor', 'signup'],
+            source: 'website'
+          };
+
+          // Create GHL contact
+          ghlContactResult = await ghlClient.createContact(
+            organization.ghlId,
+            contactData
+          );
+
+          if (ghlContactResult.success) {
+            console.log(`✅ GHL contact created successfully: ${ghlContactResult.contactId}`);
+          } else {
+            ghlContactError = ghlContactResult.error || 'Failed to create GHL contact';
+            console.error(`❌ GHL contact creation failed: ${ghlContactError}`);
+          }
         } else {
-          ghlContactError = ghlContactResult.error || 'Failed to create GHL contact';
-          console.error(`❌ GHL contact creation failed: ${ghlContactError}`);
+          console.log(`ℹ️ No GHL integration found for organization ${organization_id}, skipping GHL contact creation`);
         }
-      } else {
-        console.log(`ℹ️ No GHL integration found for organization ${organization_id}, skipping GHL contact creation`);
-        console.log(`   Organization GHL ID: ${organization?.ghlId || 'NOT SET'}`);
-        console.log(`   Organization GHL API Key: ${organization?.ghlApiKey ? 'SET' : 'NOT SET'}`);
       }
     } catch (ghlErr) {
       ghlContactError = ghlErr.message;
@@ -199,7 +208,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: emailSent 
+      message: emailSent
         ? 'Account created successfully! Please check your email to verify your account before logging in.'
         : 'Account created successfully! Please contact support for email verification.',
       donor: donor,
@@ -217,7 +226,7 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Donor signup error:', error);
-    
+
     // Handle specific Prisma errors
     if (error.code === 'P2002') {
       return NextResponse.json(
