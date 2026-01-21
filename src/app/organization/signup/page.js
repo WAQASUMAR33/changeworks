@@ -59,31 +59,12 @@ export default function OrganizationSignupPage() {
   }, []);
 
   const fetchCountries = async () => {
-    try {
-      const response = await fetch('/api/countries?format=grouped');
-      const data = await response.json();
-
-      if (data.success) {
-        // Combine popular countries first, then others
-        const allCountries = [
-          ...data.countries.popular,
-          { code: 'separator', name: 'â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€' }, // Visual separator
-          ...data.countries.others
-        ];
-        setCountries(allCountries);
-      }
-    } catch (error) {
-      console.error('Error fetching countries:', error);
-      // Fallback to basic countries if API fails
-      setCountries([
-        { code: "US", name: "United States", flag: "ðŸ‡ºðŸ‡¸" },
-        { code: "GB", name: "United Kingdom", flag: "ðŸ‡¬ðŸ‡§" },
-        { code: "CA", name: "Canada", flag: "ðŸ‡¨ðŸ‡¦" },
-        { code: "AU", name: "Australia", flag: "ðŸ‡¦ðŸ‡º" },
-        { code: "DE", name: "Germany", flag: "ðŸ‡©ðŸ‡ª" },
-        { code: "FR", name: "France", flag: "ðŸ‡«ðŸ‡·" }
-      ]);
-    }
+    // Restricted to US, Canada, and Mexico as per requirements
+    setCountries([
+      { code: "US", name: "United States", flag: "🇺🇸" },
+      { code: "CA", name: "Canada", flag: "🇨🇦" },
+      { code: "MX", name: "Mexico", flag: "🇲🇽" }
+    ]);
   };
 
   const handleChange = (e) => {
@@ -400,8 +381,8 @@ export default function OrganizationSignupPage() {
                   value={form.name}
                   onChange={handleChange}
                   className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.name
-                      ? 'border-red-300 bg-red-50'
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                     }`}
                   disabled={isSubmitting}
                 />
@@ -435,8 +416,8 @@ export default function OrganizationSignupPage() {
                   value={form.email}
                   onChange={handleChange}
                   className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.email
-                      ? 'border-red-300 bg-red-50'
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                     }`}
                   disabled={isSubmitting}
                 />
@@ -469,8 +450,8 @@ export default function OrganizationSignupPage() {
                   value={form.phone}
                   onChange={handleChange}
                   className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.phone
-                      ? 'border-red-300 bg-red-50'
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                     }`}
                   disabled={isSubmitting}
                 />
@@ -532,8 +513,8 @@ export default function OrganizationSignupPage() {
                   value={form.address}
                   onChange={handleChange}
                   className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.address
-                      ? 'border-red-300 bg-red-50'
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                     }`}
                   disabled={isSubmitting}
                 />
@@ -565,8 +546,8 @@ export default function OrganizationSignupPage() {
                   value={form.city}
                   onChange={handleChange}
                   className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.city
-                      ? 'border-red-300 bg-red-50'
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                     }`}
                   disabled={isSubmitting}
                 />
@@ -596,8 +577,8 @@ export default function OrganizationSignupPage() {
                   value={form.state}
                   onChange={handleChange}
                   className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.state
-                      ? 'border-red-300 bg-red-50'
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                     }`}
                   disabled={isSubmitting}
                 />
@@ -654,8 +635,8 @@ export default function OrganizationSignupPage() {
                   value={form.postalCode}
                   onChange={handleChange}
                   className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.postalCode
-                      ? 'border-red-300 bg-red-50'
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                     }`}
                   disabled={isSubmitting}
                 />
@@ -720,8 +701,8 @@ export default function OrganizationSignupPage() {
                   value={form.country}
                   onChange={handleChange}
                   className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.country
-                      ? 'border-red-300 bg-red-50'
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                     }`}
                   disabled={isSubmitting}
                 >
@@ -779,8 +760,8 @@ export default function OrganizationSignupPage() {
                   value={form.orgPassword}
                   onChange={handleChange}
                   className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.orgPassword
-                      ? 'border-red-300 bg-red-50'
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                     }`}
                   disabled={isSubmitting}
                 />
@@ -821,8 +802,8 @@ export default function OrganizationSignupPage() {
                   value={form.confirmOrgPassword}
                   onChange={handleChange}
                   className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.confirmOrgPassword
-                      ? 'border-red-300 bg-red-50'
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                     }`}
                   disabled={isSubmitting}
                 />
