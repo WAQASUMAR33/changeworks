@@ -65,6 +65,34 @@ export async function POST(request) {
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
+    // Validate and verify organization_id if provided
+    let validOrganizationId = null;
+    if (organization_id) {
+      const orgId = Number(organization_id);
+      // Check if it's a valid number and greater than 0
+      if (isNaN(orgId) || orgId <= 0) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid organization ID provided' },
+          { status: 400 }
+        );
+      }
+      
+      // Verify organization exists
+      const organization = await prisma.organization.findUnique({
+        where: { id: orgId },
+        select: { id: true }
+      });
+      
+      if (!organization) {
+        return NextResponse.json(
+          { success: false, error: 'Organization not found' },
+          { status: 404 }
+        );
+      }
+      
+      validOrganizationId = orgId;
+    }
+
     // Create donor
     const donorData = {
       name: name.trim(),
@@ -78,9 +106,9 @@ export async function POST(request) {
       status: false, // false means not verified yet
     };
 
-    // Only connect organization if provided
-    if (organization_id) {
-      donorData.organization = { connect: { id: Number(organization_id) } };
+    // Only connect organization if valid and exists
+    if (validOrganizationId) {
+      donorData.organization = { connect: { id: validOrganizationId } };
     }
 
     const donor = await prisma.donor.create({
@@ -113,11 +141,11 @@ export async function POST(request) {
     let emailError = null;
 
     try {
-      // Get organization details for the email ONLY if organization_id exists
+      // Get organization details for the email ONLY if valid organization_id exists
       let organization = null;
-      if (organization_id) {
+      if (validOrganizationId) {
         organization = await prisma.organization.findUnique({
-          where: { id: Number(organization_id) },
+          where: { id: validOrganizationId },
           select: { id: true, name: true, email: true }
         });
       }
@@ -152,10 +180,10 @@ export async function POST(request) {
     let ghlContactError = null;
 
     try {
-      if (organization_id) {
+      if (validOrganizationId) {
         // Get organization's GHL details directly from organization table
         const organization = await prisma.organization.findUnique({
-          where: { id: Number(organization_id) },
+          where: { id: validOrganizationId },
           select: {
             ghlId: true,
             ghlApiKey: true,
@@ -196,7 +224,7 @@ export async function POST(request) {
             console.error(`❌ GHL contact creation failed: ${ghlContactError}`);
           }
         } else {
-          console.log(`ℹ️ No GHL integration found for organization ${organization_id}, skipping GHL contact creation`);
+          console.log(`ℹ️ No GHL integration found for organization ${validOrganizationId}, skipping GHL contact creation`);
         }
       }
     } catch (ghlErr) {
@@ -232,6 +260,14 @@ export async function POST(request) {
       return NextResponse.json(
         { success: false, error: 'An account with this email already exists' },
         { status: 409 }
+      );
+    }
+
+    // Handle foreign key constraint violation
+    if (error.code === 'P2003') {
+      return NextResponse.json(
+        { success: false, error: 'Invalid organization ID. The organization does not exist.' },
+        { status: 400 }
       );
     }
 
