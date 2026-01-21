@@ -34,10 +34,7 @@ export default function DonorSignupPage() {
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const countryDropdownRef = useRef(null);
 
-  const filteredOrganizations = useMemo(() => {
-    const q = orgSearch.toLowerCase();
-    return organizations.filter(o => (o.name || '').toLowerCase().includes(q));
-  }, [orgSearch, organizations]);
+
 
 
   // Load countries on component mount
