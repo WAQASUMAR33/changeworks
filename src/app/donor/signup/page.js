@@ -733,70 +733,7 @@ export default function DonorSignupPage() {
                   </motion.div>
                 )}
 
-                {/* Step 4: Organization Selection */}
-                {currentStep === 4 && (
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="space-y-4"
-                  >
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Search Organization *
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Search organization..."
-                          value={orgSearch}
-                          onChange={(e) => setOrgSearch(e.target.value)}
-                          className="w-full px-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
-                        />
-                      </div>
-                    </div>
 
-                    <div className="max-h-64 overflow-auto border border-gray-200 rounded-xl divide-y">
-                      {filteredOrganizations.map(org => (
-                        <button
-                          key={org.id}
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, organization_id: String(org.id) }))}
-                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors duration-200 ${String(org.id) === String(formData.organization_id) ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                            }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-gray-900">{org.name}</span>
-                            <span className={`text-xs px-2 py-1 rounded ${String(org.id) === String(formData.organization_id)
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 text-gray-700'
-                              }`}>
-                              {String(org.id) === String(formData.organization_id) ? 'Selected' : `ID ${org.id}`}
-                            </span>
-                          </div>
-                          {org.email && <p className="text-xs text-gray-600 mt-1">{org.email}</p>}
-                        </button>
-                      ))}
-                      {filteredOrganizations.length === 0 && (
-                        <div className="p-4 text-sm text-gray-600 text-center">No organizations found</div>
-                      )}
-                    </div>
-
-                    <AnimatePresence>
-                      {errors.organization_id && (
-                        <motion.p
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -5 }}
-                          className="text-red-500 text-sm flex items-center space-x-1"
-                        >
-                          <AlertCircle className="w-3 h-3" />
-                          <span>{errors.organization_id}</span>
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                )}
 
                 {/* Step 4: Review */}
                 {currentStep === 4 && (
