@@ -487,7 +487,7 @@ Address: NY-123 Younkers, New York
             
             <div class="signature">
               <p>With gratitude,<br>
-              <strong>${orgName} Team</strong></p>
+              <strong>${organization.name} Team</strong></p>
             </div>
           </div>
           
@@ -523,7 +523,7 @@ Access Your Donor Portal: ${dashboardLink}
 Thank you for carrying our mission forward with every swipe, tap, and purchase. Small change, month after month, can create lasting change in our community.
 
 With gratitude,
-${orgName} Team
+${organization.name} Team
 
 ---
 ChangeWorks Fund
@@ -1743,8 +1743,7 @@ Address: NY-123 Younkers, New York
 
   // Send successful verification email to donor
   async sendVerificationSuccessEmail({ donor, organization, dashboardLink }) {
-    const orgName = organization?.name || 'ChangeWorks';
-    const subject = `Welcome to ${orgName}'s round-up community`;
+    const subject = `Welcome to ${organization.name}'s round-up community`;
     
     const html = `
       <!DOCTYPE html>
@@ -1752,7 +1751,7 @@ Address: NY-123 Younkers, New York
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Welcome to ${orgName}'s round-up community</title>
+        <title>Welcome to ${organization.name}'s round-up community</title>
         <style>
           body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -1886,25 +1885,25 @@ Address: NY-123 Younkers, New York
         <div class="container">
           <div class="header">
             ${(() => {
-              const hasImage = organization?.imageUrl;
-              const imageUrl = organization?.imageUrl;
+              const hasImage = organization.imageUrl;
+              const imageUrl = organization.imageUrl;
               const baseUrl = process.env.IMAGE_UPLOAD_URL;
               const fallbackUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
               
               if (hasImage) {
                 const logoUrl = `${baseUrl}/${imageUrl}`;
-                return `<img src="${logoUrl}" alt="${orgName} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
+                return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
               } else {
                 return `<div style="height: 60px; background: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 14px;">${organization?.name || 'Organization'} Logo</div>`;
               }
             })()}
-            <h1>Welcome to ${orgName}'s round-up community</h1>
+            <h1>Welcome to ${organization.name}'s round-up community</h1>
           </div>
           
           <div class="content">
             <p class="greeting">Hello ${donor.name},</p>
             
-            <p>Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
+            <p>Thank you for joining ${organization.name}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
             
             <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
             
@@ -1948,11 +1947,11 @@ Address: NY-123 Younkers, New York
     `;
 
     const text = `
-Welcome to ${orgName}'s round-up community
+Welcome to ${organization.name}'s round-up community
 
 Hello ${donor.name},
 
-Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
+Thank you for joining ${organization.name}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
 
 You can view your donation activity anytime through your personalized Donor Portal [Dashboard Link] on ChangeWorks, our platform partner. That's where you'll be able to:
 

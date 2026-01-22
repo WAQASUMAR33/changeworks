@@ -80,6 +80,7 @@ model Organization {
   stripeProductId3  String?            @db.VarChar(255) @map("stripe_product_id_3")
   stripeAccountId   String?            @db.VarChar(255) @map("stripe_account_id")
   transactions      DonorTransaction[] @relation("OrganizationTransactions")
+  donors            Donor[]
   fundTransfers     FundTransfer[]     @relation("OrganizationFundTransfers")
   ghlAccounts       GHLAccount[]       @relation("OrganizationGHLAccounts")
   saveTrRecords     SaveTrRecord[]     @relation("OrganizationTransactions")
@@ -102,14 +103,17 @@ model Donor {
   status            Boolean            @default(true)
   created_at        DateTime           @default(now())
   updated_at        DateTime           @updatedAt
+  organization_id   Int?
   postal_code       String?            @db.VarChar(20)
   twoFactorSecret   String?            @db.VarChar(255) @map("two_factor_secret")
   twoFactorEnabled  Boolean           @default(false) @map("two_factor_enabled")
   transactions      DonorTransaction[] @relation("DonorTransactions")
+  organization      Organization?      @relation(fields: [organization_id], references: [id])
   saveTrRecords     SaveTrRecord[]     @relation("DonorTransactions")
   subscriptions     Subscription[]     @relation("DonorSubscriptions")
   plaidConnections   PlaidConnection[]
 
+  @@index([organization_id], map: "donors_organization_id_fkey")
   @@map("donors")
 }
 

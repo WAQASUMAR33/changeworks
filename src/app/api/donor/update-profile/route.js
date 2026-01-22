@@ -51,7 +51,12 @@ export async function PUT(request) {
         phone: true,
         postal_code: true,
         country: true,
-        imageUrl: true
+        imageUrl: true,
+        organization: {
+          select: {
+            name: true
+          }
+        }
       }
     });
 
@@ -105,7 +110,12 @@ export async function PUT(request) {
         postal_code: true,
         country: true,
         imageUrl: true,
-        updated_at: true
+        updated_at: true,
+        organization: {
+          select: {
+            name: true
+          }
+        }
       }
     });
 
@@ -124,6 +134,7 @@ export async function PUT(request) {
         postal_code: updatedDonor.postal_code,
         country: updatedDonor.country,
         imageUrl: updatedDonor.imageUrl,
+        organization: updatedDonor.organization.name,
         updated_at: updatedDonor.updated_at
       },
       updated_fields: Object.keys(updateData).filter(key => key !== 'updated_at'),

@@ -43,17 +43,24 @@ export async function GET(request) {
         { status: 403 }
       );
     }
-    const donors = await prisma.donor.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true
-      },
-      orderBy: {
-        name: 'asc'
-      }
-    });
+    // Workaround for broken Prisma Client
+    const donorsRaw = await prisma.$queryRaw`
+      SELECT d.id, d.name, d.email, d.phone, o.id as organization_id, o.name as organization_name 
+      FROM donors d 
+      LEFT JOIN organizations o ON d.organization_id = o.id 
+      ORDER BY d.name ASC
+    `;
+    
+    const donors = donorsRaw.map(d => ({
+        id: d.id,
+        name: d.name,
+        email: d.email,
+        phone: d.phone,
+        organization: d.organization_id ? {
+            id: d.organization_id,
+            name: d.organization_name
+        } : null
+    }));
 
     return NextResponse.json({
       success: true,

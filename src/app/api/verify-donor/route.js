@@ -143,10 +143,19 @@ export async function GET(req) {
       );
     }
 
-    // Get donor information for email
-    const donor = await prisma.donor.findUnique({
-      where: { email: existingToken.identifier }
-    });
+    // Workaround for broken Prisma Client
+    const donors = await prisma.$queryRaw`SELECT * FROM donors WHERE email = ${existingToken.identifier}`;
+    const donorRaw = donors[0];
+
+    let organization = null;
+    if (donorRaw && donorRaw.organization_id) {
+        organization = await prisma.organization.findUnique({
+            where: { id: donorRaw.organization_id },
+            select: { name: true, email: true }
+        });
+    }
+
+    const donor = donorRaw ? { ...donorRaw, organization } : null;
 
     if (!donor) {
       return createHtmlResponse(
@@ -178,14 +187,14 @@ export async function GET(req) {
 
     try {
       if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD) {
-        const dashboardLink = 'https://app.changeworksfund.org/donor/dashboard?donor_id=' + donor.id;
+        const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
         
         const emailResult = await emailService.sendVerificationSuccessEmail({
           donor: {
             name: donor.name,
             email: donor.email
           },
-          organization: null,
+          organization: donor.organization,
           dashboardLink: dashboardLink
         });
 
