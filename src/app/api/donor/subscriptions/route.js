@@ -28,7 +28,7 @@ export async function GET(request) {
     // Get subscriptions
     const subscriptions = await prisma.subscription.findMany({
       where: {
-        donorId: donorId
+        donor_id: donorId
       },
       include: {
         organization: {
@@ -36,7 +36,7 @@ export async function GET(request) {
         }
       },
       orderBy: {
-        createdAt: 'desc'
+        created_at: 'desc'
       }
     });
 
@@ -46,9 +46,9 @@ export async function GET(request) {
       amount: subscription.amount,
       status: subscription.status,
       interval: subscription.interval || 'monthly',
-      description: subscription.description || `Recurring donation to ${subscription.organization?.name || 'Unknown Organization'}`,
-      createdAt: subscription.createdAt.toISOString(),
-      nextPaymentDate: subscription.nextPaymentDate?.toISOString(),
+      description: subscription.metadata || `Recurring donation to ${subscription.organization?.name || 'Unknown Organization'}`,
+      createdAt: subscription.created_at.toISOString(),
+      nextPaymentDate: subscription.current_period_end?.toISOString(),
       organization: subscription.organization
     }));
 
