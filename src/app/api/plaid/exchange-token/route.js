@@ -43,16 +43,18 @@ export async function POST(request) {
       signal: AbortSignal.timeout(30000), // 30 second timeout
     });
 
+    const exchangeData = await exchangeResponse.json();
+    console.log('Plaid Exchange Response:', JSON.stringify(exchangeData, null, 2));
+
     if (!exchangeResponse.ok) {
-      const errorData = await exchangeResponse.json();
-      console.error('Plaid token exchange failed:', errorData);
+      console.error('Plaid token exchange failed:', exchangeData);
       return NextResponse.json(
-        { success: false, error: 'Failed to exchange token', details: errorData },
+        { success: false, error: 'Failed to exchange token', details: exchangeData },
         { status: 500 }
       );
     }
 
-    const { access_token, item_id } = await exchangeResponse.json();
+    const { access_token, item_id } = exchangeData;
 
     // Get account information
     const accountsResponse = await fetch('https://sandbox.plaid.com/accounts/get', {
@@ -70,16 +72,18 @@ export async function POST(request) {
       signal: AbortSignal.timeout(30000), // 30 second timeout
     });
 
+    const accountsData = await accountsResponse.json();
+    console.log('Plaid Accounts Response:', JSON.stringify(accountsData, null, 2));
+
     if (!accountsResponse.ok) {
-      const errorData = await accountsResponse.json();
-      console.error('Plaid accounts get failed:', errorData);
+      console.error('Plaid accounts get failed:', accountsData);
       return NextResponse.json(
-        { success: false, error: 'Failed to get account information', details: errorData },
+        { success: false, error: 'Failed to get account information', details: accountsData },
         { status: 500 }
       );
     }
 
-    const { accounts } = await accountsResponse.json();
+    const { accounts } = accountsData;
 
     // Save Plaid connection to database
     // Store organization_id in accounts JSON for now until database migration is complete
@@ -146,6 +150,11 @@ export async function POST(request) {
         accounts_count: accounts.length,
         status: plaidConnection.status,
       },
+      // Debug info to verify Plaid response
+      debug: {
+        exchange_response: exchangeData,
+        accounts_response: accountsData
+      }
     });
 
   } catch (error) {
