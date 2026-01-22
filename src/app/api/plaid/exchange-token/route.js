@@ -101,24 +101,41 @@ export async function POST(request) {
     };
 
     // Create Plaid connection with proper Prisma relations
-    const plaidConnection = await prisma.plaidConnection.create({
-      data: {
-        donor_id: donorId,
-        organization_id: organization_id,
-        access_token: access_token,
-        item_id: item_id,
-        institution_id: metadata.institution?.institution_id || null,
-        institution_name: metadata.institution?.name || null,
-        accounts: JSON.stringify(accountsWithOrgId),
-        status: 'ACTIVE',
-        donor: {
-          connect: { id: donorId }
-        },
-        organization: {
-          connect: { id: organization_id }
-        }
-      },
-    });
+    // Workaround for broken Prisma Client
+    const createdConnections = await prisma.$queryRaw`
+      INSERT INTO plaid_connections (
+        donor_id, 
+        organization_id, 
+        access_token, 
+        item_id, 
+        institution_id, 
+        institution_name, 
+        accounts, 
+        status, 
+        created_at, 
+        updated_at
+      ) VALUES (
+        ${donorId}, 
+        ${organization_id}, 
+        ${access_token}, 
+        ${item_id}, 
+        ${metadata.institution?.institution_id || null}, 
+        ${metadata.institution?.name || null}, 
+        ${JSON.stringify(accountsWithOrgId)}, 
+        'ACTIVE', 
+        ${new Date()}, 
+        ${new Date()}
+      )
+    `;
+
+    // Fetch the created record since INSERT doesn't return it in MySQL
+    const plaidConnections = await prisma.$queryRaw`
+      SELECT * FROM plaid_connections 
+      WHERE donor_id = ${donorId} AND item_id = ${item_id} 
+      ORDER BY created_at DESC 
+      LIMIT 1
+    `;
+    const plaidConnection = plaidConnections[0];
 
     return NextResponse.json({
       success: true,
