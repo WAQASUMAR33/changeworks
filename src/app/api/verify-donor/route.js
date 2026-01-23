@@ -167,17 +167,12 @@ export async function GET(req) {
 
     // Mark donor as verified (set status true) and delete token in transaction
     await prisma.$transaction(async (tx) => {
-      // Update donor status
-      await tx.donor.update({
-        where: { email: existingToken.identifier },
-        data: {
-          status: true, // assuming 'status' true means verified
-        },
-      });
+      // Update donor status - Workaround for broken Prisma Client
+      await tx.$queryRaw`UPDATE donors SET status = 1 WHERE email = ${existingToken.identifier}`;
 
       // Delete token after verification
       await tx.donorVerificationToken.delete({
-        where: { token },
+        where: { id: existingToken.id },
       });
     });
 
