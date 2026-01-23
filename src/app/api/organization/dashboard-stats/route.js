@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 
 export async function GET(request) {
@@ -47,13 +47,14 @@ export async function GET(request) {
       lastMonthGhlAccounts,
       thisMonthGhlAccounts
     ] = await Promise.all([
-      // Total donors for this organization
-      prisma.donor.count({
+      // Total donors for this organization (Active donors via transactions)
+      prisma.saveTrRecord.groupBy({
+        by: ['trx_donor_id'],
         where: {
-          organization_id: orgId,
-          status: true
+          trx_organization_id: orgId,
+          pay_status: 'completed'
         }
-      }),
+      }).then(res => res.length),
 
       // Total donations amount for this organization
       prisma.saveTrRecord.aggregate({
@@ -97,27 +98,29 @@ export async function GET(request) {
         _sum: { trx_amount: true }
       }),
 
-      // Donor growth comparison
-      prisma.donor.count({
+      // Donor growth comparison (Active donors in period)
+      prisma.saveTrRecord.groupBy({
+        by: ['trx_donor_id'],
         where: {
-          organization_id: orgId,
-          status: true,
+          trx_organization_id: orgId,
+          pay_status: 'completed',
           created_at: {
             gte: startOfLastMonth,
             lt: endOfLastMonth
           }
         }
-      }),
+      }).then(res => res.length),
 
-      prisma.donor.count({
+      prisma.saveTrRecord.groupBy({
+        by: ['trx_donor_id'],
         where: {
-          organization_id: orgId,
-          status: true,
+          trx_organization_id: orgId,
+          pay_status: 'completed',
           created_at: {
             gte: startOfMonth
           }
         }
-      }),
+      }).then(res => res.length),
 
       // GHL accounts growth comparison
       prisma.gHLAccount.count({
