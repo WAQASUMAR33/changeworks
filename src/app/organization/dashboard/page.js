@@ -1,6 +1,7 @@
-﻿'use client';
+'use client';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import {
     DollarSign,
@@ -80,6 +81,8 @@ export default function OrganizationDashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [onboardingLoading, setOnboardingLoading] = useState(false);
+
     // Store organization data in sessionStorage for header access
     useEffect(() => {
         if (organization) {
@@ -91,6 +94,34 @@ export default function OrganizationDashboard() {
             window.dispatchEvent(new CustomEvent('orgUserUpdated'));
         }
     }, [organization]);
+
+    const handleGenerateOnboardingLink = async () => {
+        if (!organization?.stripeAccountId) return;
+        
+        try {
+            setOnboardingLoading(true);
+            const response = await fetch('/api/organization/stripe-onboarding-link', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ stripeAccountId: organization.stripeAccountId }),
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.url) {
+                window.location.href = data.url;
+            } else {
+                alert('Failed to generate onboarding link. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error generating onboarding link:', error);
+            alert('An error occurred. Please try again.');
+        } finally {
+            setOnboardingLoading(false);
+        }
+    };
 
     useEffect(() => {
         fetchDashboardData();
@@ -212,17 +243,62 @@ export default function OrganizationDashboard() {
                     <p className="text-gray-600 max-w-2xl mx-auto text-lg mb-4">
                         Welcome to your ChangeWorks organization Dashboard. Manage your donors, and track donations.
                     </p>
-                    <div className="flex justify-center">
-                        {organization?.stripeAccountId ? (
-                            <div className="inline-flex items-center space-x-2 px-4 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-full text-sm font-medium">
-                                <CheckCircle className="w-4 h-4" />
-                                <span>Stripe Connected</span>
+                    {/* Stripe Status Section */}
+                    <div className="flex flex-col items-center space-y-4 w-full max-w-2xl mx-auto mb-8">
+                        {!organization?.stripeAccountId ? (
+                            <div className="flex flex-col items-center space-y-2 p-4 bg-red-50 border border-red-200 rounded-lg w-full text-center">
+                                <div className="inline-flex items-center space-x-2 text-red-700 font-medium">
+                                    <AlertCircle className="w-5 h-5" />
+                                    <span>Stripe Not Connected</span>
+                                </div>
+                                <p className="text-sm text-red-600">Please connect your Stripe account to start accepting donations.</p>
                             </div>
                         ) : (
-                            <div className="inline-flex items-center space-x-2 px-4 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-full text-sm font-medium">
-                                <AlertCircle className="w-4 h-4" />
-                                <span>Stripe Not Connected</span>
-                            </div>
+                            <>
+                                {/* 1. Account Created but Onboarding Not Done */}
+                                {!organization.stripeStatus?.details_submitted ? (
+                                    <div className="flex flex-col items-center space-y-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg w-full text-center">
+                                        <div className="inline-flex items-center space-x-2 text-yellow-700 font-medium">
+                                            <AlertCircle className="w-5 h-5" />
+                                            <span>Action Required: Complete Stripe Onboarding</span>
+                                        </div>
+                                        <p className="text-sm text-yellow-600">Please complete your Stripe account setup to activate payments.</p>
+                                        <button
+                                            onClick={handleGenerateOnboardingLink}
+                                            disabled={onboardingLoading}
+                                            className="px-4 py-2 bg-yellow-600 text-white rounded-md text-sm font-medium hover:bg-yellow-700 transition-colors disabled:opacity-50"
+                                        >
+                                            {onboardingLoading ? 'Generating Link...' : 'Complete Onboarding'}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    /* 2. Onboarding Done but Products Not Created */
+                                    !(organization.stripeProductId1 || organization.stripeProductId2 || organization.stripeProductId3) ? (
+                                        <div className="flex flex-col items-center space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg w-full text-center">
+                                            <div className="inline-flex items-center space-x-2 text-blue-700 font-medium">
+                                                <AlertCircle className="w-5 h-5" />
+                                                <span>Stripe Account Active - Products Missing</span>
+                                            </div>
+                                            <p className="text-sm text-blue-600">Your Stripe account is ready. Now you need to create your donation products.</p>
+                                            <Link 
+                                                href="/organization/dashboard/stripe-products"
+                                                className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                                            >
+                                                Create Stripe Products
+                                            </Link>
+                                        </div>
+                                    ) : (
+                                        /* 3. All Complete */
+                                        <div className="flex flex-col items-center space-y-2 p-4 bg-green-50 border border-green-200 rounded-lg w-full text-center">
+                                            <div className="inline-flex items-center space-x-2 text-green-700 font-medium">
+                                                <CheckCircle className="w-5 h-5" />
+                                                <span>Stripe Fully Configured</span>
+                                            </div>
+                                            <p className="text-sm text-green-600">Your Stripe is completed and working.</p>
+                                        </div>
+                                    )
+                                )}
+                            </>
                         )}
                     </div>
                 </motion.div>

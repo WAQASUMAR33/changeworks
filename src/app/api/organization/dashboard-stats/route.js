@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { getStripeConnectAccount } from "../../../lib/stripe-connect";
 
 export async function GET(request) {
   try {
@@ -25,7 +26,16 @@ export async function GET(request) {
     // Get organization data
     const organization = await prisma.organization.findUnique({
       where: { id: orgId },
-      select: { id: true, name: true, email: true, imageUrl: true, stripeAccountId: true }
+      select: { 
+        id: true, 
+        name: true, 
+        email: true, 
+        imageUrl: true, 
+        stripeAccountId: true,
+        stripeProductId1: true,
+        stripeProductId2: true,
+        stripeProductId3: true
+      }
     });
 
     if (!organization) {
@@ -33,6 +43,22 @@ export async function GET(request) {
         success: false,
         error: 'Organization not found'
       }, { status: 404 });
+    }
+
+    // Check Stripe Status
+    let stripeStatus = {
+        details_submitted: false,
+        charges_enabled: false
+    };
+
+    if (organization.stripeAccountId) {
+        try {
+            const account = await getStripeConnectAccount(organization.stripeAccountId);
+            stripeStatus.details_submitted = account.details_submitted;
+            stripeStatus.charges_enabled = account.charges_enabled;
+        } catch (e) {
+            console.error('Failed to fetch stripe account status', e);
+        }
     }
 
     // Get organization-specific statistics
@@ -227,7 +253,10 @@ export async function GET(request) {
 
     return NextResponse.json({
       success: true,
-      organization,
+      organization: {
+        ...organization,
+        stripeStatus
+      },
       stats,
       recentActivity: formattedActivity.slice(0, 3)
     });
