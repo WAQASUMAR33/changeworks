@@ -41,7 +41,9 @@ export async function POST(request) {
       }, { status: 503 });
     }
 
-    const body = await request.text();
+    // Use arrayBuffer and Buffer to preserve raw body for signature verification
+    const buf = await request.arrayBuffer();
+    const body = Buffer.from(buf);
     const sig = request.headers.get('stripe-signature');
 
     let event;
@@ -50,8 +52,13 @@ export async function POST(request) {
       event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
     } catch (err) {
       console.error('Webhook signature verification failed:', err.message);
+      console.error('Debug Info:');
+      console.error('- Endpoint Secret Length:', endpointSecret ? endpointSecret.length : 'Missing');
+      console.error('- Body Length:', body ? body.length : 'Missing');
+      console.error('- Signature Header:', sig);
       return NextResponse.json({
-        error: 'Webhook signature verification failed'
+        error: 'Webhook signature verification failed',
+        details: err.message
       }, { status: 400 });
     }
 

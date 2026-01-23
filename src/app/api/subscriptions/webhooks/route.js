@@ -22,7 +22,9 @@ export async function POST(request) {
       }, { status: 503 });
     }
 
-    const body = await request.text();
+    // Use arrayBuffer and Buffer to preserve raw body for signature verification
+    const buf = await request.arrayBuffer();
+    const body = Buffer.from(buf);
     const sig = request.headers.get('stripe-signature');
 
     let event;
