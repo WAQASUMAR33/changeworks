@@ -46,9 +46,11 @@ export async function POST(request) {
     }
 
     // Check if donor already exists
-    const existingDonor = await prisma.donor.findUnique({
-      where: { email: email.toLowerCase() }
-    });
+    // Workaround for broken Prisma Client
+    const existingDonors = await prisma.$queryRaw`
+      SELECT id FROM donors WHERE email = ${email.toLowerCase()} LIMIT 1
+    `;
+    const existingDonor = existingDonors[0];
 
     if (existingDonor) {
       return NextResponse.json(
