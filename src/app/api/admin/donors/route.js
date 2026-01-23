@@ -43,11 +43,10 @@ export async function GET(request) {
         { status: 403 }
       );
     }
-    // Workaround for broken Prisma Client
+    // Workaround for broken Prisma Client - column organization_id missing in DB
     const donorsRaw = await prisma.$queryRaw`
-      SELECT d.id, d.name, d.email, d.phone, o.id as organization_id, o.name as organization_name 
+      SELECT d.id, d.name, d.email, d.phone
       FROM donors d 
-      LEFT JOIN organizations o ON d.organization_id = o.id 
       ORDER BY d.name ASC
     `;
     
@@ -56,10 +55,7 @@ export async function GET(request) {
         name: d.name,
         email: d.email,
         phone: d.phone,
-        organization: d.organization_id ? {
-            id: d.organization_id,
-            name: d.organization_name
-        } : null
+        organization: null
     }));
 
     return NextResponse.json({
