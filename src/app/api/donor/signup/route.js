@@ -94,38 +94,52 @@ export async function POST(request) {
     }
 
     // Create donor
-    const donorData = {
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      password: hashedPassword,
-      phone: phone.trim(),
-      address: null, // No longer required
-      city: null, // No longer required
-      postal_code: String(postal_code).trim(),
-      country: country,
-      status: false, // false means not verified yet
-    };
+    // Workaround for broken Prisma Client - insert without organization_id since column is missing
+    await prisma.$queryRaw`
+      INSERT INTO donors (
+        name, 
+        email, 
+        password, 
+        phone, 
+        postal_code, 
+        country, 
+        status, 
+        created_at, 
+        updated_at
+      ) VALUES (
+        ${name.trim()}, 
+        ${email.toLowerCase().trim()}, 
+        ${hashedPassword}, 
+        ${phone.trim()}, 
+        ${String(postal_code).trim()}, 
+        ${country}, 
+        0, 
+        ${new Date()}, 
+        ${new Date()}
+      )
+    `;
 
-    // Only connect organization if valid and exists
-    if (validOrganizationId) {
-      donorData.organization = { connect: { id: validOrganizationId } };
-    }
+    // Fetch the created donor
+    const donors = await prisma.$queryRaw`
+      SELECT 
+        id, 
+        name, 
+        email, 
+        phone, 
+        address, 
+        city, 
+        postal_code, 
+        country, 
+        status, 
+        created_at 
+      FROM donors 
+      WHERE email = ${email.toLowerCase().trim()} 
+      ORDER BY created_at DESC 
+      LIMIT 1
+    `;
+    const donor = donors[0];
 
-    const donor = await prisma.donor.create({
-      data: donorData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        address: true,
-        city: true,
-        postal_code: true,
-        country: true,
-        status: true,
-        created_at: true
-      }
-    });
+    // Note: organization connection skipped because organization_id column is missing in DB
 
     // Store verification token
     await prisma.donorVerificationToken.create({
