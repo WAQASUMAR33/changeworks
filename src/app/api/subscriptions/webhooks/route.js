@@ -3,7 +3,10 @@ import { prisma } from "../../../lib/prisma";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+let endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+if (endpointSecret) {
+  endpointSecret = endpointSecret.trim();
+}
 
 // POST /api/subscriptions/webhooks - Handle subscription-specific webhooks
 export async function POST(request) {
@@ -33,6 +36,9 @@ export async function POST(request) {
       event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
     } catch (err) {
       console.error('Webhook signature verification failed:', err.message);
+      console.error('Debug Info:');
+      console.error('- Endpoint Secret (partial):', endpointSecret ? `...${endpointSecret.slice(-5)}` : 'Missing');
+      console.error('- Signature Header:', sig);
       return NextResponse.json({
         error: 'Webhook signature verification failed'
       }, { status: 400 });

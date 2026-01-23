@@ -17,6 +17,10 @@ try {
   }
 
   endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (endpointSecret) {
+    endpointSecret = endpointSecret.trim();
+  }
+  
   if (!endpointSecret) {
     console.warn('STRIPE_WEBHOOK_SECRET environment variable is not set');
   }
@@ -53,7 +57,7 @@ export async function POST(request) {
     } catch (err) {
       console.error('Webhook signature verification failed:', err.message);
       console.error('Debug Info:');
-      console.error('- Endpoint Secret Length:', endpointSecret ? endpointSecret.length : 'Missing');
+      console.error('- Endpoint Secret (partial):', endpointSecret ? `...${endpointSecret.slice(-5)}` : 'Missing');
       console.error('- Body Length:', body ? body.length : 'Missing');
       console.error('- Signature Header:', sig);
       return NextResponse.json({
