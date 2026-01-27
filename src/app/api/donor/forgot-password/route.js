@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
 import crypto from "crypto";
-import emailService from "../../../lib/email-service";
+import { emailService } from "../../../lib/email-service.jsx";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -67,6 +67,8 @@ export async function POST(request) {
     try {
       const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/reset-password?token=${resetToken}`;
 
+      console.log('📧 Sending password reset email via service...');
+      
       const emailResult = await emailService.sendPasswordResetEmail({
         donor: {
           name: donor.name,
@@ -74,7 +76,7 @@ export async function POST(request) {
         },
         resetToken,
         resetLink: resetUrl,
-        organization: donor.organization
+        organization: donor.organization || { name: 'ChangeWorks Fund' }
       });
 
       if (emailResult.success) {
@@ -86,7 +88,7 @@ export async function POST(request) {
       }
     } catch (emailErr) {
       emailError = emailErr.message;
-      console.error('❌ Email sending failed:', emailErr.message);
+      console.error('❌ Email sending failed (exception):', emailErr);
     }
 
     return NextResponse.json({

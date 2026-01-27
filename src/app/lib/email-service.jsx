@@ -2269,7 +2269,8 @@ Address: NY-123 Younkers, New York
 
   // Send password reset email
   async sendPasswordResetEmail({ donor, resetToken, resetLink, organization }) {
-    const subject = `Reset Your Password - ${organization.name}`;
+    const orgName = organization?.name || 'ChangeWorks Fund';
+    const subject = `Reset Your Password - ${orgName}`;
     
     const html = `
       <!DOCTYPE html>
@@ -2299,7 +2300,7 @@ Address: NY-123 Younkers, New York
           <div class="content">
             <h2>Hello ${donor.name},</h2>
             
-            <p>You requested a password reset for your donor account with <strong>${organization.name}</strong>.</p>
+            <p>You requested a password reset for your donor account with <strong>${orgName}</strong>.</p>
             
             <p>Click the button below to reset your password:</p>
             
@@ -2322,11 +2323,11 @@ Address: NY-123 Younkers, New York
     `;
 
     const text = `
-Password Reset Request - ${organization.name}
+Password Reset Request - ${orgName}
 
 Hello ${donor.name},
 
-You requested a password reset for your donor account with ${organization.name}.
+You requested a password reset for your donor account with ${orgName}.
 
 Click the link below to reset your password:
 ${resetLink}
