@@ -174,7 +174,9 @@ export default function StripePaymentForm({
       
       let errorMessage = err.message;
       if (errorMessage.includes('No such payment_intent')) {
-         errorMessage = "System Error: Payment configuration mismatch. Please verify that your Deployment Environment Variables (STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) belong to the SAME Stripe account and mode.";
+         const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+         const keyPrefix = publishableKey.substring(0, 8) + '...';
+         errorMessage = `System Error: Payment configuration mismatch. Client Key: ${keyPrefix}. Please verify that your Deployment Environment Variables (STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) belong to the SAME Stripe account and mode.`;
       }
 
       setError(errorMessage);
