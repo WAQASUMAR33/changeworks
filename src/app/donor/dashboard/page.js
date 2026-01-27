@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 // Updated: 2026-01-20T21:04
 
 import { useState, useEffect, useCallback } from 'react';
@@ -429,7 +429,7 @@ export default function DonorDashboard() {
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
               </motion.button>
 
-              {/* Recurring Donations */}
+              {/* Monthly Donations */}
               {subscriptionStatus.loading ? (
                 <div className="bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 rounded-2xl p-6 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
@@ -461,7 +461,7 @@ export default function DonorDashboard() {
                       <p className="text-sm text-green-100">
                         {subscriptionStatus.subscriptions.length > 0
                           ? `${subscriptionStatus.subscriptions.length} active subscription${subscriptionStatus.subscriptions.length > 1 ? 's' : ''}`
-                          : 'Recurring donations active'
+                          : 'Monthly donations active'
                         }
                       </p>
                     </div>
@@ -492,7 +492,7 @@ export default function DonorDashboard() {
                     </div>
                     <div className="space-y-2">
                       <h4 className="text-lg font-bold text-white">Start and Manage your Monthly Donations</h4>
-                      <p className="text-sm text-green-100">Set Up Recurring Donations</p>
+                      <p className="text-sm text-green-100">Set Up Monthly Donations</p>
                     </div>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>

@@ -511,7 +511,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
           stripe_subscription_id: invoice.subscription,
           stripe_invoice_id: invoice.id,
           stripe_payment_intent_id: invoice.payment_intent,
-          description: `Recurring subscription payment: ${invoice.subscription}`,
+          description: `Monthly subscription payment: ${invoice.subscription}`,
           metadata: JSON.stringify({
             subscription_id: subscription.id,
             save_tr_record_id: transactionRecord.id,

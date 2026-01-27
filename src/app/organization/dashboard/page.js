@@ -277,14 +277,14 @@ export default function OrganizationDashboard() {
                                         <div className="flex flex-col items-center space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg w-full text-center">
                                             <div className="inline-flex items-center space-x-2 text-blue-700 font-medium">
                                                 <AlertCircle className="w-5 h-5" />
-                                                <span>Stripe Account Active - Products Missing</span>
+                                                <span>Stripe Account Active - Donation Options Missing</span>
                                             </div>
-                                            <p className="text-sm text-blue-600">Your Stripe account is ready. Now you need to create your donation products.</p>
+                                            <p className="text-sm text-blue-600">Your Stripe account is ready. Now you need to create your donation options.</p>
                                             <Link 
                                                 href="/organization/dashboard/stripe-products"
                                                 className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
                                             >
-                                                Create Stripe Products
+                                                Create Donation Options
                                             </Link>
                                         </div>
                                     ) : (

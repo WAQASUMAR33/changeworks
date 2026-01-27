@@ -74,7 +74,7 @@ const PackageCard = ({ pkg, onSelect, selected }) => {
                             : 'bg-gray-50 text-gray-900 hover:bg-gray-100'
                             }`}
                     >
-                        {selected ? 'Selected' : 'Select Plan'}
+                        {selected ? 'Selected' : 'Select Option'}
                     </button>
                 </div>
             </div>
@@ -198,7 +198,7 @@ const SubscribePage = () => {
                                 </div>
                                 <h1 className="text-4xl font-black text-gray-900 tracking-tight">Setup Monthly Donation</h1>
                                 <p className="text-gray-500 font-medium max-w-lg">
-                                    Join our mission to create lasting change. Select an organization and choose a contribution plan that works for you.
+                                    Join our mission to create lasting change. Select an organization and choose a contribution option that works for you.
                                 </p>
                             </div>
                             <div className="flex items-center space-x-2 px-4 py-2 bg-white rounded-2xl shadow-sm border border-gray-100">
@@ -285,7 +285,7 @@ const SubscribePage = () => {
                                         <h2 className="text-lg font-black mb-6">Subscription Summary</h2>
                                         <div className="space-y-4 text-sm font-medium">
                                             <div className="flex justify-between text-gray-400">
-                                                <span>Selected Package</span>
+                                                <span>Selected Option</span>
                                                 <span className="text-white font-bold">{selectedPkg.name}</span>
                                             </div>
                                             <div className="flex justify-between text-gray-400">

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import {
@@ -296,8 +296,8 @@ export default function DonorSubscriptionsPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Recurring Donations</h1>
-          <p className="text-gray-600 mt-2">Manage your recurring donations</p>
+          <h1 className="text-3xl font-bold text-gray-900">My Monthly Donations</h1>
+          <p className="text-gray-600 mt-2">Manage your monthly donations</p>
         </div>
         <div className="mt-4 sm:mt-0">
           <button
@@ -305,7 +305,7 @@ export default function DonorSubscriptionsPage() {
             className="flex items-center space-x-2 px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200"
           >
             <Plus className="w-4 h-4" />
-            <span>New Recurring Donation</span>
+            <span>New Monthly Donation</span>
           </button>
         </div>
       </motion.div>
@@ -376,7 +376,7 @@ export default function DonorSubscriptionsPage() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Recurring Donations</p>
+              <p className="text-sm font-medium text-gray-600">Total Monthly Donations</p>
               <p className="text-2xl font-bold text-gray-900">{subscriptions.length}</p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -461,7 +461,7 @@ export default function DonorSubscriptionsPage() {
                             {subscription.organization?.name || 'Unknown Organization'}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {subscription.description || 'Recurring Donation'}
+                            {subscription.description || 'Monthly Donation'}
                           </p>
                         </div>
                       </div>

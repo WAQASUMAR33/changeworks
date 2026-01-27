@@ -61,7 +61,7 @@ const getTransactionTypeLabel = (type) => {
     case 'subscription':
       return 'Subscription';
     case 'recurring':
-      return 'Recurring';
+      return 'Monthly';
     case 'donation':
       return 'Donation';
     default:

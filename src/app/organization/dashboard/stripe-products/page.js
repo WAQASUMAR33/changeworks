@@ -54,14 +54,14 @@ export default function StripeProductsPage() {
           product3: org.stripeProductId3
         });
 
-        // Fetch product details with prices from Stripe
+        // Fetch donation option details with prices from Stripe
         if (org.stripeProductId1 || org.stripeProductId2 || org.stripeProductId3) {
           await fetchProductDetails(orgId);
         }
       }
     } catch (err) {
       console.error('Error fetching products:', err);
-      setError('Failed to load Stripe products');
+      setError('Failed to load Stripe Donation Options');
     } finally {
       setLoading(false);
     }
@@ -103,10 +103,10 @@ export default function StripeProductsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create products');
+        throw new Error(data.error || 'Failed to create Donation Options');
       }
 
-      setSuccess('Stripe products created successfully!');
+      setSuccess('Stripe Donation Options created successfully!');
       setProducts({
         product1: data.stripeProductId1,
         product2: data.stripeProductId2,
@@ -120,7 +120,7 @@ export default function StripeProductsPage() {
 
     } catch (err) {
       console.error('Error creating products:', err);
-      setError(err.message || 'Failed to create Stripe products');
+      setError(err.message || 'Failed to create Stripe Donation Options');
     } finally {
       setCreating(false);
     }
@@ -167,7 +167,7 @@ export default function StripeProductsPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Stripe products...</p>
+          <p className="text-gray-600">Loading Stripe Donation Options...</p>
         </div>
       </div>
     );
@@ -181,7 +181,7 @@ export default function StripeProductsPage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Donation Options for Supporters</h1>
             <p className="text-gray-600">
-              Manage your organization&apos;s Stripe products for donations
+              Manage your organization&apos;s Stripe Donation Options for donations
             </p>
           </div>
 
@@ -215,7 +215,7 @@ export default function StripeProductsPage() {
                 ) : (
                   <>
                     <CreditCard className="w-5 h-5" />
-                    <span>Create Products</span>
+                    <span>Create Donation Options</span>
                   </>
                 )}
               </motion.button>
@@ -266,7 +266,7 @@ export default function StripeProductsPage() {
               </h3>
               <p className="text-red-800 mb-4">
                 Your organization is not yet connected to Stripe. You must complete your Stripe integration
-                before you can create donation products.
+                before you can create donation options.
               </p>
               <div className="flex items-center space-x-4">
                 <button
@@ -298,13 +298,13 @@ export default function StripeProductsPage() {
               </div>
             </div>
 
-            {/* Custom Products Form */}
+            {/* Custom Donation Options Form */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
               {customProducts.map((product, index) => (
                 <div key={index} className="bg-white p-5 rounded-xl border border-yellow-200 shadow-sm">
                   <h4 className="font-bold text-gray-900 mb-4 flex items-center">
                     <Package className="w-4 h-4 mr-2 text-blue-600" />
-                    Package {index + 1}
+                    Donation Option {index + 1}
                   </h4>
 
                   <div className="space-y-4">
@@ -364,7 +364,7 @@ export default function StripeProductsPage() {
                 ) : (
                   <>
                     <CreditCard className="w-5 h-5" />
-                    <span>Create Products Now</span>
+                    <span>Create Donation Options Now</span>
                   </>
                 )}
               </motion.button>
@@ -373,7 +373,7 @@ export default function StripeProductsPage() {
         </div>
       )}
 
-      {/* Products Grid */}
+      {/* Donation Options Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {productDetails.map((product, index) => {
           const Icon = product.icon;
@@ -413,7 +413,7 @@ export default function StripeProductsPage() {
                 <Icon className="w-7 h-7" />
               </div>
 
-              {/* Product Info */}
+              {/* Donation Option Info */}
               <h3 className="text-lg font-bold text-gray-900 mb-2">
                 {product.name}
               </h3>
@@ -446,6 +446,3 @@ export default function StripeProductsPage() {
     </div>
   );
 }
-
-
-

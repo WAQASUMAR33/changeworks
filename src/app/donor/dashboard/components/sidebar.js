@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -106,7 +106,7 @@ const DonorSidebar = () => {
       path: '/donor/dashboard/donations',
     },
     {
-      name: 'Recurring Donations',
+      name: 'Monthly Donations',
       icon: CreditCard,
       path: '/donor/dashboard/subscriptions',
     },

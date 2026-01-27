@@ -152,7 +152,7 @@ export default function DonorDonationsPage() {
       case 'stripe_subscription':
         return 'Subscription';
       case 'stripe_subscription_recurring':
-        return 'Recurring';
+        return 'Monthly';
       case 'plaid':
         return 'Bank Transfer';
       case 'bank_transfer':

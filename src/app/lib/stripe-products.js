@@ -1,4 +1,4 @@
-﻿import { getStripe } from '../../lib/stripe';
+import { getStripe } from '../../lib/stripe';
 
 /**
  * Create 3 custom Stripe products for an organization
@@ -66,8 +66,8 @@ export async function createOrganizationStripeProducts(organization) {
       product3,
     };
   } catch (error) {
-    console.error('âŒ Error creating Donation Options:', error);
-    throw new Error(`Failed to create Stripe products: ${error.message}`);
+    console.error('❌ Error creating Donation Options:', error);
+    throw new Error(`Failed to create Stripe Donation Options: ${error.message}`);
   }
 }
 
@@ -100,9 +100,9 @@ export async function createDefaultPricesForProducts(products, organization, cus
       },
     });
 
-    console.log(`âœ… Created Price for Product 1: ${price1.id} ($${(product1PriceCents / 100).toFixed(2)})`);
+    console.log(`✅ Created Price for Donation Option 1: ${price1.id} ($${(product1PriceCents / 100).toFixed(2)})`);
 
-    // Price 2: Monthly Recurring Donation
+    // Price 2: Monthly Recurring
     const price2 = await stripe.prices.create({
       product: products.product2.id,
       currency: 'usd',
@@ -118,9 +118,9 @@ export async function createDefaultPricesForProducts(products, organization, cus
       },
     });
 
-    console.log(`âœ… Created Price for Product 2: ${price2.id} ($${(product2PriceCents / 100).toFixed(2)}/month)`);
+    console.log(`✅ Created Price for Donation Option 2: ${price2.id} ($${(product2PriceCents / 100).toFixed(2)}/month)`);
 
-    // Price 3: Round-Up Program
+    // Price 3: Round Up (represented as a small base amount, actual round up logic handled elsewhere)
     const price3 = await stripe.prices.create({
       product: products.product3.id,
       currency: 'usd',
@@ -133,7 +133,7 @@ export async function createDefaultPricesForProducts(products, organization, cus
       },
     });
 
-    console.log(`âœ… Created Price for Product 3: ${price3.id} ($${(product3PriceCents / 100).toFixed(2)})`);
+    console.log(`✅ Created Price for Donation Option 3: ${price3.id} ($${(product3PriceCents / 100).toFixed(2)})`);
 
     return {
       price1,

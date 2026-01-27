@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { createStripeProductDirect, createStripePriceDirect } from "../../../lib/stripe-direct-api";
 import { isStripeConfigured } from "../../../../lib/stripe";
@@ -53,20 +53,20 @@ export async function POST(request) {
     // Check if products already exist and not forcing
     if (!force && organization.stripeProductId1 && organization.stripeProductId2 && organization.stripeProductId3) {
       return NextResponse.json({
-        message: 'Stripe products already exist for this organization',
+        message: 'Stripe donation options already exist for this organization',
         stripeProductId1: organization.stripeProductId1,
         stripeProductId2: organization.stripeProductId2,
         stripeProductId3: organization.stripeProductId3
       }, { status: 200 });
     }
 
-    console.log('Creating custom Stripe products for organization:', organization.id, force ? '(Forced Re-creation)' : '');
+    console.log('Creating custom Stripe donation options for organization:', organization.id, force ? '(Forced Re-creation)' : '');
 
     // Default product data if not provided
     const productsToCreate = customProducts || [
-      { name: 'Donor Option 1', price: 10, description: 'Donor Option 1' },
-      { name: 'Donor Option 2', price: 25, description: 'Donor Option 2' },
-      { name: 'Donor Option 3', price: 100, description: 'Donor Option 3' }
+      { name: 'Donation Option 1', price: 10, description: 'Donation Option 1' },
+      { name: 'Donation Option 2', price: 25, description: 'Donation Option 2' },
+      { name: 'Donation Option 3', price: 100, description: 'Donation Option 3' }
     ];
 
     const results = [];
@@ -80,7 +80,7 @@ export async function POST(request) {
       );
 
       if (!productResult.success) {
-        throw new Error(`Failed to create product "${p.name}": ${productResult.error}`);
+        throw new Error(`Failed to create donation option "${p.name}": ${productResult.error}`);
       }
 
       // 2. Create Price for the Product (Monthly Subscription)
@@ -93,7 +93,7 @@ export async function POST(request) {
       );
 
       if (!priceResult.success) {
-        throw new Error(`Failed to create price for product "${p.name}": ${priceResult.error}`);
+        throw new Error(`Failed to create price for donation option "${p.name}": ${priceResult.error}`);
       }
 
       results.push({
@@ -113,11 +113,11 @@ export async function POST(request) {
       }
     });
 
-    console.log('âœ… Custom Stripe products created and stored successfully');
+    console.log('✅ Custom Stripe donation options created and stored successfully');
 
     return NextResponse.json({
       success: true,
-      message: 'Stripe products created successfully',
+      message: 'Stripe donation options created successfully',
       stripeProductId1: results[0].productId,
       stripeProductId2: results[1].productId,
       stripeProductId3: results[2].productId,
@@ -125,9 +125,9 @@ export async function POST(request) {
     }, { status: 201 });
 
   } catch (error) {
-    console.error('âŒ Error creating custom Stripe products:', error);
+    console.error('❌ Error creating custom Stripe donation options:', error);
     return NextResponse.json({
-      error: 'Failed to create Stripe products',
+      error: 'Failed to create Stripe donation options',
       details: error.message
     }, { status: 500 });
   }

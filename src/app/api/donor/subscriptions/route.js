@@ -46,7 +46,7 @@ export async function GET(request) {
       amount: subscription.amount,
       status: subscription.status,
       interval: subscription.interval || 'monthly',
-      description: subscription.description || `Recurring donation to ${subscription.organization?.name || 'Unknown Organization'}`,
+      description: subscription.description || `Monthly donation to ${subscription.organization?.name || 'Unknown Organization'}`,
       createdAt: subscription.createdAt.toISOString(),
       nextPaymentDate: subscription.nextPaymentDate?.toISOString(),
       organization: subscription.organization
