@@ -112,7 +112,7 @@ export async function POST(request) {
       donor_info: {
         name: donor.name,
         email: donor.email,
-        organization: donor.organization.name
+        organization: donor.organization?.name || null
       },
       security_info: {
         password_updated: true,

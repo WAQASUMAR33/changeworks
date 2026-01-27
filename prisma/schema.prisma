@@ -54,6 +54,9 @@ model PasswordResetToken {
 
 model Organization {
   id                Int                @id @default(autoincrement())
+  firstName         String?            @db.VarChar(100)
+  lastName          String?            @db.VarChar(100)
+  title             String?            @db.VarChar(100)
   name              String             @db.VarChar(255)
   email             String             @unique @db.VarChar(100)
   password          String?            @db.VarChar(255)
@@ -70,6 +73,7 @@ model Organization {
   ghlApiKey         String?            @db.Text
   balance           Float              @default(0)
   status            Boolean            @default(true)
+  ein               String?            @db.VarChar(20)
   created_at        DateTime           @default(now())
   updated_at        DateTime           @updatedAt
   orgPassword       String?            @db.VarChar(255)
@@ -103,12 +107,12 @@ model Donor {
   status            Boolean            @default(true)
   created_at        DateTime           @default(now())
   updated_at        DateTime           @updatedAt
-  organization_id   Int
+  organization_id   Int?
   postal_code       String?            @db.VarChar(20)
   twoFactorSecret   String?            @db.VarChar(255) @map("two_factor_secret")
   twoFactorEnabled  Boolean           @default(false) @map("two_factor_enabled")
   transactions      DonorTransaction[] @relation("DonorTransactions")
-  organization      Organization       @relation(fields: [organization_id], references: [id])
+  organization      Organization?      @relation(fields: [organization_id], references: [id])
   saveTrRecords     SaveTrRecord[]     @relation("DonorTransactions")
   subscriptions     Subscription[]     @relation("DonorSubscriptions")
   plaidConnections   PlaidConnection[]

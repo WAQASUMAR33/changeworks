@@ -143,18 +143,19 @@ export async function GET(req) {
       );
     }
 
-    // Get donor information for email
-    const donor = await prisma.donor.findUnique({
-      where: { email: existingToken.identifier },
-      include: {
-        organization: {
-          select: {
-            name: true,
-            email: true
-          }
-        }
-      }
-    });
+    // Workaround for broken Prisma Client
+    const donors = await prisma.$queryRaw`SELECT * FROM donors WHERE email = ${existingToken.identifier}`;
+    const donorRaw = donors[0];
+
+    let organization = null;
+    if (donorRaw && donorRaw.organization_id) {
+        organization = await prisma.organization.findUnique({
+            where: { id: donorRaw.organization_id },
+            select: { name: true, email: true }
+        });
+    }
+
+    const donor = donorRaw ? { ...donorRaw, organization } : null;
 
     if (!donor) {
       return createHtmlResponse(
@@ -166,17 +167,12 @@ export async function GET(req) {
 
     // Mark donor as verified (set status true) and delete token in transaction
     await prisma.$transaction(async (tx) => {
-      // Update donor status
-      await tx.donor.update({
-        where: { email: existingToken.identifier },
-        data: {
-          status: true, // assuming 'status' true means verified
-        },
-      });
+      // Update donor status - Workaround for broken Prisma Client
+      await tx.$queryRaw`UPDATE donors SET status = 1 WHERE email = ${existingToken.identifier}`;
 
       // Delete token after verification
       await tx.donorVerificationToken.delete({
-        where: { token },
+        where: { id: existingToken.id },
       });
     });
 

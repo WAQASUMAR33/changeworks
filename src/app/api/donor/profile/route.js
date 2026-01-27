@@ -16,19 +16,26 @@ export async function GET(request) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const donorId = decoded.id;
 
-    // Get donor information
-    const donor = await prisma.donor.findUnique({
-      where: { id: donorId },
-      include: {
-        organization: {
-          select: { id: true, name: true }
-        }
-      }
-    });
+    // Workaround for broken Prisma Client
+    const donors = await prisma.$queryRaw`SELECT * FROM donors WHERE id = ${donorId}`;
+    const donorRaw = donors[0];
 
-    if (!donor) {
+    if (!donorRaw) {
       return NextResponse.json({ error: "Donor not found" }, { status: 404 });
     }
+
+    let organization = null;
+    if (donorRaw.organization_id) {
+        organization = await prisma.organization.findUnique({
+            where: { id: donorRaw.organization_id },
+            select: { id: true, name: true }
+        });
+    }
+
+    const donor = {
+        ...donorRaw,
+        organization
+    };
 
     // Remove sensitive information
     const { password, ...donorWithoutPassword } = donor;

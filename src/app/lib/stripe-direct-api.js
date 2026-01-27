@@ -3,6 +3,7 @@
  * These functions make direct HTTP calls to Stripe API using Basic Auth
  * instead of using the Stripe SDK
  */
+import { Buffer } from 'buffer';
 
 /**
  * Create a Stripe Express account using direct API call

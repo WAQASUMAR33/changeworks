@@ -54,14 +54,14 @@ export default function StripeProductsPage() {
           product3: org.stripeProductId3
         });
 
-        // Fetch product details with prices from Stripe
+        // Fetch donation option details with prices from Stripe
         if (org.stripeProductId1 || org.stripeProductId2 || org.stripeProductId3) {
           await fetchProductDetails(orgId);
         }
       }
     } catch (err) {
       console.error('Error fetching products:', err);
-      setError('Failed to load Stripe products');
+      setError('Failed to load Stripe Donation Options');
     } finally {
       setLoading(false);
     }
@@ -103,10 +103,10 @@ export default function StripeProductsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create products');
+        throw new Error(data.error || 'Failed to create Donation Options');
       }
 
-      setSuccess('Stripe products created successfully!');
+      setSuccess('Stripe Donation Options created successfully!');
       setProducts({
         product1: data.stripeProductId1,
         product2: data.stripeProductId2,
@@ -120,7 +120,7 @@ export default function StripeProductsPage() {
 
     } catch (err) {
       console.error('Error creating products:', err);
-      setError(err.message || 'Failed to create Stripe products');
+      setError(err.message || 'Failed to create Stripe Donation Options');
     } finally {
       setCreating(false);
     }
@@ -135,24 +135,24 @@ export default function StripeProductsPage() {
   const productDetails = [
     {
       id: 'product1',
-      name: 'Package 1',
-      description: 'First donation package',
+      name: 'Donation Option 1',
+      description: 'First donation Option',
       icon: DollarSign,
       color: 'blue',
       stripeId: products?.product1
     },
     {
       id: 'product2',
-      name: 'Package 2',
-      description: 'Second donation package',
+      name: 'Donation Option 2',
+      description: 'Second donation Option',
       icon: RefreshCw,
       color: 'green',
       stripeId: products?.product2
     },
     {
       id: 'product3',
-      name: 'Package 3',
-      description: 'Third donation package',
+      name: 'Donation Option 3',
+      description: 'Third donation Option',
       icon: Package,
       color: 'purple',
       stripeId: products?.product3
@@ -167,7 +167,7 @@ export default function StripeProductsPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Stripe products...</p>
+          <p className="text-gray-600">Loading Stripe Donation Options...</p>
         </div>
       </div>
     );
@@ -179,9 +179,9 @@ export default function StripeProductsPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Stripe Products</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Donation Options for Supporters</h1>
             <p className="text-gray-600">
-              Manage your organization&apos;s Stripe products for donations
+              Manage your organization&apos;s Stripe Donation Options for donations
             </p>
           </div>
 
@@ -195,7 +195,7 @@ export default function StripeProductsPage() {
                 className="px-6 py-3 bg-white text-blue-600 border-2 border-blue-600 rounded-xl font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50 flex items-center space-x-2"
               >
                 <RefreshCw className={`w-5 h-5 ${creating ? 'animate-spin' : ''}`} />
-                <span>Update to Recurring</span>
+                <span>Update to Monthly</span>
               </motion.button>
             )}
 
@@ -215,7 +215,7 @@ export default function StripeProductsPage() {
                 ) : (
                   <>
                     <CreditCard className="w-5 h-5" />
-                    <span>Create Products</span>
+                    <span>Create Donation Options</span>
                   </>
                 )}
               </motion.button>
@@ -266,7 +266,7 @@ export default function StripeProductsPage() {
               </h3>
               <p className="text-red-800 mb-4">
                 Your organization is not yet connected to Stripe. You must complete your Stripe integration
-                before you can create donation products.
+                before you can create donation options.
               </p>
               <div className="flex items-center space-x-4">
                 <button
@@ -290,28 +290,27 @@ export default function StripeProductsPage() {
               <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
               <div>
                 <h3 className="text-lg font-bold text-yellow-900 mb-2">
-                  Configure Your Donation Packages
+                  Configure your donation options
                 </h3>
                 <p className="text-yellow-800 mb-4">
-                  Set up your 3 donation products below. Once you click &quot;Create Products&quot;, they will be
-                  automatically configured in your Stripe account.
+                  Here you can arrange up to three donation options for your supporters
                 </p>
               </div>
             </div>
 
-            {/* Custom Products Form */}
+            {/* Custom Donation Options Form */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
               {customProducts.map((product, index) => (
                 <div key={index} className="bg-white p-5 rounded-xl border border-yellow-200 shadow-sm">
                   <h4 className="font-bold text-gray-900 mb-4 flex items-center">
                     <Package className="w-4 h-4 mr-2 text-blue-600" />
-                    Package {index + 1}
+                    Donation Option {index + 1}
                   </h4>
 
                   <div className="space-y-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-                        Product Name
+                        Option Name
                       </label>
                       <input
                         type="text"
@@ -365,7 +364,7 @@ export default function StripeProductsPage() {
                 ) : (
                   <>
                     <CreditCard className="w-5 h-5" />
-                    <span>Create Products Now</span>
+                    <span>Create Donation Options Now</span>
                   </>
                 )}
               </motion.button>
@@ -374,7 +373,7 @@ export default function StripeProductsPage() {
         </div>
       )}
 
-      {/* Products Grid */}
+      {/* Donation Options Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {productDetails.map((product, index) => {
           const Icon = product.icon;
@@ -414,7 +413,7 @@ export default function StripeProductsPage() {
                 <Icon className="w-7 h-7" />
               </div>
 
-              {/* Product Info */}
+              {/* Donation Option Info */}
               <h3 className="text-lg font-bold text-gray-900 mb-2">
                 {product.name}
               </h3>
@@ -437,71 +436,13 @@ export default function StripeProductsPage() {
                 </p>
               </div>
 
-              {/* Product ID */}
-              {hasProduct && (
-                <div className="space-y-2">
-                  <span className="text-xs text-gray-500">Product ID</span>
-                  <div className="flex items-center space-x-2">
-                    <code className="flex-1 text-xs bg-gray-100 px-3 py-2 rounded-lg font-mono text-gray-700 truncate">
-                      {product.stripeId}
-                    </code>
-                    <button
-                      onClick={() => copyToClipboard(product.stripeId, product.id)}
-                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                      title="Copy to clipboard"
-                    >
-                      {copiedId === product.id ? (
-                        <Check className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <Copy className="w-4 h-4 text-gray-600" />
-                      )}
-                    </button>
-                  </div>
 
-                  {/* View in Stripe */}
-                  <a
-                    href={`https://dashboard.stripe.com/products/${product.stripeId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-700 hover:underline mt-2"
-                  >
-                    <span>View in Stripe</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              )}
             </motion.div>
           );
         })}
       </div>
 
-      {/* Info Section */}
-      {allProductsCreated && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-2xl"
-        >
-          <h3 className="text-lg font-bold text-blue-900 mb-3">
-            âœ… All Products Created
-          </h3>
-          <div className="space-y-2 text-sm text-blue-800">
-            <p>
-              â€¢ Your Stripe products are set up and ready to accept donations
-            </p>
-            <p>
-              â€¢ These products will be used automatically when donors make contributions
-            </p>
-            <p>
-              â€¢ You can view and manage them in your Stripe Dashboard
-            </p>
-          </div>
-        </motion.div>
-      )}
+
     </div>
   );
 }
-
-
-

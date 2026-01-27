@@ -105,9 +105,9 @@ export default function OrgHeader() {
                 <div className="flex items-center">
                     <div>
                         <h1 className="text-xl font-semibold text-gray-900">
-                            Welcome back, <span className="text-blue-600">{orgName || 'Organization'}</span>
+                            Welcome to your ChangeWorks dashboard
                         </h1>
-                        <p className="text-sm text-gray-500">Manage your organization and track donations</p>
+                        <p className="text-sm text-gray-500">Manage your donors and track their donations.</p>
                     </div>
                 </div>
 

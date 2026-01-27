@@ -20,10 +20,9 @@ export default function DonorSignupPage() {
     postal_code: '',
     password: '',
     confirmPassword: '',
-    organization_id: ''
+    // organization_id removed
   });
-  const [organizations, setOrganizations] = useState([]);
-  const [orgSearch, setOrgSearch] = useState('');
+  // Organizations state removed
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,10 +34,7 @@ export default function DonorSignupPage() {
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const countryDropdownRef = useRef(null);
 
-  const filteredOrganizations = useMemo(() => {
-    const q = orgSearch.toLowerCase();
-    return organizations.filter(o => (o.name || '').toLowerCase().includes(q));
-  }, [orgSearch, organizations]);
+
 
 
   // Load countries on component mount
@@ -49,7 +45,7 @@ export default function DonorSignupPage() {
         const countriesData = await fetchCountries();
         setCountries(countriesData);
         console.log(`✅ Loaded ${countriesData.length} countries`);
-        
+
         // Phone auto-fill is now handled by react-international-phone
       } catch (error) {
         console.error('❌ Failed to load countries:', error);
@@ -76,46 +72,17 @@ export default function DonorSignupPage() {
     };
   }, []);
 
-  useEffect(() => {
-    if (currentStep === 4 && organizations.length === 0) {
-      const load = async () => {
-        try {
-          // Try preferred endpoint first (array response)
-          const r1 = await fetch('/api/organizations/list');
-          if (r1.ok) {
-            const d1 = await r1.json();
-            const list1 = Array.isArray(d1) ? d1 : (d1.organizations || []);
-            if (Array.isArray(list1) && list1.length > 0) {
-              setOrganizations(list1);
-              return;
-            }
-          }
-        } catch {}
-        try {
-          // Fallback endpoint (object with organizations)
-          const r2 = await fetch('/api/organization');
-          if (r2.ok) {
-            const d2 = await r2.json();
-            const list2 = Array.isArray(d2) ? d2 : (d2.organizations || []);
-            if (Array.isArray(list2)) setOrganizations(list2);
-          }
-        } catch {
-          setOrganizations([]);
-        }
-      };
-      load();
-    }
-  }, [currentStep, organizations.length]);
+  // Organization fetching effect removed
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear specific field error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
-    
+
     // Clear general error message when user starts typing
     if (error) {
       setError('');
@@ -124,28 +91,26 @@ export default function DonorSignupPage() {
 
   const validateStep = (step) => {
     const newErrors = {};
-    
+
     if (step === 1) {
       if (!formData.name.trim()) newErrors.name = 'Full name is required';
       if (!formData.email.trim()) newErrors.email = 'Email is required';
       else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Enter a valid email';
       if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
     }
-    
+
     if (step === 2) {
       if (!formData.country) newErrors.country = 'Country is required';
       if (!formData.postal_code.trim()) newErrors.postal_code = 'Postal code is required';
     }
-    
+
     if (step === 3) {
       if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
       if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     }
-    
-    if (step === 4) {
-      if (!formData.organization_id) newErrors.organization_id = 'Please select an organization';
-    }
-    
+
+    // Step 4 is now Review, no validation needed
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -153,7 +118,7 @@ export default function DonorSignupPage() {
   const goNext = () => {
     if (validateStep(currentStep)) {
       setError('');
-      setCurrentStep(prev => Math.min(prev + 1, 5));
+      setCurrentStep(prev => Math.min(prev + 1, 4));
     }
   };
 
@@ -165,14 +130,14 @@ export default function DonorSignupPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateStep(currentStep)) return;
 
     // Final submit (step 5)
     setLoading(true);
     setMessage('');
     setError('');
-    
+
     try {
       const response = await fetch('/api/donor/signup', {
         method: 'POST',
@@ -184,12 +149,12 @@ export default function DonorSignupPage() {
           phone: formData.phone.trim(),
           postal_code: formData.postal_code.trim(),
           country: formData.country,
-          organization_id: Number(formData.organization_id)
+          // organization_id removed
         })
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok) {
         setMessage('Account created successfully! Please check your email to verify your account.');
         setTimeout(() => router.push('/donor/login'), 2000);
@@ -227,8 +192,7 @@ export default function DonorSignupPage() {
     { id: 1, title: 'Personal Info' },
     { id: 2, title: 'Location' },
     { id: 3, title: 'Security' },
-    { id: 4, title: 'Organization' },
-    { id: 5, title: 'Review' }
+    { id: 4, title: 'Review' }
   ];
 
   return (
@@ -263,22 +227,22 @@ export default function DonorSignupPage() {
               priority
             />
           </motion.div>
-          
-          <motion.h1 
+
+          <motion.h1
             variants={itemVariants}
             className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-4"
           >
             Join ChangeWorks
           </motion.h1>
-          
-          <motion.p 
+
+          <motion.p
             variants={itemVariants}
             className="text-lg text-gray-600 mb-8 leading-relaxed"
           >
             Create your donor account and start making a positive impact in the world
           </motion.p>
-          
-          <motion.div 
+
+          <motion.div
             variants={itemVariants}
             className="flex items-center justify-center space-x-4 text-sm text-gray-500"
           >
@@ -313,14 +277,14 @@ export default function DonorSignupPage() {
               initial="hidden"
               animate="visible"
             >
-              <motion.h2 
+              <motion.h2
                 variants={itemVariants}
                 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent"
               >
                 Create Donor Account
               </motion.h2>
-              
-              <motion.p 
+
+              <motion.p
                 variants={itemVariants}
                 className="text-center text-gray-600 mb-8"
               >
@@ -333,21 +297,19 @@ export default function DonorSignupPage() {
                   {steps.map((step, index) => {
                     const isActive = currentStep === step.id;
                     const isCompleted = currentStep > step.id;
-                    
+
                     return (
                       <div key={step.id} className="flex flex-col items-center">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 text-sm font-semibold transition-all duration-200 ${
-                          isActive 
-                            ? 'bg-blue-600 border-blue-600 text-white' 
-                            : isCompleted 
-                            ? 'bg-green-500 border-green-500 text-white' 
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 text-sm font-semibold transition-all duration-200 ${isActive
+                          ? 'bg-blue-600 border-blue-600 text-white'
+                          : isCompleted
+                            ? 'bg-green-500 border-green-500 text-white'
                             : 'bg-gray-100 border-gray-300 text-gray-400'
-                        }`}>
+                          }`}>
                           {step.id}
                         </div>
-                        <span className={`text-xs mt-2 font-medium ${
-                          isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
-                        }`}>
+                        <span className={`text-xs mt-2 font-medium ${isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
+                          }`}>
                           {step.title}
                         </span>
                       </div>
@@ -403,15 +365,14 @@ export default function DonorSignupPage() {
                         placeholder="Enter your full name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                          errors.name 
-                            ? 'border-red-300 bg-red-50' 
-                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                        }`}
+                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${errors.name
+                          ? 'border-red-300 bg-red-50'
+                          : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                          }`}
                       />
                       <AnimatePresence>
                         {errors.name && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
@@ -434,15 +395,14 @@ export default function DonorSignupPage() {
                         placeholder="Enter your email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                          errors.email 
-                            ? 'border-red-300 bg-red-50' 
-                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                        }`}
+                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${errors.email
+                          ? 'border-red-300 bg-red-50'
+                          : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                          }`}
                       />
                       <AnimatePresence>
                         {errors.email && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
@@ -508,7 +468,7 @@ export default function DonorSignupPage() {
                       />
                       <AnimatePresence>
                         {errors.phone && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
@@ -535,7 +495,7 @@ export default function DonorSignupPage() {
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Country *
                       </label>
-                      
+
                       {countriesLoading ? (
                         <div className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 flex items-center justify-center">
                           <Loader2 className="w-5 h-5 animate-spin text-gray-400 mr-2" />
@@ -547,11 +507,10 @@ export default function DonorSignupPage() {
                           <button
                             type="button"
                             onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
-                            className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-left flex items-center justify-between ${
-                              errors.country 
-                                ? 'border-red-300 bg-red-50' 
-                                : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                            }`}
+                            className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-left flex items-center justify-between ${errors.country
+                              ? 'border-red-300 bg-red-50'
+                              : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                              }`}
                           >
                             <div className="flex items-center space-x-3">
                               {formData.country ? (
@@ -580,12 +539,12 @@ export default function DonorSignupPage() {
                                   const priorityCountries = ['MX', 'US', 'CA', 'GB'];
                                   const priorityList = countries.filter(c => priorityCountries.includes(c.code));
                                   const otherCountries = countries.filter(c => !priorityCountries.includes(c.code));
-                                  
+
                                   // Sort priority countries by the specified order
-                                  const sortedPriorityList = priorityCountries.map(code => 
+                                  const sortedPriorityList = priorityCountries.map(code =>
                                     priorityList.find(c => c.code === code)
                                   ).filter(Boolean);
-                                  
+
                                   return { priorityList: sortedPriorityList, otherCountries };
                                 })().priorityList.map(country => (
                                   <button
@@ -595,15 +554,14 @@ export default function DonorSignupPage() {
                                       setFormData(prev => ({ ...prev, country: country.code }));
                                       setIsCountryDropdownOpen(false);
                                     }}
-                                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors ${
-                                      formData.country === country.code ? 'bg-blue-50 text-black' : 'text-black'
-                                    }`}
+                                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors ${formData.country === country.code ? 'bg-blue-50 text-black' : 'text-black'
+                                      }`}
                                   >
                                     <span className={`fi ${country.flagClass} w-6 h-4`}></span>
                                     <span>{country.name}</span>
                                   </button>
                                 ))}
-                                
+
                                 {/* Separator */}
                                 {(() => {
                                   const priorityCountries = ['MX', 'US', 'CA', 'GB'];
@@ -611,9 +569,9 @@ export default function DonorSignupPage() {
                                   const otherCountries = countries.filter(c => !priorityCountries.includes(c.code));
                                   return otherCountries.length > 0;
                                 })() && (
-                                  <div className="border-t border-gray-200 my-1"></div>
-                                )}
-                                
+                                    <div className="border-t border-gray-200 my-1"></div>
+                                  )}
+
                                 {(() => {
                                   // Priority countries to show at the top
                                   const priorityCountries = ['MX', 'US', 'CA', 'GB'];
@@ -627,9 +585,8 @@ export default function DonorSignupPage() {
                                       setFormData(prev => ({ ...prev, country: country.code }));
                                       setIsCountryDropdownOpen(false);
                                     }}
-                                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors ${
-                                      formData.country === country.code ? 'bg-blue-50 text-black' : 'text-black'
-                                    }`}
+                                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors ${formData.country === country.code ? 'bg-blue-50 text-black' : 'text-black'
+                                      }`}
                                   >
                                     <span className={`fi ${country.flagClass} w-6 h-4`}></span>
                                     <span>{country.name}</span>
@@ -640,10 +597,10 @@ export default function DonorSignupPage() {
                           </AnimatePresence>
                         </div>
                       )}
-                      
+
                       <AnimatePresence>
                         {errors.country && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
@@ -666,15 +623,14 @@ export default function DonorSignupPage() {
                         placeholder="ZIP / Postal Code"
                         value={formData.postal_code}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                          errors.postal_code 
-                            ? 'border-red-300 bg-red-50' 
-                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                        }`}
+                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${errors.postal_code
+                          ? 'border-red-300 bg-red-50'
+                          : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                          }`}
                       />
                       <AnimatePresence>
                         {errors.postal_code && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
@@ -708,11 +664,10 @@ export default function DonorSignupPage() {
                           placeholder="Create a password"
                           value={formData.password}
                           onChange={handleInputChange}
-                          className={`w-full px-4 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                            errors.password 
-                              ? 'border-red-300 bg-red-50' 
-                              : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                          }`}
+                          className={`w-full px-4 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${errors.password
+                            ? 'border-red-300 bg-red-50'
+                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                            }`}
                         />
                         <button
                           type="button"
@@ -724,7 +679,7 @@ export default function DonorSignupPage() {
                       </div>
                       <AnimatePresence>
                         {errors.password && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
@@ -748,11 +703,10 @@ export default function DonorSignupPage() {
                           placeholder="Confirm your password"
                           value={formData.confirmPassword}
                           onChange={handleInputChange}
-                          className={`w-full px-4 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                            errors.confirmPassword 
-                              ? 'border-red-300 bg-red-50' 
-                              : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                          }`}
+                          className={`w-full px-4 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${errors.confirmPassword
+                            ? 'border-red-300 bg-red-50'
+                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                            }`}
                         />
                         <button
                           type="button"
@@ -764,7 +718,7 @@ export default function DonorSignupPage() {
                       </div>
                       <AnimatePresence>
                         {errors.confirmPassword && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
@@ -779,75 +733,10 @@ export default function DonorSignupPage() {
                   </motion.div>
                 )}
 
-                {/* Step 4: Organization Selection */}
+
+
+                {/* Step 4: Review */}
                 {currentStep === 4 && (
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="space-y-4"
-                  >
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Search Organization *
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Search organization..."
-                          value={orgSearch}
-                          onChange={(e) => setOrgSearch(e.target.value)}
-                          className="w-full px-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="max-h-64 overflow-auto border border-gray-200 rounded-xl divide-y">
-                      {filteredOrganizations.map(org => (
-                        <button
-                          key={org.id}
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, organization_id: String(org.id) }))}
-                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors duration-200 ${
-                            String(org.id) === String(formData.organization_id) ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-gray-900">{org.name}</span>
-                            <span className={`text-xs px-2 py-1 rounded ${
-                              String(org.id) === String(formData.organization_id) 
-                                ? 'bg-blue-600 text-white' 
-                                : 'bg-gray-100 text-gray-700'
-                            }`}>
-                              {String(org.id) === String(formData.organization_id) ? 'Selected' : `ID ${org.id}`}
-                            </span>
-                          </div>
-                          {org.email && <p className="text-xs text-gray-600 mt-1">{org.email}</p>}
-                        </button>
-                      ))}
-                      {filteredOrganizations.length === 0 && (
-                        <div className="p-4 text-sm text-gray-600 text-center">No organizations found</div>
-                      )}
-                    </div>
-                    
-                    <AnimatePresence>
-                      {errors.organization_id && (
-                        <motion.p 
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -5 }}
-                          className="text-red-500 text-sm flex items-center space-x-1"
-                        >
-                          <AlertCircle className="w-3 h-3" />
-                          <span>{errors.organization_id}</span>
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                )}
-
-                {/* Step 5: Review */}
-                {currentStep === 5 && (
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -890,12 +779,6 @@ export default function DonorSignupPage() {
                           <span className="font-medium text-gray-700">Postal Code:</span>
                           <p className="text-black">{formData.postal_code}</p>
                         </div>
-                        <div>
-                          <span className="font-medium text-gray-700">Organization:</span>
-                          <p className="text-black">
-                            {organizations.find(o => String(o.id) === String(formData.organization_id))?.name || 'Not selected'}
-                          </p>
-                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -917,8 +800,8 @@ export default function DonorSignupPage() {
                   ) : (
                     <div />
                   )}
-                  
-                  {currentStep < 5 ? (
+
+                  {currentStep < 4 ? (
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -953,14 +836,14 @@ export default function DonorSignupPage() {
                 </div>
               </form>
 
-              <motion.div 
+              <motion.div
                 variants={itemVariants}
                 className="mt-8 text-center"
               >
                 <p className="text-sm text-gray-600">
                   Already have a donor account?{' '}
-                  <a 
-                    href="/donor/login" 
+                  <a
+                    href="/donor/login"
                     className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200"
                   >
                     Sign in here
@@ -972,6 +855,6 @@ export default function DonorSignupPage() {
         </motion.div>
       </motion.div>
     </div>
-    
+
   );
 }

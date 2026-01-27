@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -15,7 +15,7 @@ export default function SubscriptionSuccessPage() {
   const handleSubscriptionSuccess = useCallback(async (sessionId) => {
     try {
       setStatus('loading');
-      setMessage('Processing your subscription...');
+      setMessage('Processing your donation...');
 
       // Check if user is authenticated
       const token = localStorage.getItem('token');
@@ -46,9 +46,9 @@ export default function SubscriptionSuccessPage() {
 
       if (data.success) {
         setStatus('success');
-        setMessage('Your subscription has been created successfully!');
+        setMessage('Your donation has been created successfully!');
 
-        console.log('âœ… Subscription processed successfully, redirecting to dashboard in 3 seconds...');
+        console.log('✅ Subscription processed successfully, redirecting to dashboard in 3 seconds...');
 
         // Redirect to dashboard after 3 seconds
         setTimeout(() => {
@@ -57,12 +57,12 @@ export default function SubscriptionSuccessPage() {
         }, 3000);
       } else {
         setStatus('error');
-        setError(data.error || 'Failed to process subscription');
+        setError(data.error || 'Failed to process donation');
       }
     } catch (err) {
       console.error('Error processing subscription:', err);
       setStatus('error');
-      setError('Failed to process subscription');
+      setError('Failed to process donation');
     }
   }, [router]);
 
@@ -118,7 +118,7 @@ export default function SubscriptionSuccessPage() {
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Processing Subscription</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Processing Donation</h1>
             <p className="text-gray-600 mb-6">{message}</p>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
@@ -131,7 +131,7 @@ export default function SubscriptionSuccessPage() {
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Subscription Created!</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Donation Done</h1>
             <p className="text-gray-600 mb-6">{message}</p>
             <div className="space-y-3">
               <div className="p-4 bg-green-50 rounded-lg border border-green-200">
@@ -163,7 +163,7 @@ export default function SubscriptionSuccessPage() {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <AlertCircle className="w-8 h-8 text-red-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Subscription Failed</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Donation Failed</h1>
             <p className="text-gray-600 mb-6">{error}</p>
             <div className="space-y-3">
               <button

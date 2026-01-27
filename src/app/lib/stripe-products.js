@@ -1,4 +1,4 @@
-﻿import { getStripe } from '../../lib/stripe';
+import { getStripe } from '../../lib/stripe';
 
 /**
  * Create 3 custom Stripe products for an organization
@@ -14,8 +14,8 @@ export async function createOrganizationStripeProducts(organization) {
 
     // Product 1: Package 1
     const product1 = await stripe.products.create({
-      name: `${organization.name} - Package 1`,
-      description: `Package 1 for ${organization.name}`,
+      name: `${organization.name} - Donation Option 1`,
+      description: `Donation Option 1 for ${organization.name}`,
       active: true,
       type: 'service',
       metadata: {
@@ -26,12 +26,12 @@ export async function createOrganizationStripeProducts(organization) {
       },
     });
 
-    console.log(`âœ… Created Stripe Product 1 (Package 1): ${product1.id}`);
+    console.log(`Created Donation Option 1 (Option 1): ${product1.id}`);
 
     // Product 2: Package 2
     const product2 = await stripe.products.create({
-      name: `${organization.name} - Package 2`,
-      description: `Package 2 for ${organization.name}`,
+      name: `${organization.name} - Donation Option 2`,
+      description: `Donation Option 2 for ${organization.name}`,
       active: true,
       type: 'service',
       metadata: {
@@ -42,12 +42,12 @@ export async function createOrganizationStripeProducts(organization) {
       },
     });
 
-    console.log(`âœ… Created Stripe Product 2 (Package 2): ${product2.id}`);
+     console.log(`Created Donation Option 2 (Option 2): ${product2.id}`);
 
     // Product 3: Package 3
     const product3 = await stripe.products.create({
-      name: `${organization.name} - Package 3`,
-      description: `Package 3 for ${organization.name}`,
+      name: `${organization.name} - Donation Option 3`,
+      description: `Donation Option 3 for ${organization.name}`,
       active: true,
       type: 'service',
       metadata: {
@@ -58,7 +58,7 @@ export async function createOrganizationStripeProducts(organization) {
       },
     });
 
-    console.log(`âœ… Created Stripe Product 3 (Package 3): ${product3.id}`);
+ console.log(`Created Donation Option 3 (Option 3): ${product3.id}`);
 
     return {
       product1,
@@ -66,8 +66,8 @@ export async function createOrganizationStripeProducts(organization) {
       product3,
     };
   } catch (error) {
-    console.error('âŒ Error creating Stripe products:', error);
-    throw new Error(`Failed to create Stripe products: ${error.message}`);
+    console.error('❌ Error creating Donation Options:', error);
+    throw new Error(`Failed to create Stripe Donation Options: ${error.message}`);
   }
 }
 
@@ -100,9 +100,9 @@ export async function createDefaultPricesForProducts(products, organization, cus
       },
     });
 
-    console.log(`âœ… Created Price for Product 1: ${price1.id} ($${(product1PriceCents / 100).toFixed(2)})`);
+    console.log(`✅ Created Price for Donation Option 1: ${price1.id} ($${(product1PriceCents / 100).toFixed(2)})`);
 
-    // Price 2: Monthly Recurring Donation
+    // Price 2: Monthly Recurring
     const price2 = await stripe.prices.create({
       product: products.product2.id,
       currency: 'usd',
@@ -118,9 +118,9 @@ export async function createDefaultPricesForProducts(products, organization, cus
       },
     });
 
-    console.log(`âœ… Created Price for Product 2: ${price2.id} ($${(product2PriceCents / 100).toFixed(2)}/month)`);
+    console.log(`✅ Created Price for Donation Option 2: ${price2.id} ($${(product2PriceCents / 100).toFixed(2)}/month)`);
 
-    // Price 3: Round-Up Program
+    // Price 3: Round Up (represented as a small base amount, actual round up logic handled elsewhere)
     const price3 = await stripe.prices.create({
       product: products.product3.id,
       currency: 'usd',
@@ -133,7 +133,7 @@ export async function createDefaultPricesForProducts(products, organization, cus
       },
     });
 
-    console.log(`âœ… Created Price for Product 3: ${price3.id} ($${(product3PriceCents / 100).toFixed(2)})`);
+    console.log(`✅ Created Price for Donation Option 3: ${price3.id} ($${(product3PriceCents / 100).toFixed(2)})`);
 
     return {
       price1,

@@ -191,22 +191,40 @@ export default function MultiStepPaymentForm({
       const { client_secret } = await response.json();
 
       // Confirm payment
+      console.log('💳 Starting card confirmation...');
       const cardElement = elements.getElement(CardElement);
-      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(client_secret, {
+      
+      const result = await stripe.confirmCardPayment(client_secret, {
         payment_method: {
           card: cardElement,
         },
+        return_url: window.location.href,
       });
 
+      console.log('📨 Stripe confirmation result:', result);
+
+      const { error: stripeError, paymentIntent } = result;
+
       if (stripeError) {
+        console.error('❌ Stripe Error:', stripeError);
         throw new Error(stripeError.message);
       }
 
-      if (paymentIntent.status === 'succeeded') {
-        setPaymentStatus('success');
-        onSuccess(paymentIntent);
+      if (paymentIntent) {
+        console.log(`✅ Payment Intent Status: ${paymentIntent.status}, Livemode: ${paymentIntent.livemode}`);
+        
+        if (paymentIntent.status === 'succeeded') {
+          setPaymentStatus('success');
+          onSuccess(paymentIntent);
+        } else if (paymentIntent.status === 'processing') {
+          setPaymentStatus('success'); // Treat processing as success for now (will settle later)
+          onSuccess(paymentIntent);
+        } else {
+          console.warn(`⚠️ Payment not succeeded. Status: ${paymentIntent.status}`);
+          throw new Error(`Payment status is ${paymentIntent.status}. Please try again.`);
+        }
       } else {
-        throw new Error('Payment was not successful');
+        throw new Error('No payment response received');
       }
 
     } catch (err) {

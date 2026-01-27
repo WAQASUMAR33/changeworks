@@ -79,7 +79,7 @@ export async function POST(request) {
       donor_info: {
         name: donor.name,
         email: donor.email,
-        organization: donor.organization.name
+        organization: donor.organization?.name || null
       },
       token_info: {
         expires_at: resetToken.expires,

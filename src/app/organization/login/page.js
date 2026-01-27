@@ -201,13 +201,10 @@ function OrganizationLoginContent() {
 
       // Check if we got a reset URL (for development when email sending fails)
       if (data.resetUrl) {
+        console.log('Development Reset URL:', data.resetUrl);
         setForgotPasswordSuccess(
-          `Password reset link generated! ${data.note || ''} Click the link below to reset your password:`
+          `Password reset link generated! ${data.note || ''} Check your email for instructions.`
         );
-        // Store the URL temporarily for display
-        setTimeout(() => {
-          window.open(data.resetUrl, '_blank');
-        }, 1000);
       } else {
         setForgotPasswordSuccess('Password reset link sent! Check your email for further instructions.');
       }
@@ -291,7 +288,7 @@ function OrganizationLoginContent() {
             variants={itemVariants}
             className="text-lg text-gray-600 mb-8 leading-relaxed"
           >
-            Sign in to your organization account to continue making a difference
+           Sign in to your organization’s account.
           </motion.p>
           
           <motion.div 
@@ -552,11 +549,7 @@ function OrganizationLoginContent() {
                       <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-green-700 text-sm">{forgotPasswordSuccess}</p>
-                        {forgotPasswordSuccess.includes('Click the link below') && (
-                          <p className="text-green-600 text-xs mt-1">
-                            A new tab will open with the password reset page.
-                          </p>
-                        )}
+
                       </div>
                     </div>
                   </motion.div>

@@ -57,11 +57,11 @@ export async function POST(request) {
       country: 'US', // Default country
       postalCode: donor.postal_code || '',
       source: 'ChangeWorks Donor',
-      tags: validatedData.tags || ['ChangeWorks', 'Donor', donor.organization.name],
+      tags: validatedData.tags || ['ChangeWorks', 'Donor', donor.organization?.name || ''],
       customFields: {
         donor_id: donor.id,
         organization_id: donor.organization_id,
-        organization_name: donor.organization.name,
+        organization_name: donor.organization?.name || null,
         created_via: 'ChangeWorks API',
         ...validatedData.customFields
       }

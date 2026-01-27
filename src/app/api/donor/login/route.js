@@ -17,25 +17,23 @@ export async function POST(request) {
     const { email, password, twoFactorCode } = donorLoginSchema.parse(body);
 
     // Check if donor exists in donors table only
-    const donor = await prisma.donor.findUnique({ 
-      where: { email },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        password: true,
-        status: true,
-        twoFactorEnabled: true,
-        twoFactorSecret: true,
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
-        }
-      }
-    });
+    // Workaround for broken Prisma Client
+    const donors = await prisma.$queryRaw`SELECT * FROM donors WHERE email = ${email}`;
+    const donorRaw = donors[0];
+    
+    let organization = null;
+    if (donorRaw && donorRaw.organization_id) {
+        organization = await prisma.organization.findUnique({
+            where: { id: donorRaw.organization_id },
+            select: {
+                id: true,
+                name: true,
+                email: true
+            }
+        });
+    }
+
+    const donor = donorRaw ? { ...donorRaw, organization } : null;
 
     if (!donor) {
       return NextResponse.json({ 

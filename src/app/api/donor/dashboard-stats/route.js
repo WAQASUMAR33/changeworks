@@ -18,14 +18,9 @@ export async function GET(request) {
     const donorId = decoded.id;
 
     // Get donor information
-    const donor = await prisma.donor.findUnique({
-      where: { id: donorId },
-      include: {
-        organization: {
-          select: { id: true, name: true }
-        }
-      }
-    });
+    // Workaround for broken Prisma Client
+    const donors = await prisma.$queryRaw`SELECT id FROM donors WHERE id = ${donorId}`;
+    const donor = donors[0];
 
     if (!donor) {
       return NextResponse.json({ error: "Donor not found" }, { status: 404 });

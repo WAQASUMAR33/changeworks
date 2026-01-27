@@ -298,13 +298,6 @@ export async function GET(request) {
           status: true,
           created_at: true,
           updated_at: true,
-          organization_id: true,
-          organization: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
         },
       }),
       prisma.donor.count(),

@@ -12,9 +12,10 @@ const signupSchema = z.object({
 });
 
 const updateUserSchema = z.object({
+  id: z.number().or(z.string().transform((val) => parseInt(val, 10))),
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address").max(100, "Email too long"),
-  password: z.string().min(6, "Password must be at least 6 characters").optional(),
+  password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal('')),
   role: z.enum(["SUPERADMIN", "MANAGER", "ADMIN"]),
 });
 
@@ -83,16 +84,13 @@ export async function GET(request) {
     // Fetch all users
     const users = await prisma.user.findMany({
       orderBy: {
-        created_at: 'desc', // Optional: Order by creation date
+        created_at: 'desc',
       },
     });
 
     // Check if users exist
-    if (!users || users.length === 0) {
-      return NextResponse.json(
-        { message: 'No users found' },
-        { status: 404 }
-      );
+    if (!users) {
+      return NextResponse.json([], { status: 200 });
     }
 
     return NextResponse.json(users, { status: 200 });
@@ -102,8 +100,6 @@ export async function GET(request) {
       { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

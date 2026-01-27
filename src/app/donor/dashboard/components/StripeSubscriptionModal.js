@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { X, Loader2, CheckCircle, AlertCircle, CreditCard, Calendar, TrendingUp, Building2, ChevronRight, Star, Coffee, Zap, Package } from 'lucide-react';
@@ -323,10 +323,10 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
           ) : (
             <div className="text-center py-12 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
               <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-gray-900 mb-2">No Recurring Packages Found</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">No Monthly Packages Found</h3>
               <p className="text-gray-600 max-w-xs mx-auto text-sm mb-4">
                 {nonRecurringProducts.length > 0
-                  ? "We found existing donation products, but they aren't set up for recurring subscriptions."
+                  ? "We found existing donation products, but they aren't set up for monthly subscriptions."
                   : "This organization hasn't set up any donation packages yet."}
               </p>
               {nonRecurringProducts.length > 0 && (

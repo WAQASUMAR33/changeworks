@@ -27,15 +27,7 @@ export async function GET(request, { params }) {
         id: true, 
         name: true, 
         email: true, 
-        phone: true,
-        organization_id: true,
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
-        }
+        phone: true
       }
     });
 
