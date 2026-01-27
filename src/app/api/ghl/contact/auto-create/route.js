@@ -99,12 +99,12 @@ export async function POST(request) {
         'ChangeWorks', 
         'Donor', 
         'Auto-Created',
-        donor.organization.name
+        donor.organization?.name || ''
       ],
       customFields: {
         donor_id: donor.id,
         organization_id: donor.organization_id,
-        organization_name: donor.organization.name,
+        organization_name: donor.organization?.name || null,
         created_via: 'ChangeWorks Auto-Create API',
         created_at: new Date().toISOString(),
         ...validatedData.customFields
