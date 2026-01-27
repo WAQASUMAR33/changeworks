@@ -94,6 +94,7 @@ export async function POST(request) {
       message: emailSent 
         ? "Password reset link has been sent to your email."
         : "Password reset token generated. Email service not configured.",
+      resetUrl: emailSent ? undefined : `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/reset-password?token=${resetToken}`, // Return URL for development/debugging if email fails
       email_status: {
         sent: emailSent,
         error: emailError,
