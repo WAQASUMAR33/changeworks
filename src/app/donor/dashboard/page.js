@@ -410,7 +410,7 @@ export default function DonorDashboard() {
                 onClick={handleStripePayment}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-[#0E0061] hover:from-blue-600 hover:via-blue-700 hover:to-[#0C0055] shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+                className="group relative overflow-hidden bg-green-900 hover:bg-green-800 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
               >
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-4">
@@ -423,7 +423,7 @@ export default function DonorDashboard() {
                   </div>
                   <div className="space-y-2">
                     <h4 className="text-lg font-bold text-white">Donate Now</h4>
-                    <p className="text-sm text-blue-100">Make a One Time Donation</p>
+                    <p className="text-sm text-green-100">Make a One Time Donation</p>
                   </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
@@ -445,7 +445,7 @@ export default function DonorDashboard() {
               ) : subscriptionStatus.hasActiveSubscription ? (
                 <motion.div
                   whileHover={{ scale: 1.05, y: -2 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
+                  className="group relative overflow-hidden bg-green-600 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
                 >
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-4">
@@ -457,7 +457,7 @@ export default function DonorDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2 mb-4">
-                      <h4 className="text-lg font-bold text-white">Start and Manage your Monthly Donations</h4>
+                      <h4 className="text-lg font-bold text-white">Manage</h4>
                       <p className="text-sm text-green-100">
                         {subscriptionStatus.subscriptions.length > 0
                           ? `${subscriptionStatus.subscriptions.length} active subscription${subscriptionStatus.subscriptions.length > 1 ? 's' : ''}`
@@ -479,7 +479,7 @@ export default function DonorDashboard() {
                   onClick={handleStripeSubscription}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 hover:from-green-600 hover:via-green-700 hover:to-emerald-800 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+                  className="group relative overflow-hidden bg-green-600 hover:bg-green-500 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
                 >
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-4">
@@ -491,7 +491,7 @@ export default function DonorDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <h4 className="text-lg font-bold text-white">Start and Manage your Monthly Donations</h4>
+                      <h4 className="text-lg font-bold text-white">Manage</h4>
                       <p className="text-sm text-green-100">Set Up Monthly Donations</p>
                     </div>
                   </div>
@@ -515,7 +515,7 @@ export default function DonorDashboard() {
               ) : plaidConnectionStatus.isConnected ? (
                 <motion.div
                   whileHover={{ scale: 1.05, y: -2 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-violet-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
+                  className="group relative overflow-hidden bg-green-400 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
                 >
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-4">
@@ -527,8 +527,8 @@ export default function DonorDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2 mb-4">
-                      <h4 className="text-lg font-bold text-white">Join Our Round-Up Program </h4>
-                      <p className="text-sm text-purple-100">
+                      <h4 className="text-lg font-bold text-white">Manage</h4>
+                      <p className="text-sm text-green-50">
                         {plaidConnectionStatus.connections.length > 0
                           ? `Connected to ${plaidConnectionStatus.connections[0].institution_name || 'Bank'}`
                           : 'Bank account connected'
@@ -539,7 +539,7 @@ export default function DonorDashboard() {
                       onClick={() => setShowPlaidDisconnectModal(true)}
                       className="w-full bg-red-500/80 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-red-600/80 transition-colors duration-200 text-sm font-semibold"
                     >
-                      Cancel
+                      Manage
                     </button>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
@@ -549,7 +549,7 @@ export default function DonorDashboard() {
                   onClick={handlePlaidIntegration}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-violet-700 hover:from-purple-600 hover:via-purple-700 hover:to-violet-800 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+                  className="group relative overflow-hidden bg-green-400 hover:bg-green-300 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
                 >
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-4">
@@ -561,8 +561,8 @@ export default function DonorDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <h4 className="text-lg font-bold text-white">Join Our Round-Up Program</h4>
-                      <p className="text-sm text-purple-100">Connect your bank account</p>
+                      <h4 className="text-lg font-bold text-white">Manage</h4>
+                      <p className="text-sm text-green-50">Connect your bank account</p>
                     </div>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>

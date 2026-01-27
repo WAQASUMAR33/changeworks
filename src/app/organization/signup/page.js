@@ -49,6 +49,7 @@ export default function OrganizationSignupPage() {
   const [onboardingLink, setOnboardingLink] = useState(null);
   const [organizationData, setOrganizationData] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
   const totalSteps = 4; // Steps: Basic Info, Address, Stripe Connect, Organization Login
 
   // Clear errors when component mounts and fetch countries
@@ -57,6 +58,16 @@ export default function OrganizationSignupPage() {
     setErrorMsg('');
     fetchCountries();
   }, []);
+
+  // Auto-hide error popup
+  useEffect(() => {
+    if (showErrorPopup) {
+      const timer = setTimeout(() => {
+        setShowErrorPopup(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorPopup]);
 
   const fetchCountries = async () => {
     // Restricted to US, Canada, and Mexico as per requirements
@@ -87,6 +98,12 @@ export default function OrganizationSignupPage() {
 
     if (step === 1) {
       // Basic Information
+      if (!form.firstName.trim()) {
+        newErrors.firstName = 'First name is required';
+      }
+      if (!form.lastName.trim()) {
+        newErrors.lastName = 'Last name is required';
+      }
       if (!form.name.trim()) {
         newErrors.name = 'Organization name is required';
       }
@@ -253,6 +270,7 @@ export default function OrganizationSignupPage() {
     e.preventDefault();
 
     if (!validateStep(currentStep)) {
+      setShowErrorPopup(true);
       return;
     }
 
@@ -370,7 +388,7 @@ export default function OrganizationSignupPage() {
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Your Title *
+                Organization Name *
               </label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -402,6 +420,146 @@ export default function OrganizationSignupPage() {
               </AnimatePresence>
             </motion.div>
 
+            <motion.div variants={itemVariants}>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Organization Website *
+              </label>
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  name="website"
+                  type="url"
+                  placeholder="https://your-website.com"
+                  value={form.website}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
+                  disabled={isSubmitting}
+                />
+              </div>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Organization EIN
+              </label>
+              <div className="relative">
+                <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  name="ein"
+                  type="text"
+                  placeholder="XX-XXXXXXX"
+                  value={form.ein}
+                  onChange={handleChange}
+                  maxLength={10}
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.ein
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <AnimatePresence>
+                {errors.ein && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    <span>{errors.ein}</span>
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Your First Name *
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    name="firstName"
+                    type="text"
+                    placeholder="First Name"
+                    value={form.firstName}
+                    onChange={handleChange}
+                    className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.firstName
+                      ? 'border-red-300 bg-red-50'
+                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                      }`}
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <AnimatePresence>
+                  {errors.firstName && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      <span>{errors.firstName}</span>
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Your Last Name *
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    name="lastName"
+                    type="text"
+                    placeholder="Last Name"
+                    value={form.lastName}
+                    onChange={handleChange}
+                    className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.lastName
+                      ? 'border-red-300 bg-red-50'
+                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                      }`}
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <AnimatePresence>
+                  {errors.lastName && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      <span>{errors.lastName}</span>
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Your Title or Role
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  name="title"
+                  type="text"
+                  placeholder="e.g. Director, Manager"
+                  value={form.title}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
+                  disabled={isSubmitting}
+                />
+              </div>
+            </motion.div>
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -469,60 +627,6 @@ export default function OrganizationSignupPage() {
                   </motion.p>
                 )}
               </AnimatePresence>
-            </motion.div>
-
-
-            <motion.div variants={itemVariants}>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                EIN Number
-              </label>
-              <div className="relative">
-                <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  name="ein"
-                  type="text"
-                  placeholder="XX-XXXXXXX"
-                  value={form.ein}
-                  onChange={handleChange}
-                  maxLength={10}
-                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.ein
-                    ? 'border-red-300 bg-red-50'
-                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                    }`}
-                  disabled={isSubmitting}
-                />
-              </div>
-              <AnimatePresence>
-                {errors.ein && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
-                  >
-                    <AlertCircle className="w-3 h-3" />
-                    <span>{errors.ein}</span>
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Your Website *
-              </label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  name="website"
-                  type="url"
-                  placeholder="https://your-website.com"
-                  value={form.website}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
-                  disabled={isSubmitting}
-                />
-              </div>
             </motion.div>
           </motion.div>
         );
@@ -925,6 +1029,20 @@ export default function OrganizationSignupPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col lg:flex-row overflow-hidden">
       {/* Background decorative elements */}
+      <AnimatePresence>
+        {showErrorPopup && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, x: '-50%' }}
+            animate={{ opacity: 1, y: 20, x: '-50%' }}
+            exit={{ opacity: 0, y: -50, x: '-50%' }}
+            className="fixed top-0 left-1/2 transform -translate-x-1/2 z-[60] px-6 py-3 bg-red-500 text-white rounded-full shadow-xl flex items-center space-x-2"
+          >
+            <AlertCircle className="w-5 h-5" />
+            <span className="font-medium">Please fill in all required fields</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>

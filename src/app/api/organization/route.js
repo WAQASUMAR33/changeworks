@@ -9,6 +9,9 @@ import emailService from "../../lib/email-service";
 // Validation schema
 const organizationSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  title: z.string().optional(),
   email: z.string().email("Invalid email").max(100),
   phone: z.string().optional(),
   company: z.string().optional(),
@@ -155,8 +158,8 @@ export async function POST(req) {
 
           // Prepare contact data for the organization
           const contactData = {
-            firstName: input.name.split(' ')[0] || input.name,
-            lastName: input.name.split(' ').slice(1).join(' ') || 'Organization',
+            firstName: input.firstName || input.name.split(' ')[0] || input.name,
+            lastName: input.lastName || input.name.split(' ').slice(1).join(' ') || 'Organization',
             email: input.email,
             phone: input.phone || '',
             address: input.address || '',
