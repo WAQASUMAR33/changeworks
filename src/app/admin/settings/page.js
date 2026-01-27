@@ -199,7 +199,7 @@ export default function AdminSettingsPage() {
                 <li>All organizations and their data</li>
                 <li>All donors and their profiles</li>
                 <li>All transactions and payment records</li>
-                <li>All subscriptions and recurring donations</li>
+                <li>All subscriptions and Monthly donations</li>
                 <li>All GHL accounts and contacts</li>
                 <li>All fund transfers and records</li>
                 <li>All other application data</li>

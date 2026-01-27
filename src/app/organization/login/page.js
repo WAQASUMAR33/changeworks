@@ -291,7 +291,7 @@ function OrganizationLoginContent() {
             variants={itemVariants}
             className="text-lg text-gray-600 mb-8 leading-relaxed"
           >
-            Sign in to your organization account to continue making a difference
+           Sign in to your organization’s account.
           </motion.p>
           
           <motion.div 

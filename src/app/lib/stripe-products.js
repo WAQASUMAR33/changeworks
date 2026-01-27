@@ -14,8 +14,8 @@ export async function createOrganizationStripeProducts(organization) {
 
     // Product 1: Package 1
     const product1 = await stripe.products.create({
-      name: `${organization.name} - Package 1`,
-      description: `Package 1 for ${organization.name}`,
+      name: `${organization.name} - Donation Option 1`,
+      description: `Donation Option 1 for ${organization.name}`,
       active: true,
       type: 'service',
       metadata: {
@@ -26,12 +26,12 @@ export async function createOrganizationStripeProducts(organization) {
       },
     });
 
-    console.log(`âœ… Created Stripe Product 1 (Package 1): ${product1.id}`);
+    console.log(`Created Donation Option 1 (Option 1): ${product1.id}`);
 
     // Product 2: Package 2
     const product2 = await stripe.products.create({
-      name: `${organization.name} - Package 2`,
-      description: `Package 2 for ${organization.name}`,
+      name: `${organization.name} - Donation Option 2`,
+      description: `Donation Option 2 for ${organization.name}`,
       active: true,
       type: 'service',
       metadata: {
@@ -42,12 +42,12 @@ export async function createOrganizationStripeProducts(organization) {
       },
     });
 
-    console.log(`âœ… Created Stripe Product 2 (Package 2): ${product2.id}`);
+     console.log(`Created Donation Option 2 (Option 2): ${product2.id}`);
 
     // Product 3: Package 3
     const product3 = await stripe.products.create({
-      name: `${organization.name} - Package 3`,
-      description: `Package 3 for ${organization.name}`,
+      name: `${organization.name} - Donation Option 3`,
+      description: `Donation Option 3 for ${organization.name}`,
       active: true,
       type: 'service',
       metadata: {
@@ -58,7 +58,7 @@ export async function createOrganizationStripeProducts(organization) {
       },
     });
 
-    console.log(`âœ… Created Stripe Product 3 (Package 3): ${product3.id}`);
+ console.log(`Created Donation Option 3 (Option 3): ${product3.id}`);
 
     return {
       product1,
@@ -66,7 +66,7 @@ export async function createOrganizationStripeProducts(organization) {
       product3,
     };
   } catch (error) {
-    console.error('âŒ Error creating Stripe products:', error);
+    console.error('âŒ Error creating Donation Options:', error);
     throw new Error(`Failed to create Stripe products: ${error.message}`);
   }
 }

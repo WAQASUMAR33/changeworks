@@ -70,6 +70,7 @@ model Organization {
   ghlApiKey         String?            @db.Text
   balance           Float              @default(0)
   status            Boolean            @default(true)
+  ein               String?            @db.VarChar(20)
   created_at        DateTime           @default(now())
   updated_at        DateTime           @updatedAt
   orgPassword       String?            @db.VarChar(255)

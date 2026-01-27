@@ -370,7 +370,7 @@ export default function OrganizationSignupPage() {
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Organization Name *
+                Your Title *
               </label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -405,7 +405,7 @@ export default function OrganizationSignupPage() {
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Email Address *
+                Your Email Address *
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -439,7 +439,7 @@ export default function OrganizationSignupPage() {
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Phone Number *
+                Your Phone Number *
               </label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -474,7 +474,42 @@ export default function OrganizationSignupPage() {
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Website (Optional)
+                EIN Number
+              </label>
+              <div className="relative">
+                <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  name="ein"
+                  type="text"
+                  placeholder="XX-XXXXXXX"
+                  value={form.ein}
+                  onChange={handleChange}
+                  maxLength={10}
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.ein
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <AnimatePresence>
+                {errors.ein && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    <span>{errors.ein}</span>
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Your Website *
               </label>
               <div className="relative">
                 <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -931,7 +966,7 @@ export default function OrganizationSignupPage() {
             variants={itemVariants}
             className="text-lg text-gray-600 mb-8 leading-relaxed"
           >
-            Create your organization account and start making a difference in the world
+            Create your organization’s account. Takes just minutes. 
           </motion.p>
 
           <motion.div
@@ -1008,7 +1043,7 @@ export default function OrganizationSignupPage() {
                     <CheckCircle className="w-12 h-12 text-green-600" />
                   </motion.div>
                   <h2 className="text-3xl font-bold text-gray-900 mb-2">Account Created Successfully!</h2>
-                  <p className="text-gray-600">Your organization account has been created</p>
+                  <p className="text-gray-600">Your organization’s Stripe account is activated</p>
                 </div>
 
                 {onboardingLink && (
@@ -1074,7 +1109,7 @@ export default function OrganizationSignupPage() {
                     </div>
 
                     <p className="text-xs text-gray-500 mt-4">
-                      âš ï¸ This link will expire in 1 hour. If you need a new link, please contact support or use the resend link feature in your dashboard.
+                      This link will expire in 1 hour. If you need a new link, please contact support or use the resend link feature in your dashboard.
                     </p>
                   </motion.div>
                 )}
@@ -1091,10 +1126,10 @@ export default function OrganizationSignupPage() {
                   </div>
                   <ul className="text-sm text-gray-700 space-y-1 ml-7">
                     {onboardingLink && (
-                      <li>â€¢ Complete your Stripe account onboarding using the link above</li>
+                      <li>Complete your Stripe account onboarding using the link above</li>
                     )}
-                    <li>â€¢ Check your email ({organizationData?.email}) for confirmation and additional information</li>
-                    <li>â€¢ Sign in to your organization dashboard to get started</li>
+                    <li>Check your email ({organizationData?.email}) for confirmation and additional information</li>
+                    <li>Sign in to your organization dashboard to get started</li>
                   </ul>
                 </motion.div>
 

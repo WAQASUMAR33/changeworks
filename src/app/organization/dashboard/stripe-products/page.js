@@ -135,24 +135,24 @@ export default function StripeProductsPage() {
   const productDetails = [
     {
       id: 'product1',
-      name: 'Package 1',
-      description: 'First donation package',
+      name: 'Donation Option 1',
+      description: 'First donation Option',
       icon: DollarSign,
       color: 'blue',
       stripeId: products?.product1
     },
     {
       id: 'product2',
-      name: 'Package 2',
-      description: 'Second donation package',
+      name: 'Donation Option 2',
+      description: 'Second donation Option',
       icon: RefreshCw,
       color: 'green',
       stripeId: products?.product2
     },
     {
       id: 'product3',
-      name: 'Package 3',
-      description: 'Third donation package',
+      name: 'Donation Option 3',
+      description: 'Third donation Option',
       icon: Package,
       color: 'purple',
       stripeId: products?.product3
@@ -179,7 +179,7 @@ export default function StripeProductsPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Stripe Products</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Donation Options for Supporters</h1>
             <p className="text-gray-600">
               Manage your organization&apos;s Stripe products for donations
             </p>
@@ -195,7 +195,7 @@ export default function StripeProductsPage() {
                 className="px-6 py-3 bg-white text-blue-600 border-2 border-blue-600 rounded-xl font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50 flex items-center space-x-2"
               >
                 <RefreshCw className={`w-5 h-5 ${creating ? 'animate-spin' : ''}`} />
-                <span>Update to Recurring</span>
+                <span>Update to Monthly</span>
               </motion.button>
             )}
 
@@ -290,11 +290,10 @@ export default function StripeProductsPage() {
               <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
               <div>
                 <h3 className="text-lg font-bold text-yellow-900 mb-2">
-                  Configure Your Donation Packages
+                  Configure your donation options
                 </h3>
                 <p className="text-yellow-800 mb-4">
-                  Set up your 3 donation products below. Once you click &quot;Create Products&quot;, they will be
-                  automatically configured in your Stripe account.
+                  Here you can arrange up to three donation options for your supporters
                 </p>
               </div>
             </div>
@@ -311,7 +310,7 @@ export default function StripeProductsPage() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-                        Product Name
+                        Option Name
                       </label>
                       <input
                         type="text"

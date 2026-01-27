@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "../../lib/prisma";
 import { hash } from "bcryptjs";
 import { z } from "zod";
@@ -66,6 +66,7 @@ export async function POST(req) {
         country: input.country,
         postalCode: input.postalCode,
         ghlId: input.ghlId,
+        ein: input.ein,
         imageUrl: input.logoUrl || input.imageUrl, // Use logoUrl if available, fallback to imageUrl
         orgPassword: hashedOrgPassword, // Store same password in orgPassword field
       },

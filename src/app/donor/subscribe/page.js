@@ -196,7 +196,7 @@ const SubscribePage = () => {
                                     <Gift className="w-4 h-4" />
                                     <span>Support a Cause</span>
                                 </div>
-                                <h1 className="text-4xl font-black text-gray-900 tracking-tight">Setup Recurring Donation</h1>
+                                <h1 className="text-4xl font-black text-gray-900 tracking-tight">Setup Monthly Donation</h1>
                                 <p className="text-gray-500 font-medium max-w-lg">
                                     Join our mission to create lasting change. Select an organization and choose a contribution plan that works for you.
                                 </p>

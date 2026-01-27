@@ -60,13 +60,13 @@ export async function POST(request) {
       }, { status: 200 });
     }
 
-    console.log('ðŸ”µ Creating custom Stripe products for organization:', organization.id, force ? '(Forced Re-creation)' : '');
+    console.log('Creating custom Stripe products for organization:', organization.id, force ? '(Forced Re-creation)' : '');
 
     // Default product data if not provided
     const productsToCreate = customProducts || [
-      { name: 'Package 1', price: 10, description: 'Contribution package 1' },
-      { name: 'Package 2', price: 25, description: 'Contribution package 2' },
-      { name: 'Package 3', price: 1, description: 'Contribution package 3' }
+      { name: 'Donor Option 1', price: 10, description: 'Donor Option 1' },
+      { name: 'Donor Option 2', price: 25, description: 'Donor Option 2' },
+      { name: 'Donor Option 3', price: 100, description: 'Donor Option 3' }
     ];
 
     const results = [];
