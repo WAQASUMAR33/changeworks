@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
@@ -18,7 +18,7 @@ console.log('Environment check:', {
 
 // Initialize Stripe once globally for the platform
 let stripePromise = null;
-if (typeof window !== 'undefined' && stripePublishableKey && stripePublishableKey.trim().startsWith('pk_')) {
+if (stripePublishableKey && stripePublishableKey.trim().startsWith('pk_')) {
   stripePromise = loadStripe(stripePublishableKey);
 }
 
@@ -29,6 +29,16 @@ export default function StripeProvider({ children }) {
       <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
         <p className="text-red-700 font-semibold mb-2">Payment system not configured</p>
         <p className="text-red-600 text-sm">Stripe publishable key is missing.</p>
+      </div>
+    );
+  }
+
+  // Handle invalid key format
+  if (!stripePublishableKey.trim().startsWith('pk_')) {
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+        <p className="text-red-700 font-semibold mb-2">Invalid Configuration</p>
+        <p className="text-red-600 text-sm">Stripe publishable key must start with 'pk_'.</p>
       </div>
     );
   }
