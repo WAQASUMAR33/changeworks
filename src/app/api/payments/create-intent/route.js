@@ -129,7 +129,8 @@ export async function POST(request) {
       },
     });
 
-    console.log('âœ… Payment Intent created successfully:', paymentIntent.id);
+    console.log('✅ Payment Intent created successfully:', paymentIntent.id);
+    console.log('ℹ️ Mode:', paymentIntent.livemode ? 'Live' : 'Test');
 
     // Create a pending transaction record in the database
     const transactionId = `pi_${paymentIntent.id}_${Date.now()}`;
@@ -265,7 +266,8 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       client_secret: paymentIntent.client_secret,
-      payment_intent_id: paymentIntent.id
+      transaction_id: transaction.id,
+      livemode: paymentIntent.livemode // Return mode for client-side validation
     });
 
   } catch (error) {

@@ -83,6 +83,16 @@ export default function StripePaymentForm({
         throw new Error(data.error || 'Failed to create payment intent');
       }
 
+      // Validate Environment Consistency (Client vs Server)
+      const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+      const isClientLive = publishableKey.trim().startsWith('pk_live_');
+      const isServerLive = data.livemode;
+
+      if (publishableKey && isClientLive !== isServerLive) {
+         console.error('Stripe Mode Mismatch:', { client: isClientLive ? 'Live' : 'Test', server: isServerLive ? 'Live' : 'Test' });
+         throw new Error(`Configuration Error: Client is in ${isClientLive ? 'Live' : 'Test'} mode but Server is in ${isServerLive ? 'Live' : 'Test'} mode. Please check your deployment variables.`);
+      }
+
       // Confirm payment with Stripe
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(
         data.client_secret,
@@ -161,9 +171,15 @@ export default function StripePaymentForm({
       }
     } catch (err) {
       console.error('Payment error:', err);
-      setError(err.message);
+      
+      let errorMessage = err.message;
+      if (errorMessage.includes('No such payment_intent')) {
+         errorMessage = "System Error: Payment configuration mismatch. Please verify that your Deployment Environment Variables (STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) belong to the SAME Stripe account and mode.";
+      }
+
+      setError(errorMessage);
       setPaymentStatus('error');
-      onError(err.message);
+      onError(errorMessage);
     } finally {
       setLoading(false);
     }
