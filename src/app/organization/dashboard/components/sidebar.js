@@ -7,7 +7,6 @@ import Link from 'next/link';
 
 import {
   Settings,
-  ArrowRightLeft,
   LogOut,
   CircleUserRound,
   ChevronDown,
@@ -86,14 +85,9 @@ const OrgSidebar = () => {
       path: '/organization/dashboard',
     },
     {
-      name: 'Stripe Products',
+      name: 'Donation Options',
       icon: CreditCard,
       path: '/organization/dashboard/stripe-products',
-    },
-    {
-      name: 'Fund Transfers',
-      icon: ArrowRightLeft,
-      path: '/organization/dashboard/fund-transfers',
     },
     {
       name: 'Transactions',

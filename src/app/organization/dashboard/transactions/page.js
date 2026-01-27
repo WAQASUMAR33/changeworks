@@ -46,8 +46,8 @@ const TransactionsPage = () => {
       const userData = JSON.parse(orgUser);
       const organizationId = userData.id;
       
-      // Fetch transactions for this organization only
-      const response = await fetch(`/api/transactions/by-organization/${organizationId}`);
+      // Fetch transactions from Stripe using the organization's connected account
+      const response = await fetch(`/api/organization/${organizationId}/stripe-transactions`);
       const data = await response.json();
 
       if (data.success) {
@@ -375,9 +375,6 @@ const TransactionsPage = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Transaction ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -432,23 +429,6 @@ const TransactionsPage = () => {
                         <div className="text-xs text-gray-500">
                           GHL: {transaction.ghl_id}
                         </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      {transaction.receipt_url && (
-                        <a
-                          href={transaction.receipt_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-green-600 hover:text-green-900"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
                       )}
                     </div>
                   </td>

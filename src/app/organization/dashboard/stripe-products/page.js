@@ -436,68 +436,13 @@ export default function StripeProductsPage() {
                 </p>
               </div>
 
-              {/* Product ID */}
-              {hasProduct && (
-                <div className="space-y-2">
-                  <span className="text-xs text-gray-500">Product ID</span>
-                  <div className="flex items-center space-x-2">
-                    <code className="flex-1 text-xs bg-gray-100 px-3 py-2 rounded-lg font-mono text-gray-700 truncate">
-                      {product.stripeId}
-                    </code>
-                    <button
-                      onClick={() => copyToClipboard(product.stripeId, product.id)}
-                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                      title="Copy to clipboard"
-                    >
-                      {copiedId === product.id ? (
-                        <Check className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <Copy className="w-4 h-4 text-gray-600" />
-                      )}
-                    </button>
-                  </div>
 
-                  {/* View in Stripe */}
-                  <a
-                    href={`https://dashboard.stripe.com/products/${product.stripeId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-700 hover:underline mt-2"
-                  >
-                    <span>View in Stripe</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              )}
             </motion.div>
           );
         })}
       </div>
 
-      {/* Info Section */}
-      {allProductsCreated && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-2xl"
-        >
-          <h3 className="text-lg font-bold text-blue-900 mb-3">
-            âœ… All Products Created
-          </h3>
-          <div className="space-y-2 text-sm text-blue-800">
-            <p>
-              â€¢ Your Stripe products are set up and ready to accept donations
-            </p>
-            <p>
-              â€¢ These products will be used automatically when donors make contributions
-            </p>
-            <p>
-              â€¢ You can view and manage them in your Stripe Dashboard
-            </p>
-          </div>
-        </motion.div>
-      )}
+
     </div>
   );
 }
