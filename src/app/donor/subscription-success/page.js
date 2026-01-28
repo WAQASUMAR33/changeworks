@@ -69,13 +69,13 @@ export default function SubscriptionSuccessPage() {
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
 
-    console.log('ðŸ” Subscription Success Page Loaded');
-    console.log('ðŸ” Current URL:', window.location.href);
-    console.log('ðŸ” Search Params:', Object.fromEntries(searchParams.entries()));
-    console.log('ðŸ” Session ID:', sessionId);
+    console.log('Subscription Success Page Loaded');
+    console.log('Current URL:', window.location.href);
+    console.log('Search Params:', Object.fromEntries(searchParams.entries()));
+    console.log('Session ID:', sessionId);
 
     if (sessionId) {
-      console.log('âœ… Session ID found, processing subscription...');
+      console.log('Session ID found, processing donation...');
       handleSubscriptionSuccess(sessionId);
     } else {
       console.log('âŒ No session ID found in URL');

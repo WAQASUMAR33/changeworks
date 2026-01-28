@@ -81,17 +81,22 @@ export async function POST(request) {
     // DEBUG: Check organization Stripe account status
     try {
       const stripeAcc = await stripe.accounts.retrieve(organization.stripeAccountId);
-      console.log(`ðŸ¦ Stripe Account ${organization.stripeAccountId} status:`, {
+      console.log(`🏦 Stripe Account ${organization.stripeAccountId} status:`, {
         charges_enabled: stripeAcc.charges_enabled,
         payouts_enabled: stripeAcc.payouts_enabled,
         capabilities: stripeAcc.capabilities
       });
 
       if (!stripeAcc.charges_enabled && !stripeAcc.details_submitted) {
-        console.warn('âš ï¸ Warning: Organization Stripe account has not submitted details yet.');
+        console.warn('⚠️ Warning: Organization Stripe account has not submitted details yet.');
       }
     } catch (accErr) {
-      console.error('âŒ Error retrieving Stripe account status:', accErr);
+      console.error('❌ Error retrieving Stripe account status:', accErr);
+      return NextResponse.json({
+        success: false,
+        error: "Organization Account Error",
+        details: `Could not retrieve Stripe account ${organization.stripeAccountId}. It may be invalid or not connected to this platform in the current mode. Stripe Error: ${accErr.message}`
+      }, { status: 400 });
     }
 
     // amount is in cents (per contract)
@@ -110,24 +115,41 @@ export async function POST(request) {
 
     // Create payment intent with Stripe Destination Charge
     // ChangeWorks processes the full amount, then transfers 90% to the organization automatically
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountInCents,
-      currency: currency.toLowerCase(),
-      payment_method_types: ['card'],
-      description: description || `Donation to ${organization.name}`,
-      metadata: {
-        donor_id: donor_id.toString(),
-        organization_id: organization_id.toString(),
-        donor_name: donor.name,
-        organization_name: organization.name,
-        ...(metadata || {}),
-      },
-      receipt_email: donor.email,
-      transfer_data: {
-        amount: transferAmountCents,
-        destination: organization.stripeAccountId,
-      },
-    });
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: amountInCents,
+        currency: currency.toLowerCase(),
+        payment_method_types: ['card'],
+        description: description || `Donation to ${organization.name}`,
+        metadata: {
+          donor_id: donor_id.toString(),
+          organization_id: organization_id.toString(),
+          donor_name: donor.name,
+          organization_name: organization.name,
+          ...(metadata || {}),
+        },
+        receipt_email: donor.email,
+        transfer_data: {
+          amount: transferAmountCents,
+          destination: organization.stripeAccountId,
+        },
+      });
+    } catch (stripeError) {
+      console.error('❌ Stripe Payment Intent Creation Failed:', stripeError);
+      
+      let errorMessage = stripeError.message;
+      if (stripeError.code === 'account_invalid' || stripeError.param === 'transfer_data[destination]') {
+        errorMessage = `The organization's Stripe account (${organization.stripeAccountId}) is invalid or not connected in ${process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'Live' : 'Test'} mode.`;
+      }
+
+      return NextResponse.json({
+        success: false,
+        error: "Stripe Payment Creation Failed",
+        details: errorMessage,
+        stripeCode: stripeError.code || stripeError.type
+      }, { status: 400 });
+    }
 
     console.log('✅ Payment Intent created successfully:', paymentIntent.id);
     console.log('ℹ️ Mode:', paymentIntent.livemode ? 'Live' : 'Test');

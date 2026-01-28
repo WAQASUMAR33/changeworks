@@ -391,8 +391,8 @@ export default function OrganizationDashboard() {
                                 <div className="w-20 h-20 bg-gradient-to-r from-gray-100 to-gray-200 rounded-3xl flex items-center justify-center mx-auto mb-6">
                                     <Activity className="w-10 h-10 text-gray-400" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">No recent activity</h3>
-                                <p className="text-gray-500">Activity will appear here as you use the platform</p>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2">No recent activity.</h3>
+                                <p className="text-gray-500">Activity will appear here as you use the platform.</p>
                             </div>
                         )}
                     </div>

@@ -52,16 +52,16 @@ export default function DonorLoginPage() {
     
     // Email validation
     if (!form.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email is required.';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = 'Please enter a valid email address.';
     }
 
     // Password validation
     if (!form.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = 'Password is required.';
     } else if (form.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters long';
+      newErrors.password = 'Password must be at least 6 characters long.';
     }
 
     setErrors(newErrors);
@@ -164,12 +164,12 @@ export default function DonorLoginPage() {
     e.preventDefault();
     
     if (!forgotPasswordEmail.trim()) {
-      setForgotPasswordError('Please enter your email address');
+      setForgotPasswordError('Please enter your email address.');
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotPasswordEmail.trim())) {
-      setForgotPasswordError('Please enter a valid email address');
+      setForgotPasswordError('Please enter a valid email address.');
       return;
     }
 
@@ -280,7 +280,7 @@ export default function DonorLoginPage() {
             variants={itemVariants}
             className="text-lg text-gray-600 mb-8 leading-relaxed"
           >
-            Sign in to your donor account to continue making a difference in the world
+            Sign in to your donor account to continue making a difference in the world.
           </motion.p>
           
           <motion.div 
@@ -329,7 +329,7 @@ export default function DonorLoginPage() {
                 variants={itemVariants}
                 className="text-center text-gray-600 mb-8"
               >
-                Enter your donor credentials to access your account
+                Enter your donor credentials to access your account.
               </motion.p>
 
               <AnimatePresence>

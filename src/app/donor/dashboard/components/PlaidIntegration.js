@@ -507,8 +507,8 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                       <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Building2 className="w-8 h-8 text-blue-600" />
                       </div>
-                      <h4 className="text-lg font-semibold text-black mb-2">Select Organization</h4>
-                      <p className="text-black text-sm">Choose which organization will receive your bank connection</p>
+                      <h4 className="text-lg font-semibold text-black mb-2">Select Organization.</h4>
+                      <p className="text-black text-sm">Choose which organization will receive your bank connection.</p>
                     </div>
 
                     <div className="max-w-2xl mx-auto">

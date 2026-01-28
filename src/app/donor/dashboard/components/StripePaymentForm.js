@@ -35,7 +35,7 @@ export default function StripePaymentForm({
         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
         </div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-2">Loading Payment Form</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-2">Loading Payment Form.</h4>
         <p className="text-gray-600 mb-4">
           Please wait while we initialize the secure payment system...
         </p>
@@ -59,7 +59,7 @@ export default function StripePaymentForm({
       // Get donor info from localStorage
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       if (!user.id) {
-        throw new Error('Please log in to make a payment');
+        throw new Error('Please log in to make a payment.');
       }
 
       // Create payment intent
@@ -69,7 +69,7 @@ export default function StripePaymentForm({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          amount: parseFloat(amount),
+          amount: Math.round(parseFloat(amount) * 100), // send in cents
           currency: 'USD',
           donor_id: user.id,
           organization_id: parseInt(organization.id),
@@ -80,7 +80,10 @@ export default function StripePaymentForm({
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to create payment intent');
+        const detailedError = data.details 
+          ? `${data.error}: ${typeof data.details === 'object' ? JSON.stringify(data.details) : data.details}`
+          : (data.error || 'Failed to create payment intent.');
+        throw new Error(detailedError);
       }
 
       // Validate Environment Consistency (Client vs Server)
@@ -167,7 +170,7 @@ export default function StripePaymentForm({
 
         onSuccess(paymentIntent);
       } else {
-        throw new Error('Payment was not successful');
+        throw new Error('Payment was not successful.');
       }
     } catch (err) {
       console.error('Payment error:', err);
@@ -221,7 +224,7 @@ export default function StripePaymentForm({
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <AlertCircle className="w-8 h-8 text-red-600" />
         </div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-2">Payment Failed</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-2">Payment Failed.</h4>
         <p className="text-gray-600 mb-4">
           {error || 'There was an error processing your payment. Please try again.'}
         </p>
@@ -249,7 +252,7 @@ export default function StripePaymentForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="bg-gray-50 rounded-lg p-4">
-        <h4 className="font-semibold text-gray-900 mb-2">Payment Summary</h4>
+        <h4 className="font-semibold text-gray-900 mb-2">Payment Summary.</h4>
         <div className="space-y-1 text-sm text-gray-600">
           <div className="flex justify-between">
             <span>Amount:</span>
@@ -270,7 +273,7 @@ export default function StripePaymentForm({
 
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Card Information
+          Card Information.
         </label>
         <div className="p-4 border-2 border-gray-200 rounded-xl focus-within:border-blue-500 transition-colors duration-200 bg-white">
           <CardElement 

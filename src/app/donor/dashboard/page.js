@@ -144,7 +144,7 @@ export default function DonorDashboard() {
       const token = localStorage.getItem('token');
 
       if (!token) {
-        setError('No authentication token found');
+        setError('No authentication token found.');
         return;
       }
 
@@ -192,11 +192,11 @@ export default function DonorDashboard() {
         setStats(transformedStats);
         setRecentActivity(data.recentActivity || []);
       } else {
-        setError(data.error || 'Failed to load dashboard data');
+        setError(data.error || 'Failed to load dashboard data.');
       }
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data');
+      setError('Failed to load dashboard data.');
     } finally {
       setLoading(false);
     }
@@ -233,7 +233,7 @@ export default function DonorDashboard() {
   };
 
   const handleSubscriptionSuccess = (subscriptionData) => {
-    console.log('Subscription created successfully:', subscriptionData);
+    console.log('Donation created successfully:', subscriptionData);
     // Refresh dashboard data to show updated stats
     fetchDashboardData();
     // Refresh subscription status
@@ -360,7 +360,7 @@ export default function DonorDashboard() {
             <div className="flex-1 min-w-0">
               <h2 className="text-xl sm:text-2xl font-bold mb-2">Your Impact Dashboard</h2>
               <p className="text-blue-100 text-sm sm:text-base">
-                Track your donations, manage subscriptions, and see the difference you&apos;re making
+                Track your donations, manage subscriptions, and see the difference you&apos;re making.
               </p>
             </div>
 
@@ -403,7 +403,7 @@ export default function DonorDashboard() {
         <div className="space-y-6">
           {/* Quick Actions */}
           <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-6">Quick Actions</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-6">Donation Menu</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Donate Now */}
               <motion.button
@@ -422,8 +422,8 @@ export default function DonorDashboard() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <h4 className="text-lg font-bold text-white">Donate Now</h4>
-                    <p className="text-sm text-green-100">Make a One Time Donation</p>
+                    <h4 className="text-lg font-bold text-white">Make a One-Time Donation</h4>
+                    {/* <p className="text-sm text-green-100">Make a One Time Donation</p> */}
                   </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
@@ -439,7 +439,7 @@ export default function DonorDashboard() {
                   </div>
                   <div className="space-y-2">
                     <h4 className="text-lg font-bold text-gray-700">Checking Status...</h4>
-                    <p className="text-sm text-gray-500">Loading subscription status</p>
+                    <p className="text-sm text-gray-500">Loading subscription status.</p>
                   </div>
                 </div>
               ) : subscriptionStatus.hasActiveSubscription ? (
@@ -457,7 +457,7 @@ export default function DonorDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2 mb-4">
-                      <h4 className="text-lg font-bold text-white">Manage</h4>
+                      <h4 className="text-lg font-bold text-white">Start and Manage Your Monthly Donations</h4>
                       <p className="text-sm text-green-100">
                         {subscriptionStatus.subscriptions.length > 0
                           ? `${subscriptionStatus.subscriptions.length} active subscription${subscriptionStatus.subscriptions.length > 1 ? 's' : ''}`
@@ -509,7 +509,7 @@ export default function DonorDashboard() {
                   </div>
                   <div className="space-y-2">
                     <h4 className="text-lg font-bold text-gray-700">Checking Status...</h4>
-                    <p className="text-sm text-gray-500">Loading Plaid connection</p>
+                    <p className="text-sm text-gray-500">Loading Plaid connection.</p>
                   </div>
                 </div>
               ) : plaidConnectionStatus.isConnected ? (
@@ -561,8 +561,8 @@ export default function DonorDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <h4 className="text-lg font-bold text-white">Manage</h4>
-                      <p className="text-sm text-green-50">Connect your bank account</p>
+                      <h4 className="text-lg font-bold text-white">Join Our Round-Up Donation Program</h4>
+                      <p className="text-sm text-green-50">Connect your bank account.</p>
                     </div>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>

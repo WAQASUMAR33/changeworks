@@ -70,7 +70,7 @@ export default function MultiStepPaymentForm({
         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
         </div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-2">Loading Payment Form</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-2">Loading Payment Form.</h4>
         <p className="text-gray-600 mb-4">
           Please wait while we initialize the secure payment system...
         </p>
@@ -185,7 +185,10 @@ export default function MultiStepPaymentForm({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create payment intent');
+        const detailedError = errorData.details 
+          ? `${errorData.error}: ${typeof errorData.details === 'object' ? JSON.stringify(errorData.details) : errorData.details}`
+          : (errorData.error || 'Failed to create payment intent');
+        throw new Error(detailedError);
       }
 
       const { client_secret } = await response.json();
@@ -295,7 +298,7 @@ export default function MultiStepPaymentForm({
 
       <div className="max-w-md mx-auto">
         <label className="block text-sm font-semibold text-black mb-2">
-          Donation Amount *
+          Donation Amount *.
         </label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black text-lg">$</span>
@@ -353,8 +356,8 @@ export default function MultiStepPaymentForm({
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Building2 className="w-8 h-8 text-green-600" />
         </div>
-        <h3 className="text-xl font-semibold text-black mb-2">Select Organization</h3>
-        <p className="text-black">Choose which organization will receive your donation</p>
+        <h3 className="text-xl font-semibold text-black mb-2">Select Organization.</h3>
+        <p className="text-black">Choose which organization will receive your donation.</p>
       </div>
 
       <div className="max-w-2xl mx-auto">
@@ -426,8 +429,8 @@ export default function MultiStepPaymentForm({
           ) : (
             <div className="text-center py-8">
               <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-black">No organizations found</p>
-              <p className="text-sm text-black">Try adjusting your search terms</p>
+              <p className="text-black">No organizations found.</p>
+              <p className="text-sm text-black">Try adjusting your search terms.</p>
             </div>
           )}
         </div>
@@ -446,8 +449,8 @@ export default function MultiStepPaymentForm({
         <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <CreditCard className="w-8 h-8 text-purple-600" />
         </div>
-        <h3 className="text-xl font-semibold text-black mb-2">Complete Payment</h3>
-        <p className="text-black">Enter your payment details to complete the donation</p>
+        <h3 className="text-xl font-semibold text-black mb-2">Complete Payment.</h3>
+        <p className="text-black">Enter your payment details to complete the donation.</p>
       </div>
 
       <div className="max-w-md mx-auto space-y-6">
@@ -476,7 +479,7 @@ export default function MultiStepPaymentForm({
         {/* Card Element */}
         <div>
           <label className="block text-sm font-semibold text-black mb-2">
-            Payment Information *
+            Payment Information *.
           </label>
           <div className="p-4 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all duration-200">
             <CardElement options={CARD_ELEMENT_OPTIONS} />

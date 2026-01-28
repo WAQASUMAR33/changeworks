@@ -29,10 +29,10 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
       if (data.success) {
         setOrganizations(data.organizations || []);
       } else {
-        setError('Failed to load organizations');
+        setError('Failed to load organizations.');
       }
     } catch (err) {
-      setError('Failed to load organizations');
+      setError('Failed to load organizations.');
     } finally {
       setLoading(false);
     }
@@ -50,7 +50,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
       setNonRecurringProducts([]);
       const response = await fetch(`/api/stripe/organization-products?organization_id=${org.id}&stripe_account_id=${org.stripeAccountId || ''}`);
       const data = await response.json();
-      console.log('ðŸ“¦ Org Products Data:', data);
+      console.log('📦 Org Products Data:', data);
       if (data.success) {
         setProducts(data.products || []);
         setNonRecurringProducts(data.nonRecurringProducts || []);
@@ -58,7 +58,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
         setError(data.error || 'This organization has no packages set up.');
       }
     } catch (err) {
-      setError('Failed to load organization packages');
+      setError('Failed to load organization packages.');
     } finally {
       setLoadingPkgs(false);
     }
@@ -97,7 +97,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
       }
     } catch (err) {
       console.error('Error creating subscription:', err);
-      setError(err.message || 'Failed to create subscription');
+      setError(err.message || 'Failed to create subscription.');
     } finally {
       setSubscriptionLoading(false);
     }
@@ -144,8 +144,8 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <AlertCircle className="w-8 h-8 text-blue-600" />
         </div>
-        <h3 className="text-xl font-semibold text-black mb-2">Important Information</h3>
-        <p className="text-gray-600">Please read the following disclaimer before proceeding</p>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Important Information.</h3>
+        <p className="text-gray-600">Please read the following disclaimer before proceeding.</p>
       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
@@ -154,7 +154,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
             <span className="text-white text-sm font-bold">i</span>
           </div>
           <div className="text-sm text-blue-800 space-y-3">
-            <p className="font-bold text-lg">Payment Processing:</p>
+            <p className="font-bold text-lg">Payment Processing.</p>
             <p>
               To process your donations securely, ChangeWorks uses Stripe to handle payment processing. Stripe is used by over 300,000 companies such as Amazon, DoorDash, and Shopify. Your banking information is collected only for verification and transaction purposes and is never shared with ChangeWorks or your chosen charity.
             </p>
@@ -164,7 +164,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
 
       <div className="text-center">
         <p className="text-sm text-gray-500">
-          By clicking &quot;Next&quot;, you acknowledge that you have read and understood this disclaimer.
+          By clicking &quot;Continue&quot;, you acknowledge that you have read and understood this disclaimer.
         </p>
       </div>
     </motion.div>
@@ -184,8 +184,8 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
         className="space-y-6 flex flex-col h-full"
       >
         <div className="text-center mb-2">
-          <h4 className="text-lg font-bold text-gray-900 mb-1">Select Organization</h4>
-          <p className="text-sm text-gray-600">Choose which organization you&apos;d like to support</p>
+          <h4 className="text-lg font-bold text-gray-900 mb-1">Select Organization.</h4>
+          <p className="text-sm text-gray-600">Choose which organization you&apos;d like to support.</p>
         </div>
 
         <div className="relative">
@@ -234,7 +234,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
                     <h4 className="font-black text-gray-900 leading-tight">{org.name}</h4>
                     <div className="flex items-center mt-1 space-x-1">
                       <Star className="w-3 h-3 text-blue-600 fill-current" />
-                      <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Verified Partner</p>
+                      <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Verified Partner.</p>
                     </div>
                   </div>
                   {selectedOrg?.id === org.id ? (
@@ -251,7 +251,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
             ) : (
               <div className="text-center py-12">
                 <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 font-medium">No organizations found matching &quot;{searchTerm}&quot;</p>
+                <p className="text-gray-500 font-medium">No organizations found matching &quot;{searchTerm}&quot;.</p>
               </div>
             )}
           </div>
@@ -268,8 +268,8 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
       className="space-y-6"
     >
       <div className="text-center mb-6">
-        <h4 className="text-lg font-bold text-gray-900 mb-2">Choose a Plan</h4>
-        <p className="text-gray-600">Select a contribution package for {selectedOrg?.name}</p>
+        <h4 className="text-lg font-bold text-gray-900 mb-2">Choose Your Monthly Donation Amount.</h4>
+        <p className="text-gray-600">Select a contribution package for {selectedOrg?.name}.</p>
       </div>
 
       {loadingPkgs ? (
@@ -310,7 +310,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-black text-gray-900">{formatPrice(product.price.unit_amount)}</p>
-                    <p className="text-xs text-gray-400 font-black uppercase tracking-widest">/ Month</p>
+                    <p className="text-xs text-gray-400 font-black uppercase tracking-widest">/ Month.</p>
                   </div>
                 </div>
                 {selectedProduct?.id === product.id && (
@@ -323,7 +323,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
           ) : (
             <div className="text-center py-12 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
               <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-gray-900 mb-2">No Monthly Packages Found</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">No Monthly Packages Found.</h3>
               <p className="text-gray-600 max-w-xs mx-auto text-sm mb-4">
                 {nonRecurringProducts.length > 0
                   ? "We found existing donation products, but they aren't set up for monthly subscriptions."
@@ -366,9 +366,9 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
                 <TrendingUp className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-gray-900">Setup Donation</h3>
+                <h3 className="text-xl font-black text-gray-900">Setup Donation.</h3>
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                  Step {currentStep} of 3
+                  Step {currentStep} of 3.
                 </p>
               </div>
             </div>
@@ -397,7 +397,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
                   onClick={handleBack}
                   className="px-6 py-3 text-gray-600 font-bold hover:text-gray-900 transition-colors"
                 >
-                  Back
+                  Back.
                 </button>
               )}
               {currentStep === 1 && (
@@ -405,7 +405,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
                   onClick={onClose}
                   className="px-6 py-3 text-gray-500 font-bold hover:text-gray-900 transition-colors"
                 >
-                  Cancel
+                  Cancel.
                 </button>
               )}
             </div>
@@ -417,7 +417,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
                   disabled={currentStep === 2 && !selectedOrg}
                   className="px-8 py-3 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center space-x-2"
                 >
-                  <span>Continue</span>
+                  <span>Continue.</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               ) : (
@@ -431,7 +431,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
                   ) : (
                     <>
                       <CreditCard className="w-5 h-5" />
-                      <span>Start Subscription</span>
+                      <span>Start My Donation.</span>
                     </>
                   )}
                 </button>

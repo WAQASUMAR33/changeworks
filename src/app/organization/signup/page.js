@@ -99,55 +99,55 @@ export default function OrganizationSignupPage() {
     if (step === 1) {
       // Basic Information
       if (!form.firstName.trim()) {
-        newErrors.firstName = 'First name is required';
+        newErrors.firstName = 'First name is required.';
       }
       if (!form.lastName.trim()) {
-        newErrors.lastName = 'Last name is required';
+        newErrors.lastName = 'Last name is required.';
       }
       if (!form.name.trim()) {
-        newErrors.name = 'Organization name is required';
+        newErrors.name = 'Organization name is required.';
       }
       if (!form.email.trim()) {
-        newErrors.email = 'Email is required';
+        newErrors.email = 'Email is required.';
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-        newErrors.email = 'Please enter a valid email address';
+        newErrors.email = 'Please enter a valid email address.';
       }
       if (!form.phone.trim()) {
-        newErrors.phone = 'Phone number is required';
+        newErrors.phone = 'Phone number is required.';
       }
       // Company name is now optional - no validation needed
     } else if (step === 2) {
       // Address Information
       if (!form.address.trim()) {
-        newErrors.address = 'Address is required';
+        newErrors.address = 'Address is required.';
       }
       if (!form.city.trim()) {
-        newErrors.city = 'City is required';
+        newErrors.city = 'City is required.';
       }
       if (!form.state.trim()) {
-        newErrors.state = 'State is required';
+        newErrors.state = 'State is required.';
       }
       if (!form.postalCode.trim()) {
-        newErrors.postalCode = 'Postal code is required';
+        newErrors.postalCode = 'Postal code is required.';
       }
     } else if (step === 3) {
       // Stripe Connect Account Information - only country is required
       if (form.createStripeAccount) {
         if (!form.country) {
-          newErrors.country = 'Country is required for Stripe account';
+          newErrors.country = 'Country is required for Stripe account.';
         }
       }
     } else if (step === 4) {
       // Organization Login Details
       if (!form.orgPassword) {
-        newErrors.orgPassword = 'Organization password is required';
+        newErrors.orgPassword = 'Organization password is required.';
       } else if (form.orgPassword.length < 6) {
-        newErrors.orgPassword = 'Organization password must be at least 6 characters long';
+        newErrors.orgPassword = 'Organization password must be at least 6 characters long.';
       }
       if (!form.confirmOrgPassword) {
-        newErrors.confirmOrgPassword = 'Please confirm your organization password';
+        newErrors.confirmOrgPassword = 'Please confirm your organization password.';
       } else if (form.orgPassword !== form.confirmOrgPassword) {
-        newErrors.confirmOrgPassword = 'Organization passwords do not match';
+        newErrors.confirmOrgPassword = 'Organization passwords do not match.';
       }
     }
 
@@ -220,13 +220,13 @@ export default function OrganizationSignupPage() {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      setErrorMsg('Please select a valid image file');
+      setErrorMsg('Please select a valid image file.');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg('Image size must be less than 5MB');
+      setErrorMsg('Image size must be less than 5MB.');
       return;
     }
 
@@ -382,8 +382,8 @@ export default function OrganizationSignupPage() {
         return (
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
             <motion.div variants={itemVariants} className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Basic Information</h2>
-              <p className="text-gray-600">Let&apos;s start with your organization details</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Basic Information.</h2>
+              <p className="text-gray-600">Let&apos;s start with your organization details.</p>
             </motion.div>
 
             <motion.div variants={itemVariants}>
@@ -545,7 +545,7 @@ export default function OrganizationSignupPage() {
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Your Title or Role
+                Your Title or Role *
               </label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -1029,20 +1029,6 @@ export default function OrganizationSignupPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col lg:flex-row overflow-hidden">
       {/* Background decorative elements */}
-      <AnimatePresence>
-        {showErrorPopup && (
-          <motion.div
-            initial={{ opacity: 0, y: -50, x: '-50%' }}
-            animate={{ opacity: 1, y: 20, x: '-50%' }}
-            exit={{ opacity: 0, y: -50, x: '-50%' }}
-            className="fixed top-0 left-1/2 transform -translate-x-1/2 z-[60] px-6 py-3 bg-red-500 text-white rounded-full shadow-xl flex items-center space-x-2"
-          >
-            <AlertCircle className="w-5 h-5" />
-            <span className="font-medium">Please fill in all required fields</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>

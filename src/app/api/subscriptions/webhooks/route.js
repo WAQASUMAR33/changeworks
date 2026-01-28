@@ -118,7 +118,7 @@ export async function POST(request) {
 // Handle subscription created
 async function handleSubscriptionCreated(subscription) {
   try {
-    console.log('Processing subscription created:', subscription.id);
+    console.log('Processing donation created:', subscription.id);
 
     const metadata = subscription.metadata;
     if (!metadata.donor_id || !metadata.organization_id || !metadata.package_id) {
@@ -172,16 +172,16 @@ async function handleSubscriptionCreated(subscription) {
       }
     });
 
-    console.log('Subscription created successfully:', subscription.id);
+    console.log('Donation created successfully:', subscription.id);
   } catch (error) {
-    console.error('Error handling subscription created:', error);
+    console.error('Error handling donation created:', error);
   }
 }
 
 // Handle subscription updated
 async function handleSubscriptionUpdated(subscription) {
   try {
-    console.log('Processing subscription updated:', subscription.id);
+    console.log('Processing donation updated:', subscription.id);
 
     const existingSubscription = await prisma.subscription.findFirst({
       where: { stripe_subscription_id: subscription.id }
@@ -221,7 +221,7 @@ async function handleSubscriptionUpdated(subscription) {
 // Handle subscription deleted
 async function handleSubscriptionDeleted(subscription) {
   try {
-    console.log('Processing subscription deleted:', subscription.id);
+    console.log('Processing donation deleted:', subscription.id);
 
     const existingSubscription = await prisma.subscription.findFirst({
       where: { stripe_subscription_id: subscription.id }

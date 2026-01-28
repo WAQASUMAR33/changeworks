@@ -319,7 +319,7 @@ const SubscribePage = () => {
                                     <div className="flex items-center justify-between mb-8">
                                         <h2 className="text-xl font-black text-gray-900 flex items-center space-x-2">
                                             <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                                            <span>2. Choose a Plan</span>
+                                            <span>2. Choose Your Monthly Donation Amount</span>
                                         </h2>
                                         {loadingPkgs && <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />}
                                     </div>

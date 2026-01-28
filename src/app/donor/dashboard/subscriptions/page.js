@@ -39,7 +39,7 @@ export default function DonorSubscriptionsPage() {
       const token = localStorage.getItem('token');
 
       if (!token) {
-        setError('No authentication token found');
+        setError('No authentication token found.');
         return;
       }
 
@@ -59,11 +59,11 @@ export default function DonorSubscriptionsPage() {
       if (data.success) {
         setSubscriptions(data.subscriptions || []);
       } else {
-        setError(data.error || 'Failed to load subscriptions');
+        setError(data.error || 'Failed to load subscriptions.');
       }
     } catch (err) {
       console.error('Error fetching subscriptions:', err);
-      setError('Failed to load subscriptions');
+      setError('Failed to load subscriptions.');
     } finally {
       setLoading(false);
     }
@@ -182,10 +182,10 @@ export default function DonorSubscriptionsPage() {
   };
 
   const handleSubscriptionSuccess = (subscriptionData) => {
-    console.log('Subscription created successfully:', subscriptionData);
+    console.log('Donation created successfully:', subscriptionData);
     // Refresh subscriptions list
     fetchSubscriptions();
-    setMessage('Subscription created successfully!');
+    setMessage('Donation created successfully!');
     setTimeout(() => setMessage(''), 3000);
   };
 
@@ -280,7 +280,7 @@ export default function DonorSubscriptionsPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading subscriptions...</p>
+          <p className="text-gray-600">Loading subscriptions.</p>
         </div>
       </div>
     );
@@ -296,8 +296,8 @@ export default function DonorSubscriptionsPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Monthly Donations</h1>
-          <p className="text-gray-600 mt-2">Manage your monthly donations</p>
+          <h1 className="text-3xl font-bold text-gray-900">My Monthly Donations.</h1>
+          <p className="text-gray-600 mt-2">Manage your monthly donations.</p>
         </div>
         <div className="mt-4 sm:mt-0">
           <button
@@ -305,7 +305,7 @@ export default function DonorSubscriptionsPage() {
             className="flex items-center space-x-2 px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200"
           >
             <Plus className="w-4 h-4" />
-            <span>New Monthly Donation</span>
+            <span>New Monthly Donation.</span>
           </button>
         </div>
       </motion.div>
@@ -344,7 +344,7 @@ export default function DonorSubscriptionsPage() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Recurring Donations</p>
+              <p className="text-sm font-medium text-gray-600">Active Recurring Donations.</p>
               <p className="text-2xl font-bold text-gray-900">
                 {subscriptions.filter(sub => sub.status === 'ACTIVE').length}
               </p>
@@ -358,7 +358,7 @@ export default function DonorSubscriptionsPage() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Monthly Total</p>
+              <p className="text-sm font-medium text-gray-600">Monthly Total.</p>
               <p className="text-2xl font-bold text-gray-900">
                 {formatAmount(
                   subscriptions
@@ -376,7 +376,7 @@ export default function DonorSubscriptionsPage() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Monthly Donations</p>
+              <p className="text-sm font-medium text-gray-600">Total Monthly Donations.</p>
               <p className="text-2xl font-bold text-gray-900">{subscriptions.length}</p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -388,7 +388,7 @@ export default function DonorSubscriptionsPage() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Organizations</p>
+              <p className="text-sm font-medium text-gray-600">Organizations.</p>
               <p className="text-2xl font-bold text-gray-900">
                 {new Set(subscriptions.map(sub => sub.organization?.id)).size}
               </p>
@@ -405,7 +405,7 @@ export default function DonorSubscriptionsPage() {
         {error ? (
           <div className="p-8 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Subscriptions</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Subscriptions.</h3>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={fetchSubscriptions}
@@ -419,12 +419,12 @@ export default function DonorSubscriptionsPage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Organization</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Amount</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Frequency</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Next Payment</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Organization.</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Amount.</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Frequency.</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Next Payment.</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status.</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions.</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">

@@ -23,7 +23,7 @@ const DonorHeader = () => {
               Welcome back, {user?.name || 'Donor'}!
             </h1>
             <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
-              Manage your donations and track your impact
+              Manage your donations and track your impact.
             </p>
           </div>
         </div>

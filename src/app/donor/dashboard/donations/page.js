@@ -34,7 +34,7 @@ export default function DonorDonationsPage() {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        setError('No authentication token found');
+        setError('No authentication token found.');
         return;
       }
 
@@ -55,11 +55,11 @@ export default function DonorDonationsPage() {
         setDonations(data.transactions || []);
         setFilteredDonations(data.transactions || []);
       } else {
-        setError(data.error || 'Failed to load donations');
+        setError(data.error || 'Failed to load donations.');
       }
     } catch (err) {
       console.error('Error fetching donations:', err);
-      setError('Failed to load donations');
+      setError('Failed to load donations.');
     } finally {
       setLoading(false);
     }
@@ -189,7 +189,7 @@ export default function DonorDonationsPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading donations...</p>
+          <p className="text-gray-600">Loading donations.</p>
         </div>
       </div>
     );
@@ -205,13 +205,13 @@ export default function DonorDonationsPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Donations</h1>
-          <p className="text-gray-600 mt-2">View and manage your donation history</p>
+          <h1 className="text-3xl font-bold text-gray-900">My Donations.</h1>
+          <p className="text-gray-600 mt-2">View and manage your donation history.</p>
         </div>
         <div className="mt-4 sm:mt-0">
           <button className="flex items-center space-x-2 px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200">
             <Download className="w-4 h-4" />
-            <span>Export</span>
+            <span>Export.</span>
           </button>
         </div>
       </motion.div>
@@ -221,7 +221,7 @@ export default function DonorDonationsPage() {
         <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm font-medium text-gray-600">Total Donated</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600">Total Donated.</p>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 {formatAmount(donations.reduce((sum, donation) => sum + (donation.amount || 0), 0))}
               </p>
@@ -235,7 +235,7 @@ export default function DonorDonationsPage() {
         <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm font-medium text-gray-600">Total Donations</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600">Total Donations.</p>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">{donations.length}</p>
             </div>
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -247,7 +247,7 @@ export default function DonorDonationsPage() {
         <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm font-medium text-gray-600">This Month</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600">This Month.</p>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 {formatAmount(
                   donations
@@ -270,7 +270,7 @@ export default function DonorDonationsPage() {
         <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm font-medium text-gray-600">Organizations</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600">Organizations.</p>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 {new Set(donations.map(donation => donation.organization?.id)).size}
               </p>
@@ -319,7 +319,7 @@ export default function DonorDonationsPage() {
             </div>
           </div>
           <div className="text-sm text-black">
-            Showing {filteredDonations.length} of {donations.length} donations
+            Showing {filteredDonations.length} of {donations.length} donations.
           </div>
         </div>
       </motion.div>
@@ -329,13 +329,13 @@ export default function DonorDonationsPage() {
         {error ? (
           <div className="p-8 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Donations</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Donations.</h3>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={fetchDonations}
               className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200"
             >
-              Try Again
+              Try Again.
             </button>
           </div>
         ) : filteredDonations.length > 0 ? (
@@ -343,12 +343,12 @@ export default function DonorDonationsPage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Organization</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Amount</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Type</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Organization.</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Amount.</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Type.</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date.</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status.</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions.</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -426,7 +426,7 @@ export default function DonorDonationsPage() {
         ) : (
           <div className="p-8 text-center">
             <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Donations Found</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Donations Found.</h3>
             <p className="text-gray-600 mb-4">
               {searchTerm || startDate || endDate
                 ? 'No donations match your current filters.'
@@ -459,7 +459,7 @@ export default function DonorDonationsPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-800">Donation Details</h3>
+                <h3 className="text-xl font-bold text-gray-800">Donation Details.</h3>
                 <button
                   onClick={() => setSelectedDonation(null)}
                   className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
@@ -470,7 +470,7 @@ export default function DonorDonationsPage() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Organization.</label>
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden">
                       {selectedDonation.organization?.imageUrl ? (
@@ -497,7 +497,7 @@ export default function DonorDonationsPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount.</label>
                   <p className="text-2xl font-bold text-gray-900">{formatAmount(selectedDonation.amount || 0)}</p>
                 </div>
                 
