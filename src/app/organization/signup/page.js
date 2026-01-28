@@ -80,7 +80,21 @@ export default function OrganizationSignupPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+
+    // Custom handling for EIN to format as XX-XXXXXXX
+    if (name === 'ein') {
+      // Remove non-digits
+      const digits = value.replace(/\D/g, '');
+      let formattedEin = digits;
+
+      if (digits.length > 2) {
+        formattedEin = `${digits.slice(0, 2)}-${digits.slice(2, 9)}`;
+      }
+
+      setForm(prev => ({ ...prev, [name]: formattedEin }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
+    }
 
     // Clear specific field error when user starts typing
     if (errors[name]) {
@@ -118,8 +132,8 @@ export default function OrganizationSignupPage() {
       }
       if (!form.ein || !form.ein.trim()) {
         newErrors.ein = 'Organization EIN is required.';
-      } else if (!/^\d{9}$/.test(form.ein.trim())) {
-        newErrors.ein = 'EIN must be exactly 9 digits.';
+      } else if (!/^\d{2}-\d{7}$/.test(form.ein.trim())) {
+        newErrors.ein = 'EIN must be in format XX-XXXXXXX (10 characters).';
       }
       // Company name is now optional - no validation needed
     } else if (step === 2) {
@@ -453,10 +467,10 @@ export default function OrganizationSignupPage() {
                 <input
                   name="ein"
                   type="text"
-                  placeholder="9-digit EIN"
+                  placeholder="XX-XXXXXXX"
                   value={form.ein}
                   onChange={handleChange}
-                  maxLength={9}
+                  maxLength={10}
                   className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.ein
                     ? 'border-red-300 bg-red-50'
                     : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
