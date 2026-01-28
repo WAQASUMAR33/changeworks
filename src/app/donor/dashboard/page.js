@@ -322,7 +322,7 @@ export default function DonorDashboard() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading dashboard data...</p>
+          <p className="text-gray-600">Loading dashboard data.</p>
         </div>
       </div>
     );
@@ -358,9 +358,9 @@ export default function DonorDashboard() {
         <motion.div variants={itemVariants} className="bg-[#0E0061] rounded-2xl p-4 sm:p-6 text-white">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
-              <h2 className="text-xl sm:text-2xl font-bold mb-2">Your Impact Dashboard</h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-2">Your ChangeWorks Dashboard</h2>
               <p className="text-blue-100 text-sm sm:text-base">
-                Track your donations, manage subscriptions, and see the difference you&apos;re making.
+                Track your donations, manage monthly donations, and Round Up Program.
               </p>
             </div>
 
