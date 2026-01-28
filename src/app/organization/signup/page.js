@@ -1,4 +1,4 @@
-﻿﻿'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -449,7 +449,7 @@ export default function OrganizationSignupPage() {
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Organization EIN
+                Organization EIN *
               </label>
               <div className="relative">
                 <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
