@@ -2284,16 +2284,14 @@ Address: NY-123 Younkers, New York
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
           .header { background: linear-gradient(135deg, #302E56 0%, #0E0061 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
           .content { background: #ffffff; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-          .reset-button { background: linear-gradient(135deg, #302E56 0%, #0E0061 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 20px 0; font-weight: bold; }
-          .reset-button:hover { background: linear-gradient(135deg, #0E0061 0%, #302E56 100%); }
+          .reset-button { background: linear-gradient(135deg, #302E56 0%, #0E0061 100%); color: white !important; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 20px 0; font-weight: bold; }
+          .reset-button:hover { background: linear-gradient(135deg, #0E0061 0%, #302E56 100%); color: white !important; }
           .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; }
-          .logo { max-width: 150px; height: auto; margin-bottom: 20px; }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo" />
             <h1>Password Reset Request</h1>
           </div>
           
@@ -2365,17 +2363,15 @@ Your trusted platform partner for charitable giving
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
           .header { background: linear-gradient(135deg, #302E56 0%, #0E0061 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
           .content { background: #ffffff; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-          .reset-button { background: linear-gradient(135deg, #302E56 0%, #0E0061 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 20px 0; font-weight: bold; }
-          .reset-button:hover { background: linear-gradient(135deg, #0E0061 0%, #302E56 100%); }
+          .reset-button { background: linear-gradient(135deg, #302E56 0%, #0E0061 100%); color: white !important; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 20px 0; font-weight: bold; }
+          .reset-button:hover { background: linear-gradient(135deg, #0E0061 0%, #302E56 100%); color: white !important; }
           .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; }
-          .logo { max-width: 150px; height: auto; margin-bottom: 20px; }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo" />
-            <h1>Organization Password Reset</h1>
+            <h1>Reset Your Organization Password</h1>
           </div>
           
           <div class="content">
