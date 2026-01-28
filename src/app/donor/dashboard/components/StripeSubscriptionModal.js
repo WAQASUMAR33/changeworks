@@ -156,7 +156,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
           <div className="text-sm text-blue-800 space-y-3">
             <p className="font-bold text-lg">Payment Processing.</p>
             <p>
-              To process your donations securely, ChangeWorks uses Stripe to handle payment processing. Stripe is used by over 300,000 companies such as Amazon, DoorDash, and Shopify. Your banking information is collected only for verification and transaction purposes and is never shared with ChangeWorks or your chosen charity.
+              To process your donations securely, ChangeWorks uses Stripe to handle payment processing. Stripe is used by over 300,000 companies such as Amazon, DoorDash, and Shopify. Your banking information is collected <u>only for verification</u> and transaction purposes and is <u>never shared</u> with ChangeWorks or your chosen charity.
             </p>
           </div>
         </div>

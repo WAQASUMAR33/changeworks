@@ -398,7 +398,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
               </p>
               <div className="bg-blue-100 border border-blue-300 rounded-lg p-4 mt-4">
                 <p className="font-semibold text-blue-900 text-base">
-                  Your banking information is collected only for verification and transaction purposes and is never shared with ChangeWorks or your chosen charity.
+                  Your banking information is collected <u>only for verification</u> and transaction purposes and is never shared with ChangeWorks or your chosen charity.
                 </p>
               </div>
             </div>

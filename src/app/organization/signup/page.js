@@ -121,8 +121,8 @@ export default function OrganizationSignupPage() {
       }
       if (!form.ein || !form.ein.trim()) {
         newErrors.ein = 'Organization EIN is required.';
-      } else if (!/^\d{2}-\d{7}$/.test(form.ein.trim())) {
-        newErrors.ein = 'EIN must be in XX-XXXXXXX format.';
+      } else if (!/^\d{9}$/.test(form.ein.trim())) {
+        newErrors.ein = 'EIN must be exactly 9 digits.';
       }
       // Company name is now optional - no validation needed
     } else if (step === 2) {
@@ -397,6 +397,67 @@ export default function OrganizationSignupPage() {
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Organization Logo *
+              </label>
+              <div className="space-y-4">
+                {logoPreview ? (
+                  <div className="relative inline-block">
+                    <div className="w-32 h-32 border-2 border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+                      <Image
+                        src={logoPreview}
+                        alt="Logo preview"
+                        width={128}
+                        height={128}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeLogo}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      disabled={logoUploading}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-gray-400 transition-colors relative">
+                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600 mb-2">Upload your organization logo</p>
+                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      disabled={logoUploading || isSubmitting}
+                    />
+                  </div>
+                )}
+                {logoUploading && (
+                  <div className="flex items-center justify-center space-x-2 text-blue-600">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-sm">Uploading logo...</span>
+                  </div>
+                )}
+                <AnimatePresence>
+                  {errors.logo && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      <span>{errors.logo}</span>
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Organization Name *
               </label>
               <div className="relative">
@@ -456,10 +517,10 @@ export default function OrganizationSignupPage() {
                 <input
                   name="ein"
                   type="text"
-                  placeholder="XX-XXXXXXX"
+                  placeholder="9-digit EIN"
                   value={form.ein}
                   onChange={handleChange}
-                  maxLength={10}
+                  maxLength={9}
                   className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.ein
                     ? 'border-red-300 bg-red-50'
                     : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -979,66 +1040,7 @@ export default function OrganizationSignupPage() {
               </AnimatePresence>
             </motion.div>
 
-            <motion.div variants={itemVariants}>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Organization Logo *
-              </label>
-              <div className="space-y-4">
-                {logoPreview ? (
-                  <div className="relative inline-block">
-                    <div className="w-32 h-32 border-2 border-gray-200 rounded-xl overflow-hidden bg-gray-50">
-                      <Image
-                        src={logoPreview}
-                        alt="Logo preview"
-                        width={128}
-                        height={128}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={removeLogo}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                      disabled={logoUploading}
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-gray-400 transition-colors relative">
-                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">Upload your organization logo</p>
-                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoChange}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      disabled={logoUploading || isSubmitting}
-                    />
-                  </div>
-                )}
-                {logoUploading && (
-                  <div className="flex items-center justify-center space-x-2 text-blue-600">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-sm">Uploading logo...</span>
-                  </div>
-                )}
-              <AnimatePresence>
-                  {errors.logo && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      className="text-red-500 text-sm mt-1 flex items-center space-x-1"
-                    >
-                      <AlertCircle className="w-3 h-3" />
-                      <span>{errors.logo}</span>
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
-            </motion.div>
+
           </motion.div>
         );
 
