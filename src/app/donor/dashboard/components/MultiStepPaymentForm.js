@@ -200,6 +200,10 @@ export default function MultiStepPaymentForm({
       const result = await stripe.confirmCardPayment(client_secret, {
         payment_method: {
           card: cardElement,
+          billing_details: {
+            name: user.name || 'Donor',
+            email: user.email,
+          },
         },
         return_url: window.location.href,
       });
@@ -209,8 +213,16 @@ export default function MultiStepPaymentForm({
       const { error: stripeError, paymentIntent } = result;
 
       if (stripeError) {
-        console.error('❌ Stripe Error:', stripeError);
-        throw new Error(stripeError.message);
+        console.error('❌ Payment Confirmation Failed:', stripeError);
+        
+        let errorMessage = stripeError.message;
+        
+        // Detect Environment Mismatch (Frontend Key vs Backend Key)
+        if (errorMessage.includes('No such payment_intent')) {
+          errorMessage = `Configuration Error: The Payment Intent was created but could not be found. \n\nThis almost always means your Frontend 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY' and Backend 'STRIPE_SECRET_KEY' belong to DIFFERENT Stripe accounts. \n\nPlease verify your deployment environment variables.`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       if (paymentIntent) {

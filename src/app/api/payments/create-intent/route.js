@@ -78,10 +78,12 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
+    const destinationAccountId = organization.stripeAccountId.trim();
+
     // DEBUG: Check organization Stripe account status
     try {
-      const stripeAcc = await stripe.accounts.retrieve(organization.stripeAccountId);
-      console.log(`🏦 Stripe Account ${organization.stripeAccountId} status:`, {
+      const stripeAcc = await stripe.accounts.retrieve(destinationAccountId);
+      console.log(`🏦 Stripe Account ${destinationAccountId} status:`, {
         charges_enabled: stripeAcc.charges_enabled,
         payouts_enabled: stripeAcc.payouts_enabled,
         capabilities: stripeAcc.capabilities
@@ -95,7 +97,7 @@ export async function POST(request) {
       return NextResponse.json({
         success: false,
         error: "Organization Account Error",
-        details: `Could not retrieve Stripe account ${organization.stripeAccountId}. It may be invalid or not connected to this platform in the current mode. Stripe Error: ${accErr.message}`
+        details: `Could not retrieve Stripe account ${destinationAccountId}. It may be invalid or not connected to this platform in the current mode. Stripe Error: ${accErr.message}`
       }, { status: 400 });
     }
 
@@ -107,11 +109,11 @@ export async function POST(request) {
     const transferAmountCents = Math.round(amountInCents * 0.90);
     const applicationFeeAmount = amountInCents - transferAmountCents;
 
-    console.log(`ðŸ’° Total: $${amountDollars} (${amountInCents} cents)`);
-    console.log(`ðŸ’¸ Platform Commission (10%): ${amountInCents - transferAmountCents} cents`);
-    console.log(`ðŸ¦ Transfer to Org (90%): ${transferAmountCents} cents to ${organization.stripeAccountId}`);
+    console.log(`💰 Total: $${amountDollars} (${amountInCents} cents)`);
+    console.log(`💸 Platform Commission (10%): ${amountInCents - transferAmountCents} cents`);
+    console.log(`🏦 Transfer to Org (90%): ${transferAmountCents} cents to ${destinationAccountId}`);
 
-    console.log(`ðŸ¦ Initiating Destination Charge: Total=${amountInCents}, Transfer=${transferAmountCents} to ${organization.stripeAccountId}`);
+    console.log(`🏦 Initiating Destination Charge: Total=${amountInCents}, Transfer=${transferAmountCents} to ${destinationAccountId}`);
 
     // Create payment intent with Stripe Destination Charge
     // ChangeWorks processes the full amount, then transfers 90% to the organization automatically
@@ -132,7 +134,7 @@ export async function POST(request) {
         receipt_email: donor.email,
         transfer_data: {
           amount: transferAmountCents,
-          destination: organization.stripeAccountId,
+          destination: destinationAccountId,
         },
       });
     } catch (stripeError) {
@@ -140,7 +142,7 @@ export async function POST(request) {
       
       let errorMessage = stripeError.message;
       if (stripeError.code === 'account_invalid' || stripeError.param === 'transfer_data[destination]') {
-        errorMessage = `The organization's Stripe account (${organization.stripeAccountId}) is invalid or not connected in ${process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'Live' : 'Test'} mode.`;
+        errorMessage = `The organization's Stripe account (${destinationAccountId}) is invalid or not connected in ${process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'Live' : 'Test'} mode.`;
       }
 
       return NextResponse.json({
