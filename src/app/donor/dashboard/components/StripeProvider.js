@@ -13,7 +13,8 @@ console.log('Environment check:', {
   hasStripeKey: !!stripePublishableKey,
   keyLength: stripePublishableKey?.length || 0,
   keyPrefix: stripePublishableKey?.substring(0, 10) || 'none',
-  allEnvKeys: Object.keys(process.env).filter(key => key.includes('STRIPE'))
+  allEnvKeys: Object.keys(process.env).filter(key => key.includes('STRIPE')),
+  ACTION_REQUIRED: 'Please verify that this key prefix matches the account used in your backend (STRIPE_SECRET_KEY).'
 });
 
 // Initialize Stripe once globally for the platform

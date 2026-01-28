@@ -39,6 +39,15 @@ export async function POST(request) {
       }, { status: 503 });
     }
 
+    // DEBUG: Identify the Platform Account (The one making the API calls)
+    try {
+      const platformAccount = await stripe.accounts.retrieve();
+      console.log(`🔑 API Key belongs to Platform Account: ${platformAccount.id} (${platformAccount.email || 'No Email'})`);
+      console.log(`ℹ️ This Account ID (${platformAccount.id}) MUST match the account for NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in the frontend.`);
+    } catch (e) {
+      console.error('⚠️ Could not identify Platform Account:', e.message);
+    }
+
     const body = await request.json();
     console.log('ðŸ” Payment Intent Request Body:', body);
 
