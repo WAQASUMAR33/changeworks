@@ -121,8 +121,8 @@ export default function OrganizationSignupPage() {
       }
       if (!form.ein || !form.ein.trim()) {
         newErrors.ein = 'Organization EIN is required.';
-      } else if (!/^\d{2}-\d{7}$/.test(form.ein.trim())) {
-        newErrors.ein = 'EIN must be in XX-XXXXXXX format.';
+      } else if (!/^\d{9}$/.test(form.ein.trim())) {
+        newErrors.ein = 'EIN must be exactly 9 digits.';
       }
       // Company name is now optional - no validation needed
     } else if (step === 2) {
@@ -456,10 +456,10 @@ export default function OrganizationSignupPage() {
                 <input
                   name="ein"
                   type="text"
-                  placeholder="XX-XXXXXXX"
+                  placeholder="9-digit EIN"
                   value={form.ein}
                   onChange={handleChange}
-                  maxLength={10}
+                  maxLength={9}
                   className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.ein
                     ? 'border-red-300 bg-red-50'
                     : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
