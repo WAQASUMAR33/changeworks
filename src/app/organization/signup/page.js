@@ -98,6 +98,10 @@ export default function OrganizationSignupPage() {
 
     if (step === 1) {
       // Basic Information
+      if (!form.logo && !form.logoUrl) {
+        newErrors.logo = 'Organization logo is required.';
+      }
+
       if (!form.firstName.trim()) {
         newErrors.firstName = 'First name is required.';
       }
@@ -114,6 +118,11 @@ export default function OrganizationSignupPage() {
       }
       if (!form.phone.trim()) {
         newErrors.phone = 'Phone number is required.';
+      }
+      if (!form.ein || !form.ein.trim()) {
+        newErrors.ein = 'Organization EIN is required.';
+      } else if (!/^\d{2}-\d{7}$/.test(form.ein.trim())) {
+        newErrors.ein = 'EIN must be in XX-XXXXXXX format.';
       }
       // Company name is now optional - no validation needed
     } else if (step === 2) {
@@ -972,7 +981,7 @@ export default function OrganizationSignupPage() {
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Organization Logo (Optional)
+                Organization Logo *
               </label>
               <div className="space-y-4">
                 {logoPreview ? (
@@ -1015,9 +1024,21 @@ export default function OrganizationSignupPage() {
                     <span className="text-sm">Uploading logo...</span>
                   </div>
                 )}
+              <AnimatePresence>
+                  {errors.logo && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      <span>{errors.logo}</span>
+                    </motion.p>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
-
           </motion.div>
         );
 

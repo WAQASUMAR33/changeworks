@@ -22,9 +22,10 @@ const organizationSchema = z.object({
   country: z.string().optional(),
   postalCode: z.string().optional(),
   ghlId: z.string().optional(),
+  ein: z.string().min(10, "EIN must be at least 10 characters (including hyphen)"),
   imageUrl: z.string().optional(),
   logo: z.string().optional(), // Base64 encoded logo
-  logoUrl: z.string().optional(), // URL returned from PHP API
+  logoUrl: z.string().min(1, "Organization logo is required"), // URL returned from PHP API
   // Stripe Connect Account Information
   createStripeAccount: z.boolean().optional().default(false),
   // Organization Login Details (single password)
