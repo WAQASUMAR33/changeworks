@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma.jsx";
-import emailService from "../../../lib/email-service.jsx";
+import emailService from "../../../lib/email-service";
 
 // GET /api/email/send-monthly-impact - Check email configuration
 export async function GET() {

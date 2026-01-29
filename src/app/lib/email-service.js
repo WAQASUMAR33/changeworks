@@ -249,7 +249,7 @@ class EmailService {
           
           <div class="footer">
             <div class="logo-section">
-              <img src="${process.env.NEXT_PUBLIC_BASE_URL}/imgs/changeworks.jpg" alt="ChangeWorks Logo" />
+              <img src="${process.env.NEXT_PUBLIC_BASE_URL}/imgs/changeworks.png" alt="ChangeWorks Logo" />
             </div>
             
             <div class="contact-info">
@@ -460,7 +460,7 @@ Address: NY-123 Younkers, New York
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo">
+            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.png" alt="ChangeWorks Logo" class="logo">
             <h1>Your Monthly Impact</h1>
           </div>
           
@@ -693,7 +693,7 @@ Address: NY-123 Younkers, New York
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo">
+            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.png" alt="ChangeWorks Logo" class="logo">
             <h1>Donation Confirmation</h1>
           </div>
           
@@ -941,7 +941,7 @@ Address: NY-123 Younkers, New York
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo">
+            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.png" alt="ChangeWorks Logo" class="logo">
             <h1>Recurring Payment Confirmation</h1>
           </div>
           
@@ -1033,6 +1033,8 @@ Address: NY-123 Younkers, New York
   // Send recurring change donation confirmation email
   async sendRecurringChangeDonationEmail({ donor, organization, dashboardLink, amount, donationDate }) {
     const subject = `Your recurring change donation to ${organization.name} is active`;
+    // Format amount to handle "Round Up" text or numeric values
+    const formattedAmount = isNaN(amount) ? amount : `$${amount}`;
     
     const html = `
       <!DOCTYPE html>
@@ -1194,7 +1196,7 @@ Address: NY-123 Younkers, New York
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo">
+            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.png" alt="ChangeWorks Logo" class="logo">
             <h1>Recurring Change Donation Active</h1>
           </div>
           
@@ -1203,11 +1205,11 @@ Address: NY-123 Younkers, New York
             
             <div class="change-highlight">
               <h2>Your Change Donation is Active!</h2>
-              <div class="change-amount">$${amount}</div>
+              <div class="change-amount">${formattedAmount}</div>
               <p class="change-date">Started ${donationDate}</p>
             </div>
             
-            <p>Your recurring change donation of <strong>$${amount}</strong> to <strong>${organization.name}</strong> is now active and will automatically round up your everyday purchases.</p>
+            <p>Your recurring change donation of <strong>${formattedAmount}</strong> to <strong>${organization.name}</strong> is now active and will automatically round up your everyday purchases.</p>
             
             <div class="change-info">
               <p><strong>How it works:</strong> Every time you make a purchase, the amount will be rounded up to the nearest dollar, and the difference will be donated to ${organization.name}.</p>
@@ -1252,7 +1254,7 @@ Your recurring change donation to ${organization.name} is active
 
 Hello ${donor.name},
 
-Your recurring change donation of $${amount} to ${organization.name} is now active and will automatically round up your everyday purchases.
+Your recurring change donation of ${formattedAmount} to ${organization.name} is now active and will automatically round up your everyday purchases.
 
 How it works: Every time you make a purchase, the amount will be rounded up to the nearest dollar, and the difference will be donated to ${organization.name}.
 
@@ -1428,7 +1430,7 @@ Address: NY-123 Younkers, New York
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo">
+            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.png" alt="ChangeWorks Logo" class="logo">
             <h1>Card Update Required</h1>
           </div>
           
@@ -1657,7 +1659,7 @@ Address: NY-123 Younkers, New York
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo">
+            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.png" alt="ChangeWorks Logo" class="logo">
             <h1>Final Reminder</h1>
           </div>
           
@@ -2163,7 +2165,7 @@ Address: NY-123 Younkers, New York
                 console.log('âœ… Using organization logo:', logoUrl);
                 return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
               } else {
-                const logoUrl = `${fallbackUrl}/imgs/changeworks.jpg`;
+                const logoUrl = `${fallbackUrl}/imgs/changeworks.png`;
                 console.log('âŒ No organization image found, using ChangeWorks logo:', logoUrl);
                 console.log('ðŸ” Organization data for debugging:', {
                   id: organization.id,
@@ -2452,7 +2454,7 @@ Your trusted platform partner for charitable giving
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo" />
+            <img src="${process.env.NEXT_PUBLIC_BASE_URL}/imgs/changeworks.png" alt="ChangeWorks Logo" class="logo" />
             <h1>Complete Your Stripe Account Setup</h1>
           </div>
           

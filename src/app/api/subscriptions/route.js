@@ -291,13 +291,13 @@ export async function POST(request) {
       subscription,
       client_secret: stripeSubscription.latest_invoice.payment_intent.client_secret,
       stripe_subscription_id: stripeSubscription.id,
-      message: 'Subscription created successfully. Complete payment to activate.'
+      message: 'Donation created successfully. Complete payment to activate.'
     });
 
   } catch (error) {
     console.error('Error creating subscription:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create subscription' },
+      { success: false, error: 'Failed to create donation' },
       { status: 500 }
     );
   }

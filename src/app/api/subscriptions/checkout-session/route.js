@@ -258,7 +258,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Subscription created successfully',
+      message: 'Donation created successfully',
       subscription: {
         id: dbSubscription.id,
         status: dbSubscription.status,

@@ -141,6 +141,29 @@ export async function POST(request) {
     `;
     const plaidConnection = plaidConnections[0];
 
+    // Send Round Up Active Email
+    try {
+      // Fetch donor and organization details
+      const donor = await prisma.donor.findUnique({ where: { id: donorId } });
+      const organization = await prisma.organization.findUnique({ where: { id: organization_id } });
+
+      if (donor && organization) {
+        const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://changeworkscollective.org'}/donor/dashboard`;
+        
+        console.log('📧 Sending Round Up Active email to:', donor.email);
+        await emailService.sendRecurringChangeDonationEmail({
+          donor,
+          organization,
+          dashboardLink,
+          amount: 'Round Up',
+          donationDate: new Date().toLocaleDateString()
+        });
+      }
+    } catch (emailError) {
+      console.error('❌ Failed to send Round Up Active email:', emailError);
+      // Don't fail the request if email fails
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Bank account connected successfully',

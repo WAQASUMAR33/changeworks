@@ -1,7 +1,8 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import Stripe from 'stripe';
 import { prisma } from "../../../lib/prisma";
+import { emailService } from "../../../lib/email-service";
 
 // Initialize Stripe
 let stripe;
@@ -36,7 +37,7 @@ export async function POST(request) {
     // Fetch organization to get stripeAccountId
     const organization = await prisma.organization.findUnique({
       where: { id: organization_id },
-      select: { stripeAccountId: true }
+      select: { stripeAccountId: true, name: true, email: true }
     });
 
     if (!organization?.stripeAccountId) {
@@ -135,26 +136,56 @@ export async function POST(request) {
       });
 
       // Create donor transaction record for one-time payment
-      await prisma.donorTransaction.create({
-        data: {
-          donor_id: donor_id,
-          organization_id: organization_id,
-          amount: organizationAmount, // Store 90% of the amount
-          currency: 'usd',
-          transaction_type: 'one_time',
-          status: 'completed',
-          stripe_payment_intent_id: pi.id,
-          description: `One-time donation payment: ${pi.id}`,
-          metadata: JSON.stringify({
-            save_tr_record_id: record.id,
-            payment_intent_id: pi.id,
-            full_amount: amountDollars,
-            organization_amount: organizationAmount,
-            platform_commission: amountDollars * 0.1,
-            created_via: 'confirm_and_record'
-          })
-        }
+      // Ensure fields match the schema exactly
+      const paymentMethod = typeof pi.payment_method === 'string' ? pi.payment_method : (pi.payment_method?.id || 'card');
+      
+      try {
+        await prisma.donorTransaction.create({
+          data: {
+            donor_id: donor_id,
+            organization_id: organization_id,
+            amount: organizationAmount, // Store 90% of the amount
+            currency: 'usd',
+            transaction_type: 'one_time',
+            status: 'completed',
+            trnx_id: pi.id, // Use trnx_id as per schema
+            payment_method: paymentMethod,
+            receipt_url: receiptUrl,
+            // description and metadata are not in the schema, so we omit them
+          }
+        });
+      } catch (dbError) {
+        console.error('❌ Failed to create donor transaction record:', dbError);
+        // Continue to send email even if DB record fails (though ideal is both)
+      }
+
+      // Fetch donor details for email
+      console.log(`🔍 Attempting to send one-time donation email for donor_id: ${donor_id}`);
+      const donor = await prisma.donor.findUnique({
+        where: { id: donor_id },
+        select: { name: true, email: true }
       });
+
+      // Send Thank You Email
+      if (donor && organization) {
+        console.log(`📧 Found donor (${donor.email}) and organization (${organization.name}). Sending email...`);
+        try {
+          const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor_id}`;
+          
+          const emailResult = await emailService.sendOneTimeDonationEmail({
+            donor: { name: donor.name, email: donor.email },
+            organization: { name: organization.name, email: organization.email },
+            dashboardLink,
+            amount: amountDollars.toFixed(2),
+            donationDate: new Date().toLocaleDateString()
+          });
+          console.log(`📧 One-time donation email result for ${donor.email}:`, JSON.stringify(emailResult));
+        } catch (emailError) {
+          console.error('❌ Failed to send one-time donation email:', emailError);
+        }
+      } else {
+        console.warn(`⚠️ Could not send email. Missing data - Donor found: ${!!donor}, Org found: ${!!organization}`);
+      }
     }
 
     return NextResponse.json({

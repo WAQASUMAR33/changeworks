@@ -3,7 +3,7 @@ import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import { emailService } from "../../../lib/email-service.jsx";
+import { emailService } from "../../../lib/email-service";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email format"),

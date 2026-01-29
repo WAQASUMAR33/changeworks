@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+﻿﻿import { NextResponse } from "next/server";
 import { z } from "zod";
 import Stripe from 'stripe';
 import { prisma } from "../../../lib/prisma";
@@ -138,6 +138,7 @@ export async function POST(request) {
           organization_id: organization_id.toString(),
           donor_name: donor.name,
           organization_name: organization.name,
+          transaction_type: 'one_time',
           ...(metadata || {}),
         },
         receipt_email: donor.email,

@@ -3,7 +3,7 @@ import { prisma } from "../../../lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
-import { emailService } from "../../../lib/email-service.jsx";
+import { emailService } from "../../../lib/email-service";
 import GHLClient from "../../../lib/ghl-client";
 
 // POST /api/donor/signup - Create a new donor account

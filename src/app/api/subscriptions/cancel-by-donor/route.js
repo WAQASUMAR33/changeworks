@@ -149,7 +149,7 @@ export async function POST(request) {
         });
 
       } catch (error) {
-        console.error(`Error processing subscription ${subscription.id}:`, error);
+        console.error(`Error processing Donation ${subscription.id}:`, error);
         
         // Check if it's a Stripe error or database error
         if (error.type && error.type.startsWith('Stripe')) {

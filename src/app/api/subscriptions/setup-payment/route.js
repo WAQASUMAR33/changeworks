@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import Stripe from "stripe";
-import emailService from "../../../lib/email-service.jsx";
+import emailService from "../../../lib/email-service";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -279,7 +279,7 @@ export async function POST(request) {
             price: packageData.price,
             currency: packageData.currency
           },
-          message: 'Subscription created successfully. Complete payment to activate.'
+          message: 'Donation created successfully. Complete payment to activate.'
         });
 
       } catch (stripeError) {

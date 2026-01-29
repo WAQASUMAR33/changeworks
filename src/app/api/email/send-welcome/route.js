@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma.jsx";
-import { emailService } from "../../../lib/email-service.jsx";
+import { emailService } from "../../../lib/email-service";
 
 // POST /api/email/send-welcome - Send welcome email to donor
 export async function POST(request) {

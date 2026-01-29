@@ -144,7 +144,7 @@ export default function DonorDashboard() {
       const token = localStorage.getItem('token');
 
       if (!token) {
-        setError('No authentication token found.');
+        setError('No authentication token found');
         return;
       }
 
@@ -192,11 +192,11 @@ export default function DonorDashboard() {
         setStats(transformedStats);
         setRecentActivity(data.recentActivity || []);
       } else {
-        setError(data.error || 'Failed to load dashboard data.');
+        setError(data.error || 'Failed to load dashboard data');
       }
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data.');
+      setError('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
@@ -233,7 +233,7 @@ export default function DonorDashboard() {
   };
 
   const handleSubscriptionSuccess = (subscriptionData) => {
-    console.log('Donation created successfully:', subscriptionData);
+    console.log('Subscription created successfully:', subscriptionData);
     // Refresh dashboard data to show updated stats
     fetchDashboardData();
     // Refresh subscription status
@@ -322,7 +322,7 @@ export default function DonorDashboard() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading dashboard data.</p>
+          <p className="text-gray-600">Loading dashboard data...</p>
         </div>
       </div>
     );
@@ -358,9 +358,9 @@ export default function DonorDashboard() {
         <motion.div variants={itemVariants} className="bg-[#0E0061] rounded-2xl p-4 sm:p-6 text-white">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
-              <h2 className="text-xl sm:text-2xl font-bold mb-2">Your ChangeWorks Dashboard</h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-2">Your Impact Dashboard</h2>
               <p className="text-blue-100 text-sm sm:text-base">
-                Track your donations, manage monthly donations, and Round Up Program.
+                Track your donations, manage subscriptions, and see the difference you&apos;re making
               </p>
             </div>
 
@@ -403,14 +403,14 @@ export default function DonorDashboard() {
         <div className="space-y-6">
           {/* Quick Actions */}
           <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-6">Donation Menu</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-6">Quick Actions</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Donate Now */}
               <motion.button
                 onClick={handleStripePayment}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="group relative overflow-hidden bg-green-900 hover:bg-green-800 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+                className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-[#0E0061] hover:from-blue-600 hover:via-blue-700 hover:to-[#0C0055] shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
               >
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-4">
@@ -422,14 +422,14 @@ export default function DonorDashboard() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <h4 className="text-lg font-bold text-white">Make a One-Time Donation</h4>
-                    {/* <p className="text-sm text-green-100">Make a One Time Donation</p> */}
+                    <h4 className="text-lg font-bold text-white">Donate Now</h4>
+                    <p className="text-sm text-blue-100">Make a One Time Donation</p>
                   </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
               </motion.button>
 
-              {/* Monthly Donations */}
+              {/* Recurring Donations */}
               {subscriptionStatus.loading ? (
                 <div className="bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 rounded-2xl p-6 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
@@ -439,13 +439,13 @@ export default function DonorDashboard() {
                   </div>
                   <div className="space-y-2">
                     <h4 className="text-lg font-bold text-gray-700">Checking Status...</h4>
-                    <p className="text-sm text-gray-500">Loading subscription status.</p>
+                    <p className="text-sm text-gray-500">Loading subscription status</p>
                   </div>
                 </div>
               ) : subscriptionStatus.hasActiveSubscription ? (
                 <motion.div
                   whileHover={{ scale: 1.05, y: -2 }}
-                  className="group relative overflow-hidden bg-green-600 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
                 >
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-4">
@@ -457,11 +457,11 @@ export default function DonorDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2 mb-4">
-                      <h4 className="text-lg font-bold text-white">Start and Manage Your Monthly Donations</h4>
+                      <h4 className="text-lg font-bold text-white">Start and Manage your Monthly Donations</h4>
                       <p className="text-sm text-green-100">
                         {subscriptionStatus.subscriptions.length > 0
                           ? `${subscriptionStatus.subscriptions.length} active subscription${subscriptionStatus.subscriptions.length > 1 ? 's' : ''}`
-                          : 'Monthly donations active'
+                          : 'Recurring donations active'
                         }
                       </p>
                     </div>
@@ -479,7 +479,7 @@ export default function DonorDashboard() {
                   onClick={handleStripeSubscription}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group relative overflow-hidden bg-green-600 hover:bg-green-500 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 hover:from-green-600 hover:via-green-700 hover:to-emerald-800 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
                 >
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-4">
@@ -491,8 +491,8 @@ export default function DonorDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <h4 className="text-lg font-bold text-white">Manage</h4>
-                      <p className="text-sm text-green-100">Set Up Monthly Donations</p>
+                      <h4 className="text-lg font-bold text-white">Start and Manage your Monthly Donations</h4>
+                      <p className="text-sm text-green-100">Set Up Recurring Donations</p>
                     </div>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
@@ -509,13 +509,13 @@ export default function DonorDashboard() {
                   </div>
                   <div className="space-y-2">
                     <h4 className="text-lg font-bold text-gray-700">Checking Status...</h4>
-                    <p className="text-sm text-gray-500">Loading Plaid connection.</p>
+                    <p className="text-sm text-gray-500">Loading Plaid connection</p>
                   </div>
                 </div>
               ) : plaidConnectionStatus.isConnected ? (
                 <motion.div
                   whileHover={{ scale: 1.05, y: -2 }}
-                  className="group relative overflow-hidden bg-green-400 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
+                  className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-violet-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
                 >
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-4">
@@ -527,8 +527,8 @@ export default function DonorDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2 mb-4">
-                      <h4 className="text-lg font-bold text-white">Manage</h4>
-                      <p className="text-sm text-green-50">
+                      <h4 className="text-lg font-bold text-white">Join Our Round-Up Program </h4>
+                      <p className="text-sm text-purple-100">
                         {plaidConnectionStatus.connections.length > 0
                           ? `Connected to ${plaidConnectionStatus.connections[0].institution_name || 'Bank'}`
                           : 'Bank account connected'
@@ -539,7 +539,7 @@ export default function DonorDashboard() {
                       onClick={() => setShowPlaidDisconnectModal(true)}
                       className="w-full bg-red-500/80 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-red-600/80 transition-colors duration-200 text-sm font-semibold"
                     >
-                      Manage
+                      Cancel
                     </button>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
@@ -549,7 +549,7 @@ export default function DonorDashboard() {
                   onClick={handlePlaidIntegration}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group relative overflow-hidden bg-green-400 hover:bg-green-300 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+                  className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-violet-700 hover:from-purple-600 hover:via-purple-700 hover:to-violet-800 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
                 >
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-4">
@@ -561,8 +561,8 @@ export default function DonorDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <h4 className="text-lg font-bold text-white">Join Our Round-Up Donation Program</h4>
-                      <p className="text-sm text-green-50">Connect your bank account.</p>
+                      <h4 className="text-lg font-bold text-white">Join Our Round-Up Program</h4>
+                      <p className="text-sm text-purple-100">Connect your bank account</p>
                     </div>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>

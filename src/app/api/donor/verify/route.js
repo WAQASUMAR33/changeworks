@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { emailService } from "../../../lib/email-service";
 
 // POST /api/donor/verify - Verify donor email
 export async function POST(request) {
@@ -56,7 +57,15 @@ export async function POST(request) {
         name: true,
         email: true,
         status: true,
-        updated_at: true
+        updated_at: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            imageUrl: true
+          }
+        }
       }
     });
 
@@ -64,6 +73,26 @@ export async function POST(request) {
     await prisma.donorVerificationToken.delete({
       where: { id: verificationToken.id }
     });
+
+    // Send Welcome Email
+    if (updatedDonor.organization) {
+      try {
+        const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${updatedDonor.id}`;
+        
+        await emailService.sendWelcomeEmail({
+          donor: {
+            name: updatedDonor.name,
+            email: updatedDonor.email
+          },
+          organization: updatedDonor.organization,
+          dashboardLink
+        });
+        console.log(`📧 Welcome email sent to ${updatedDonor.email}`);
+      } catch (emailError) {
+        console.error('❌ Failed to send welcome email:', emailError);
+        // Don't fail the verification response if email fails
+      }
+    }
 
     return NextResponse.json({
       success: true,

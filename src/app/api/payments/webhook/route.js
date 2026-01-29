@@ -158,12 +158,76 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
 
     await Promise.all([updateTrRecord, updateOrgBalance]);
 
+    // Handle one-time donation specific logic (create transaction record if missing and send email)
+    if (paymentIntent.metadata?.transaction_type === 'one_time') {
+      try {
+        // Check if transaction already exists
+        const existingTrx = await prisma.donorTransaction.findUnique({
+          where: { trnx_id: paymentIntent.id }
+        });
+
+        if (!existingTrx) {
+          console.log(`Creating missing DonorTransaction for one-time payment ${paymentIntent.id}`);
+          
+          const paymentMethod = typeof paymentIntent.payment_method === 'string' 
+            ? paymentIntent.payment_method 
+            : (paymentIntent.payment_method?.id || 'card');
+
+          await prisma.donorTransaction.create({
+            data: {
+              donor_id: donorId,
+              organization_id: organizationId,
+              amount: organizationAmount,
+              currency: 'usd',
+              transaction_type: 'one_time',
+              status: 'completed',
+              trnx_id: paymentIntent.id,
+              payment_method: paymentMethod,
+              receipt_url: paymentIntent.receipt_url,
+            }
+          });
+          
+          // Send Thank You Email (only if we just created the transaction, implying it wasn't handled by confirm-and-record)
+          // Fetch donor and organization details
+          const [donor, organization] = await Promise.all([
+            prisma.donor.findUnique({ where: { id: donorId }, select: { name: true, email: true } }),
+            prisma.organization.findUnique({ where: { id: organizationId }, select: { name: true, email: true } })
+          ]);
+
+          if (donor && organization) {
+            const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://changeworkscollective.org'}/donor/dashboard`;
+            
+            console.log(`📧 [Webhook] Sending one-time donation email to ${donor.email}`);
+            try {
+              const emailResult = await emailService.sendOneTimeDonationEmail({
+                donor,
+                organization,
+                dashboardLink,
+                amount: fullAmount.toFixed(2),
+                donationDate: new Date().toLocaleDateString()
+              });
+              console.log(`📧 [Webhook] Email result: ${JSON.stringify(emailResult)}`);
+            } catch (emailErr) {
+              console.error(`❌ [Webhook] Failed to send email: ${emailErr.message}`);
+            }
+          } else {
+             console.warn(`⚠️ [Webhook] Missing donor/org data for email. Donor: ${!!donor}, Org: ${!!organization}`);
+          }
+        }
+      } catch (err) {
+        console.error('Error handling one-time donation in webhook:', err);
+      }
+    }
+
     // Send monthly impact email to donor
     // We await this to ensure it sends before function exit, but failures are caught
-    try {
-      await sendMonthlyImpactEmail(donorId, organizationId, fullAmount);
-    } catch (emailError) {
-      console.error('Failed to send monthly impact email:', emailError);
+    // Only send if NOT one_time transaction (one-time handled in confirm-and-record or above block)
+    if (paymentIntent.metadata?.transaction_type !== 'one_time') {
+      try {
+        await sendMonthlyImpactEmail(donorId, organizationId, fullAmount);
+      } catch (emailError) {
+        console.error('Failed to send monthly impact email:', emailError);
+      }
     }
 
   } catch (error) {
@@ -421,6 +485,10 @@ async function handleInvoicePaymentSucceeded(invoice) {
     const subscription = await prisma.subscription.findFirst({
       where: {
         stripe_subscription_id: invoice.subscription
+      },
+      include: {
+        donor: true,
+        organization: true
       }
     });
 
@@ -532,8 +600,26 @@ async function handleInvoicePaymentSucceeded(invoice) {
     // Send monthly impact email to donor with full amount
     try {
       await sendMonthlyImpactEmail(subscription.donor_id, subscription.organization_id, fullAmount);
+
+      // Send recurring payment confirmation email
+      const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://changeworkscollective.org'}/donor/dashboard`;
+      
+      // Calculate next payment date (approximated from current period end)
+      let nextPaymentDate = 'Next month';
+      if (invoice.lines?.data?.[0]?.period?.end) {
+        nextPaymentDate = new Date(invoice.lines.data[0].period.end * 1000).toLocaleDateString();
+      }
+
+      await emailService.sendRecurringPaymentEmail({
+        donor: subscription.donor,
+        organization: subscription.organization,
+        dashboardLink: dashboardLink,
+        amount: fullAmount.toFixed(2),
+        paymentDate: new Date().toLocaleDateString(),
+        nextPaymentDate: nextPaymentDate
+      });
     } catch (emailError) {
-      console.error('Failed to send monthly impact email:', emailError);
+      console.error('Failed to send recurring payment emails:', emailError);
     }
 
   } catch (error) {

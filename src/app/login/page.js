@@ -278,7 +278,7 @@ export default function LoginPage() {
             className="mb-8"
           >
             <Image
-              src="/imgs/changeworks.jpg"
+              src="/imgs/changeworks.png"
               alt="ChangeWorks Logo"
               width={200}
               height={200}

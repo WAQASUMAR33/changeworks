@@ -271,7 +271,7 @@ export async function POST(request) {
         currency: paymentIntent.currency
       },
       stripe_subscription_id: stripeSubscription.id,
-      message: 'Subscription created and payment completed successfully'
+      message: 'Donation created and payment completed successfully'
     });
 
   } catch (error) {
