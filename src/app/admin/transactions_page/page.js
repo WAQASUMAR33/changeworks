@@ -254,9 +254,8 @@ export default function TransactionManagementPage() {
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.autoTable({
-      head: [['ID', 'Donor', 'Organization', 'Amount', 'Status', 'Type', 'Method', 'Date']],
+      head: [['Donor', 'Organization', 'Amount', 'Status', 'Type', 'Method', 'Date']],
       body: filteredTransactions.map(transaction => [
-        transaction.id,
         `${transaction.donor.name} (${transaction.donor.email})`,
         transaction.organization.name,
         `${transaction.amount} ${transaction.currency}`,
@@ -365,7 +364,6 @@ export default function TransactionManagementPage() {
           <table>
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Donor</th>
                 <th>Organization</th>
                 <th>Amount</th>
@@ -378,7 +376,6 @@ export default function TransactionManagementPage() {
             <tbody>
               ${filteredTransactions.map(transaction => `
                 <tr>
-                  <td>${transaction.id}</td>
                   <td>${transaction.donor.name}<br><small>${transaction.donor.email}</small></td>
                   <td>${transaction.organization.name}</td>
                   <td class="amount">${formatCurrency(transaction.amount, transaction.currency)}</td>
