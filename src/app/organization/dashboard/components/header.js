@@ -141,11 +141,6 @@ export default function OrgHeader() {
                             onClick={() => setShowProfile(!showProfile)}
                             className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
                         >
-                            <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
-                                <span className="text-white text-sm font-medium">
-                                    {orgName ? orgName.charAt(0).toUpperCase() : 'O'}
-                                </span>
-                            </div>
                             <div className="hidden md:block text-left">
                                 <p className="text-sm font-medium text-gray-900">{orgName || 'Organization'}</p>
                                 <p className="text-xs text-gray-500">Organization</p>

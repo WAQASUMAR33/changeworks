@@ -159,6 +159,10 @@ export default function OrganizationSignupPage() {
       }
     } else if (step === 4) {
       // Organization Login Details
+      if (!form.logo && !form.logoUrl) {
+        newErrors.logo = 'Organization logo is required.';
+      }
+
       if (!form.orgPassword) {
         newErrors.orgPassword = 'Organization password is required.';
       } else if (form.orgPassword.length < 6) {
@@ -346,9 +350,23 @@ export default function OrganizationSignupPage() {
 
       if (!res.ok) {
         const apiError = data?.error;
-        const normalized = typeof apiError === 'string'
-          ? apiError
-          : (apiError?.message || apiError?.code || apiError?.validation || JSON.stringify(apiError) || 'Registration failed. Please try again.');
+        let normalized = 'Registration failed. Please try again.';
+
+        if (typeof apiError === 'string') {
+          normalized = apiError;
+        } else if (Array.isArray(apiError) && apiError.length > 0) {
+          // Handle Zod error array
+          normalized = apiError.map(e => e.message || e.code).join(', ');
+        } else if (apiError?.message) {
+          normalized = apiError.message;
+        } else if (apiError?.code) {
+          normalized = apiError.code;
+        } else if (apiError?.validation) {
+          normalized = apiError.validation;
+        } else if (apiError) {
+          normalized = JSON.stringify(apiError);
+        }
+        
         setErrorMsg(normalized);
         return;
       }
@@ -902,7 +920,7 @@ export default function OrganizationSignupPage() {
         return (
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
             <motion.div variants={itemVariants} className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Organization Login</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Security Details</h2>
               <p className="text-gray-600">Set up secure login credentials for your organization</p>
             </motion.div>
 
@@ -1088,7 +1106,7 @@ export default function OrganizationSignupPage() {
               alt="ChangeWorks Logo"
               width={200}
               height={200}
-              className="mx-auto rounded-2xl shadow-2xl border-4 border-white/20 backdrop-blur-sm"
+              className="mx-auto"
               priority
             />
           </motion.div>

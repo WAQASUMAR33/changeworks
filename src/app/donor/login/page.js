@@ -264,7 +264,7 @@ export default function DonorLoginPage() {
               alt="ChangeWorks Logo"
               width={200}
               height={200}
-              className="mx-auto rounded-2xl shadow-2xl border-4 border-white/20 backdrop-blur-sm"
+              className="mx-auto"
               priority
             />
           </motion.div>
