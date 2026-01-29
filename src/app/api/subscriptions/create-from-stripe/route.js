@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import Stripe from "stripe";
 
@@ -38,7 +38,7 @@ export async function POST(request) {
     // Get organization details
     const organization = await prisma.organization.findUnique({
       where: { id: organization_id },
-      select: { id: true, name: true, email: true }
+      select: { id: true, name: true, email: true, stripeAccountId: true }
     });
 
     if (!organization) {
@@ -112,6 +112,10 @@ export async function POST(request) {
           price_id: price_id
         },
         subscription_data: {
+          transfer_data: organization.stripeAccountId ? {
+            destination: organization.stripeAccountId,
+            amount_percent: 90,
+          } : undefined,
           metadata: {
             donor_id: donor_id.toString(),
             organization_id: organization_id.toString(),
