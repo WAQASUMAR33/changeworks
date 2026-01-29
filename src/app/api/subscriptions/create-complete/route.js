@@ -46,7 +46,7 @@ export async function POST(request) {
       }),
       prisma.organization.findUnique({
         where: { id: organization_id },
-        select: { id: true, name: true, email: true }
+        select: { id: true, name: true, email: true, stripeAccountId: true }
       })
     ]);
 
@@ -126,6 +126,10 @@ export async function POST(request) {
     try {
       const subscriptionData = {
         customer: customer.id,
+        transfer_data: organization.stripeAccountId ? {
+          destination: organization.stripeAccountId,
+          amount_percent: 90,
+        } : undefined,
         items: [{
           price_data: {
             currency: packageData.currency.toLowerCase(),
