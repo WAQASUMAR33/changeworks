@@ -12,7 +12,7 @@ export default function AdminLayout({ children }) {
 
   useEffect(() => {
     // Skip authentication check for login page to prevent infinite loop
-    if (pathname === '/admin/secure-portal') {
+    if (pathname === '/admin/login') {
       setIsAdmin(false);
       setIsLoading(false);
       return;
@@ -63,11 +63,11 @@ export default function AdminLayout({ children }) {
     console.log('❌ Admin Layout - No valid admin access, redirecting to login');
     setIsLoading(false);
     // If no valid admin access, redirect to admin login
-    window.location.replace('/admin/secure-portal');
+    window.location.replace('/admin/login');
   }, [pathname]);
 
   // For login page, render children without admin layout
-  if (pathname === '/admin/secure-portal') {
+  if (pathname === '/admin/login') {
     return children;
   }
 

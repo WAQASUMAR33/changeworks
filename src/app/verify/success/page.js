@@ -31,7 +31,7 @@ export default function VerifySuccessPage() {
 
           <div className="mt-8">
             <a
-              href="/login"
+              href="/admin/login"
               className="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-sm transition"
             >
               Go to Login

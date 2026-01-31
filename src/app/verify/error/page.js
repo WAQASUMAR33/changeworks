@@ -27,7 +27,7 @@ export default function VerifyErrorPage() {
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <a
-              href="/login"
+              href="/admin/login"
               className="inline-flex items-center px-6 py-3 bg-gray-800 hover:bg-black text-white font-medium rounded-lg shadow-sm transition"
             >
               Go to Login
