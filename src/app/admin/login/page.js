@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import TwoFactorVerification from '../components/TwoFactorVerification';
+import TwoFactorVerification from '@/app/components/TwoFactorVerification';
 
 export default function LoginPage() {
   const router = useRouter();
