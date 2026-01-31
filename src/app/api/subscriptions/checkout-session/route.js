@@ -1,6 +1,7 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import Stripe from "stripe";
+import { emailService } from "../../../lib/email-service";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -255,6 +256,26 @@ export async function POST(request) {
     console.log(`   - Organization ID: ${organizationId}`);
     console.log(`   - Subscription Status: ${dbSubscription.status}`);
     console.log(`   - Amount: ${dbSubscription.amount} ${dbSubscription.currency}`);
+
+    // Send recurring donation email
+    try {
+      const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard`;
+      
+      await emailService.sendRecurringDonationEmail({
+        donor: {
+          name: donor.name,
+          email: donor.email
+        },
+        organization: organization,
+        amount: amount,
+        startDate: new Date(),
+        transactionId: donorTransaction.trnx_id,
+        dashboardLink: dashboardLink
+      });
+      console.log('✅ Recurring donation email sent');
+    } catch (emailError) {
+      console.error('Failed to send recurring donation email:', emailError);
+    }
 
     return NextResponse.json({
       success: true,

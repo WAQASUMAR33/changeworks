@@ -543,6 +543,128 @@ Address: NY-123 Younkers, New York
     });
   }
 
+  // Send recurring donation confirmation email
+  async sendRecurringDonationEmail({ donor, organization, amount, startDate, transactionId, dashboardLink }) {
+    const subject = `Thanks for Your Recurring Monthly Donation to ${organization.name}`;
+
+    // Construct address string if available
+    const orgAddress = [
+      organization.address,
+      organization.city,
+      organization.state,
+      organization.postalCode
+    ].filter(Boolean).join(', ');
+
+    // Ensure logo URL is absolute
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
+    const logoUrl = organization.imageUrl
+      ? (organization.imageUrl.startsWith('http')
+          ? organization.imageUrl
+          : `${baseUrl}${organization.imageUrl.startsWith('/') ? '' : '/'}${organization.imageUrl}`)
+      : null;
+
+    const formattedDate = new Date(startDate).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Thanks for Your Recurring Monthly Donation to ${organization.name}</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+          .container { background-color: #ffffff; padding: 20px; }
+          .header { text-align: center; margin-bottom: 20px; }
+          .logo { max-height: 100px; max-width: 200px; height: auto; }
+          .details-list { list-style: none; padding: 0; }
+          .details-list li { margin-bottom: 8px; }
+          .button { display: inline-block; background-color: #ffffff; color: #302E56; border: 2px solid #302E56; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; margin: 20px 0; }
+          .footer { font-size: 12px; color: #666; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            ${logoUrl ? `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo">` : `<h1>${organization.name}</h1>`}
+          </div>
+
+          <p>Hello ${donor.name || ''}!</p>
+
+          <p>Thank you for your generous recurring monthly donation to ${organization.name}. Your support helps us continue our mission and make a difference.</p>
+
+          <p>Here are the details of your recurring donation:</p>
+          <ul class="details-list">
+            <li><strong>Organization:</strong> ${organization.name}</li>
+            <li><strong>Donation Amount:</strong> $${amount}</li>
+            <li><strong>Frequency:</strong> Monthly</li>
+            <li><strong>Start Date:</strong> ${formattedDate}</li>
+            <li><strong>Transaction ID:</strong> ${transactionId}</li>
+          </ul>
+
+          <p>You will receive a receipt for each monthly payment. You can manage or cancel your subscription at any time through your donor dashboard.</p>
+          
+          <div style="text-align: center;">
+            <a href="${dashboardLink}" class="button">Manage Subscription</a>
+          </div>
+
+          <p>If you have any questions, please contact us at ${organization.email || 'support'} ${organization.phone ? ' or ' + organization.phone : ''}.</p>
+
+          <p>Sincerely,<br>
+          The ${organization.name} Team</p>
+
+          <div class="footer">
+            <p>${organization.name}</p>
+            ${orgAddress ? `<p>${orgAddress}</p>` : ''}
+            ${organization.phone ? `<p>Phone: ${organization.phone}</p>` : ''}
+            ${organization.email ? `<p>Email: ${organization.email}</p>` : ''}
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+Thanks for Your Recurring Monthly Donation to ${organization.name}
+
+Hello ${donor.name || ''}!
+
+Thank you for your generous recurring monthly donation to ${organization.name}. Your support helps us continue our mission and make a difference.
+
+Here are the details of your recurring donation:
+• Organization: ${organization.name}
+• Donation Amount: $${amount}
+• Frequency: Monthly
+• Start Date: ${formattedDate}
+• Transaction ID: ${transactionId}
+
+You will receive a receipt for each monthly payment. You can manage or cancel your subscription at any time through your donor dashboard:
+${dashboardLink}
+
+If you have any questions, please contact us at ${organization.email || 'support'} ${organization.phone ? ' or ' + organization.phone : ''}.
+
+Sincerely,
+The ${organization.name} Team
+
+---
+${organization.name}
+${orgAddress}
+${organization.phone ? `Phone: ${organization.phone}` : ''}
+${organization.email ? `Email: ${organization.email}` : ''}
+    `;
+
+    return await this.sendEmail({
+      to: donor.email,
+      subject: subject,
+      html: html,
+      text: text
+    });
+  }
+
   // Send one-time donation confirmation email
   async sendOneTimeDonationEmail({ donor, organization, dashboardLink, amount, donationDate, transactionId, paymentMethod, campaignName }) {
     const subject = `Thanks for Your One-Time Donation to ${organization.name}`;

@@ -647,26 +647,6 @@ export default function DonorDashboard() {
 
                 {paymentStatus === 'success' && (
                   <div className="text-center py-8 relative">
-                    {/* Email Toast */}
-                    {emailStatus && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`absolute top-0 left-0 right-0 mx-auto w-max max-w-[90%] px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 text-sm font-medium ${
-                          emailStatus.sent 
-                            ? 'bg-green-100 text-green-800 border border-green-200' 
-                            : 'bg-red-100 text-red-800 border border-red-200'
-                        }`}
-                      >
-                        {emailStatus.sent ? (
-                            <CheckCircle className="w-4 h-4" />
-                        ) : (
-                            <AlertCircle className="w-4 h-4" />
-                        )}
-                        {emailStatus.sent ? 'Confirmation email sent!' : 'Email sending failed.'}
-                      </motion.div>
-                    )}
-
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 mt-8">
                       <CheckCircle className="w-8 h-8 text-green-600" />
                     </div>
@@ -674,15 +654,6 @@ export default function DonorDashboard() {
                     <p className="text-gray-600 mb-4">
                       Your donation has been processed successfully.
                     </p>
-
-                    {/* Persistent Email Status Message */}
-                    {emailStatus && (
-                        <p className={`text-sm mb-6 font-medium ${emailStatus.sent ? 'text-green-600' : 'text-red-600'}`}>
-                            {emailStatus.sent 
-                                ? 'A receipt has been sent to your email.' 
-                                : 'We could not send the receipt email. Please contact support.'}
-                        </p>
-                    )}
 
                     <button
                       onClick={closePaymentModal}
