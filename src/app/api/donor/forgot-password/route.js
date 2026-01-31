@@ -24,7 +24,11 @@ export async function POST(request) {
         email: true,
         organization: {
           select: {
-            name: true
+            name: true,
+            firstName: true,
+            lastName: true,
+            title: true,
+            imageUrl: true
           }
         }
       }

@@ -66,6 +66,238 @@ class EmailService {
     }
   }
 
+  // Send Round-Up Welcome Email
+  async sendWelcomeEmail({ donor, organization, dashboardLink }) {
+    const orgName = organization?.name || 'ChangeWorks Fund';
+    const subject = `Welcome to ${orgName}'s Round-Up Community`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Welcome to ${orgName}'s Round-Up Community</title>
+        <style>
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+          }
+          .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+          }
+          .header {
+            text-align: center;
+            border-bottom: 3px solid #302E56;
+            padding-bottom: 25px;
+            margin-bottom: 35px;
+          }
+          .header h1 {
+            color: #302E56;
+            margin: 0;
+            font-size: 32px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .content {
+            margin-bottom: 35px;
+          }
+          .content p {
+            margin-bottom: 18px;
+            font-size: 16px;
+            color: #495057;
+          }
+          .greeting {
+            font-size: 18px;
+            font-weight: 500;
+            color: #212529;
+            margin-bottom: 25px;
+          }
+          .features {
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            border-left: 4px solid #302E56;
+          }
+          .features h3 {
+            color: #302E56;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+          }
+          .features ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #495057;
+          }
+          .features li {
+            margin-bottom: 8px;
+          }
+          .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #302E56 0%, #4A487A 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(48, 46, 86, 0.3);
+            transition: all 0.3s ease;
+          }
+          .ps-note {
+            background: linear-gradient(135deg, #e8f4fd 0%, #d1ecf1 100%);
+            border: 1px solid #bee5eb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            border-left: 4px solid #302E56;
+          }
+          .ps-note p {
+            margin: 0;
+            color: #0c5460;
+            font-weight: 500;
+          }
+          .footer {
+            border-top: 2px solid #e9ecef;
+            padding-top: 25px;
+            margin-top: 35px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+          }
+          .logo-section {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          .logo-section img {
+            max-width: 200px;
+            height: auto;
+          }
+          .contact-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 25px;
+            text-align: center;
+          }
+          .contact-info h4 {
+            color: #302E56;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+          }
+          .contact-info p {
+            margin: 5px 0;
+            color: #495057;
+            font-size: 14px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            ${organization.imageUrl ? `<div class="logo-section"><img src="${organization.imageUrl}" alt="${orgName} Logo"></div>` : ''}
+            <h1>Welcome to ${orgName}'s Round-Up Community</h1>
+          </div>
+          
+          <div class="content">
+            <p class="greeting">Hello ${donor.name},</p>
+            
+            <p>Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
+            
+            <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
+            
+            <div class="features">
+              <h3>Your Donor Portal Features:</h3>
+              <ul>
+                <li>Track your monthly round-up totals</li>
+                <li>Adjust or pause your contributions at any time</li>
+                <li>Download donation records for your own files</li>
+              </ul>
+            </div>
+            
+            <div style="text-align: center;">
+              <a href="${dashboardLink}" class="button" style="color: white;">Access Your Donor Portal</a>
+            </div>
+            
+            <p>We're so glad to have you as part of our round-up community, where even pennies can create lasting change.</p>
+            
+            <p><strong>With gratitude,<br>${orgName} Team</strong></p>
+            
+            <div class="ps-note">
+              <p><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <div class="contact-info">
+              <h4>ChangeWorks Fund</h4>
+              <p>Your trusted platform partner for charitable giving</p>
+              
+              <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
+              
+              <h4>Contact Information</h4>
+              <p><strong>Email:</strong> support@changeworksfund.org</p>
+              <p><strong>Address:</strong> 5830 E 2nd St. STE 7000 #29896<br>Casper, WY 82609</p>
+              <p><a href="#" style="color: #6c757d; text-decoration: underline;">Unsubscribe</a></p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+Welcome to ${orgName}'s Round-Up Community
+
+Hello ${donor.name},
+
+Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
+
+You can view your donation activity anytime through your personalized Donor Portal [Dashboard Link] on ChangeWorks, our platform partner. That's where you'll be able to:
+
+- Track your monthly round-up totals
+- Adjust or pause your contributions at any time
+- Download donation records for your own files
+
+Access Your Donor Portal: ${dashboardLink}
+
+We're so glad to have you as part of our round-up community, where even pennies can create lasting change.
+
+With gratitude,
+${orgName} Team
+
+P.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.
+
+---
+ChangeWorks Fund
+Your trusted platform partner for charitable giving
+
+Contact Information:
+Email: support@changeworksfund.org
+Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
+Unsubscribe
+    `;
+
+    return await this.sendEmail({
+      to: donor.email,
+      subject: subject,
+      html: html,
+      text: text
+    });
+  }
+
   // Send verification email to donor
   async sendVerificationEmail({ donor, verificationToken, verificationLink, organization }) {
     const orgName = organization?.name || 'ChangeWorks Fund';
@@ -2320,7 +2552,11 @@ Unsubscribe
   // Send password reset email
   async sendPasswordResetEmail({ donor, resetToken, resetLink, organization }) {
     const orgName = organization?.name || 'ChangeWorks Fund';
-    const subject = `Reset Your Password - ${orgName}`;
+    const subject = `Reset your password for your ${orgName} donor account`;
+    
+    const directorName = (organization?.firstName && organization?.lastName) 
+      ? `${organization.firstName} ${organization.lastName}` 
+      : 'Director';
     
     const html = `
       <!DOCTYPE html>
@@ -2328,42 +2564,118 @@ Unsubscribe
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Password Reset</title>
+        <title>Reset your password for your ${orgName} donor account</title>
         <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #302E56 0%, #0E0061 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #ffffff; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-          .reset-button { background: linear-gradient(135deg, #302E56 0%, #0E0061 100%); color: white !important; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 20px 0; font-weight: bold; }
-          .reset-button:hover { background: linear-gradient(135deg, #0E0061 0%, #302E56 100%); color: white !important; }
-          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; }
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+          }
+          .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+          }
+          .header {
+            text-align: center;
+            border-bottom: 3px solid #302E56;
+            padding-bottom: 25px;
+            margin-bottom: 35px;
+          }
+          .content p {
+            margin-bottom: 18px;
+            font-size: 16px;
+            color: #495057;
+          }
+          .greeting {
+            font-size: 18px;
+            font-weight: 500;
+            color: #212529;
+            margin-bottom: 25px;
+          }
+          .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #302E56 0%, #4A487A 100%);
+            color: white !important;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(48, 46, 86, 0.3);
+            transition: all 0.3s ease;
+          }
+          .footer {
+            border-top: 2px solid #e9ecef;
+            padding-top: 25px;
+            margin-top: 35px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+          }
+          .logo-section {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          .logo-section img {
+            max-width: 200px;
+            height: auto;
+          }
+          ul {
+            color: #495057;
+            margin-bottom: 18px;
+          }
+          li {
+            margin-bottom: 8px;
+          }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            <h1>Password Reset Request</h1>
+            ${organization?.imageUrl ? `<div class="logo-section"><img src="${organization.imageUrl}" alt="${orgName} Logo"></div>` : ''}
           </div>
           
           <div class="content">
-            <h2>Hello ${donor.name},</h2>
+            <p class="greeting">Dear ${donor.name},</p>
             
-            <p>You requested a password reset for your donor account with <strong>${orgName}</strong>.</p>
+            <p>We received a request to reset the password for your ${orgName} donor account.</p>
             
-            <p>Click the button below to reset your password:</p>
+            <p>To keep your information secure, you’ll need to create a new password before you can access your ChangeWorks donor dashboard. The process is quick and should take less than a minute.</p>
+            
+            <p>What you can do once you’re logged in:</p>
+            <ul>
+              <li>View and manage your donation activity</li>
+              <li>Update payment details or giving preferences</li>
+              <li>Download donation records for your files</li>
+            </ul>
+            
+            <p>To reset your password, click the button below and follow the on-screen steps. This link will expire for security reasons.</p>
             
             <div style="text-align: center;">
-              <a href="${resetLink}" class="reset-button">Reset My Password</a>
+              <a href="${resetLink}" class="button">CLICK HERE TO RESET YOUR PASSWORD</a>
             </div>
             
-            <p><strong>This link will expire in 1 hour.</strong></p>
+            <p>If you didn’t request a password reset, you can safely ignore this email. No changes will be made to your account.</p>
             
-            <p>If you didn't request this password reset, please ignore this email. Your account remains secure.</p>
+            <p>If you need help at any point, support is available through our trusted donation partner, ChangeWorks: <a href="mailto:support@changeworksfund.org" style="color: #302E56;">support@changeworksfund.org</a></p>
             
-            <div class="footer">
-              <p>Best regards,<br><strong>ChangeWorks Fund Team</strong></p>
-              <p>Your trusted platform partner for charitable giving</p>
-            </div>
+            <p>Thank you for being part of ${orgName} and for the support you provide to our work.</p>
+            
+            <p>With appreciation,</p>
+            <p><strong>${directorName}</strong><br>${orgName}</p>
+            
+            <p style="font-size: 12px; color: #999; margin-top: 30px;">This message was sent to help protect your account. Please do not reply directly to this email.</p>
+          </div>
+          
+          <div class="footer">
+            <p><strong>ChangeWorks</strong><br>Your trusted platform partner for charitable giving</p>
           </div>
         </div>
       </body>
@@ -2371,21 +2683,36 @@ Unsubscribe
     `;
 
     const text = `
-Password Reset Request - ${orgName}
+Reset your password for your ${orgName} donor account
 
-Hello ${donor.name},
+Dear ${donor.name},
 
-You requested a password reset for your donor account with ${orgName}.
+We received a request to reset the password for your ${orgName} donor account.
 
-Click the link below to reset your password:
-${resetLink}
+To keep your information secure, you’ll need to create a new password before you can access your ChangeWorks donor dashboard. The process is quick and should take less than a minute.
 
-This link will expire in 1 hour.
+What you can do once you’re logged in:
+- View and manage your donation activity
+- Update payment details or giving preferences
+- Download donation records for your files
 
-If you didn't request this password reset, please ignore this email. Your account remains secure.
+To reset your password, click the link below and follow the on-screen steps. This link will expire for security reasons.
 
-Best regards,
-ChangeWorks Fund Team
+CLICK HERE TO RESET YOUR PASSWORD: ${resetLink}
+
+If you didn’t request a password reset, you can safely ignore this email. No changes will be made to your account.
+
+If you need help at any point, support is available through our trusted donation partner, ChangeWorks: support@changeworksfund.org
+
+Thank you for being part of ${orgName} and for the support you provide to our work.
+
+With appreciation,
+${directorName}
+${orgName}
+
+This message was sent to help protect your account. Please do not reply directly to this email.
+
+ChangeWorks
 Your trusted platform partner for charitable giving
     `;
 
