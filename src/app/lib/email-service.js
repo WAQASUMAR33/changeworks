@@ -94,40 +94,16 @@ class EmailService {
         <title>${title}</title>
         <style>
           body {
+            margin: 0;
+            padding: 0;
+            background-color: #f3f2ef; /* Light gray background */
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            background-color: #f3f2ef;
           }
-          .container {
-            background-color: #ffffff;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            margin-bottom: 20px;
-          }
-          .header {
-            margin-bottom: 30px;
-          }
-          .logo {
-            max-height: 60px;
-            max-width: 200px;
-            height: auto;
-          }
-          .content {
-            font-size: 16px;
-            color: #191919;
-          }
-          .content p {
-            margin-bottom: 1.5em;
-          }
+          /* Button style for compatibility */
           .button {
             display: inline-block;
             background-color: #302E56;
-            color: white !important;
+            color: #ffffff !important;
             padding: 12px 24px;
             text-decoration: none;
             border-radius: 24px;
@@ -138,36 +114,7 @@ class EmailService {
           .button:hover {
             background-color: #201e3b;
           }
-          .footer {
-            text-align: center;
-            font-size: 12px;
-            color: #666;
-            padding-top: 10px;
-          }
-          .footer p {
-            margin: 5px 0;
-          }
-          .footer a {
-            color: #666;
-            text-decoration: underline;
-          }
-          /* Utility classes for specific email needs */
-          .highlight-box {
-            background-color: #f8f9fa;
-            border-left: 4px solid #302E56;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 4px;
-          }
-          .amount-display {
-            font-size: 24px;
-            font-weight: bold;
-            color: #302E56;
-            margin: 10px 0;
-          }
-          .center-text {
-            text-align: center;
-          }
+          /* List styling */
           ul {
             padding-left: 20px;
             margin-bottom: 1.5em;
@@ -175,22 +122,55 @@ class EmailService {
           li {
             margin-bottom: 8px;
           }
+          /* Highlight box */
+          .highlight-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #302E56;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+          }
+          /* Media Query for mobile */
+          @media only screen and (max-width: 600px) {
+            .main-table {
+              width: 100% !important;
+            }
+            .content-cell {
+              padding: 20px !important;
+            }
+          }
         </style>
       </head>
-      <body>
-        <div class="container">
-          ${logoUrl ? `<div class="header"><img src="${logoUrl}" alt="${orgName} Logo" class="logo"></div>` : ''}
-          <div class="content">
-            ${content}
-          </div>
-        </div>
-        
-        <div class="footer">
-           <p>ChangeWorks Fund</p>
-           <p>Your trusted platform partner for charitable giving</p>
-           <p>5830 E 2nd St. STE 7000 #29896, Casper, WY 82609</p>
-           <p><a href="#">Unsubscribe</a></p>
-        </div>
+      <body style="background-color: #f3f2ef; margin: 0; padding: 0;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f3f2ef;">
+          <tr>
+            <td align="center" style="padding: 40px 0;">
+              <!-- Main Card -->
+              <table class="main-table" role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden; margin: 0 auto;">
+                <tr>
+                  <td class="content-cell" style="padding: 40px; text-align: left; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 16px; color: #333; line-height: 1.6;">
+                    ${organization ? `
+                      <div style="text-align: center; margin-bottom: 30px;">
+                        ${logoUrl ? `<img src="${logoUrl}" alt="${orgName}" style="max-height: 80px; max-width: 200px; height: auto; border: 0; display: inline-block; margin-bottom: 15px;">` : ''}
+                        <h2 style="color: #302E56; margin: 0; font-size: 24px; font-weight: 700;">${orgName}</h2>
+                      </div>
+                    ` : ''}
+                    
+                    ${content}
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Footer -->
+              <div style="margin-top: 20px; text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; color: #666;">
+                 <p style="margin: 5px 0;">ChangeWorks Fund</p>
+                 <p style="margin: 5px 0;">Your trusted platform partner for charitable giving</p>
+                 <p style="margin: 5px 0;">5830 E 2nd St. STE 7000 #29896, Casper, WY 82609</p>
+                 <p style="margin: 5px 0;"><a href="#" style="color: #666; text-decoration: underline;">Unsubscribe</a></p>
+              </div>
+            </td>
+          </tr>
+        </table>
       </body>
       </html>
     `;
@@ -572,7 +552,8 @@ Email: support@changeworksfund.org
     `;
 
     // Suppress logo for one-time donation email as requested previously
-    const html = this.generateEmailHtml(content, { ...organization, imageUrl: null }, subject);
+    // Pass null for organization to generateEmailHtml to suppress Org Logo and Name in the branding header/footer
+    const html = this.generateEmailHtml(content, null, subject);
 
     const text = `
 Thanks for Your One-Time Donation
@@ -631,219 +612,38 @@ Unsubscribe
   async sendRecurringPaymentEmail({ donor, organization, dashboardLink, amount, paymentDate, nextPaymentDate }) {
     const subject = `Your recurring donation to ${organization.name} has been processed`;
     
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Recurring Payment Confirmation - ${organization.name}</title>
-        <style>
-          body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
-          }
-          .container {
-            background-color: #ffffff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-          }
-          .header {
-            text-align: center;
-            border-bottom: 3px solid #302E56;
-            padding-bottom: 25px;
-            margin-bottom: 35px;
-          }
-          .header h1 {
-            color: #302E56;
-            margin: 0;
-            font-size: 32px;
-            font-weight: 600;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }
-          .logo {
-            max-width: 150px;
-            height: auto;
-            margin-bottom: 20px;
-          }
-          .content {
-            margin-bottom: 35px;
-          }
-          .content p {
-            margin-bottom: 18px;
-            font-size: 16px;
-            color: #495057;
-          }
-          .greeting {
-            font-size: 18px;
-            font-weight: 500;
-            color: #212529;
-            margin-bottom: 25px;
-          }
-          .payment-highlight {
-            background: linear-gradient(135deg, #302E56 0%, #4A487A 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            margin: 25px 0;
-            text-align: center;
-            box-shadow: 0 8px 25px rgba(48, 46, 86, 0.3);
-          }
-          .payment-highlight h2 {
-            margin: 0 0 15px 0;
-            font-size: 24px;
-            font-weight: 600;
-          }
-          .payment-amount {
-            font-size: 36px;
-            font-weight: 700;
-            margin: 10px 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          }
-          .payment-date {
-            font-size: 18px;
-            opacity: 0.9;
-            margin: 0;
-          }
-          .next-payment {
-            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
-            border: 1px solid #bee5eb;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 25px 0;
-            border-left: 4px solid #17a2b8;
-            text-align: center;
-          }
-          .next-payment p {
-            margin: 0;
-            color: #0c5460;
-            font-weight: 500;
-            font-size: 16px;
-          }
-          .dashboard-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #302E56 0%, #4A487A 100%);
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            margin: 25px 0;
-            box-shadow: 0 4px 15px rgba(48, 46, 86, 0.3);
-            transition: all 0.3s ease;
-          }
-          .dashboard-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(48, 46, 86, 0.4);
-          }
-          .footer {
-            border-top: 2px solid #e9ecef;
-            padding-top: 25px;
-            margin-top: 35px;
-            text-align: center;
-            color: #6c757d;
-            font-size: 14px;
-          }
-          .signature {
-            margin-top: 30px;
-            font-style: italic;
-            color: #495057;
-          }
-          .gratitude-section {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 1px solid #ffeaa7;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 25px 0;
-            border-left: 4px solid #ffc107;
-          }
-          .gratitude-section p {
-            margin: 0;
-            color: #856404;
-            font-weight: 500;
-            font-size: 16px;
-          }
-          .contact-info {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 25px;
-            text-align: center;
-          }
-          .contact-info h4 {
-            color: #302E56;
-            margin: 0 0 10px 0;
-            font-size: 16px;
-          }
-          .contact-info p {
-            margin: 5px 0;
-            color: #495057;
-            font-size: 14px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.png" alt="ChangeWorks Logo" class="logo">
-            <h1>Recurring Payment Confirmation</h1>
-          </div>
-          
-          <div class="content">
-            <p class="greeting">Hello ${donor.name},</p>
-            
-            <div class="payment-highlight">
-              <h2>Payment Processed Successfully!</h2>
-              <div class="payment-amount">$${amount}</div>
-              <p class="payment-date">${paymentDate}</p>
-            </div>
-            
-            <p>Your recurring donation of <strong>$${amount}</strong> to <strong>${organization.name}</strong> has been processed successfully.</p>
-            
-            <div class="next-payment">
-              <p><strong>Next Payment:</strong> ${nextPaymentDate}</p>
-            </div>
-            
-            <p>If you want to see details of your recurring donations or make changes, log into your Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.</p>
-            
-            <div style="text-align: center;">
-              <a href="${dashboardLink}" class="dashboard-button">Access Your Donor Portal</a>
-            </div>
-            
-            <div class="gratitude-section">
-              <p>Thank you for carrying our mission forward with your ongoing support. Your recurring contributions help create lasting change in our community.</p>
-            </div>
-            
-            <div class="signature">
-              <p>With gratitude,<br>
-              <strong>${organization.name} Team</strong></p>
-            </div>
-          </div>
-          
-          <div class="footer">
-            <div class="contact-info">
-              <h4>ChangeWorks Fund</h4>
-              <p>Your trusted platform partner for charitable giving</p>
-              
-              <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
-              
-              <h4>Contact Information</h4>
-              <p><strong>Email:</strong> support@changeworksfund.org</p>
-              
-              <p><strong>Address:</strong> 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609</p>
-            </div>
-          </div>
-        </div>
-      </body>
-      </html>
+    const content = `
+      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello ${donor.name},</p>
+      
+      <div style="background: linear-gradient(135deg, #302E56 0%, #4A487A 100%); color: white; padding: 30px; border-radius: 15px; margin: 25px 0; text-align: center; box-shadow: 0 8px 25px rgba(48, 46, 86, 0.3);">
+        <h2 style="margin: 0 0 15px 0; font-size: 24px; font-weight: 600; color: white;">Payment Processed Successfully!</h2>
+        <div style="font-size: 36px; font-weight: 700; margin: 10px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">$${amount}</div>
+        <p style="font-size: 18px; opacity: 0.9; margin: 0; color: white;">${paymentDate}</p>
+      </div>
+      
+      <p>Your recurring donation of <strong>$${amount}</strong> to <strong>${organization.name}</strong> has been processed successfully.</p>
+      
+      <div style="background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); border: 1px solid #bee5eb; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #17a2b8; text-align: center;">
+        <p style="margin: 0; color: #0c5460; font-weight: 500; font-size: 16px;"><strong>Next Payment:</strong> ${nextPaymentDate}</p>
+      </div>
+      
+      <p>If you want to see details of your recurring donations or make changes, log into your Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.</p>
+      
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="${dashboardLink}" class="button">Access Your Donor Portal</a>
+      </div>
+      
+      <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #ffc107;">
+        <p style="margin: 0; color: #856404; font-weight: 500; font-size: 16px;">Thank you for carrying our mission forward with your ongoing support. Your recurring contributions help create lasting change in our community.</p>
+      </div>
+      
+      <div style="margin-top: 30px; font-style: italic; color: #495057;">
+        <p>With gratitude,<br>
+        <strong>${organization.name} Team</strong></p>
+      </div>
     `;
+
+    const html = this.generateEmailHtml(content, organization, subject);
 
     const text = `
 Your recurring donation to ${organization.name} has been processed
@@ -1092,215 +892,51 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
 
   // Send successful verification email to donor
   async sendVerificationSuccessEmail({ donor, organization, dashboardLink }) {
-    const subject = `Welcome to ${organization.name}'s Round-Up Community`;
+    const orgName = organization?.name || 'ChangeWorks Fund';
+    const subject = `Welcome to ${orgName}'s Round-Up Community`;
     
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Welcome to ${organization.name}'s round-up community</title>
-        <style>
-          body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
-          }
-          .container {
-            background-color: #ffffff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-          }
-          .header {
-            text-align: center;
-            border-bottom: 3px solid #302E56;
-            padding-bottom: 25px;
-            margin-bottom: 35px;
-          }
-          .header h1 {
-            color: #302E56;
-            margin: 0;
-            font-size: 32px;
-            font-weight: 600;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }
-          .logo {
-            max-width: 150px;
-            height: auto;
-            margin-bottom: 20px;
-          }
-          .content {
-            margin-bottom: 35px;
-          }
-          .content p {
-            margin-bottom: 18px;
-            font-size: 16px;
-            color: #495057;
-          }
-          .greeting {
-            font-size: 18px;
-            font-weight: 500;
-            color: #212529;
-            margin-bottom: 25px;
-          }
-          .features {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 25px;
-            border-radius: 10px;
-            margin: 25px 0;
-            border-left: 4px solid #302E56;
-          }
-          .features h3 {
-            color: #302E56;
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 18px;
-            font-weight: 600;
-          }
-          .features ul {
-            margin: 0;
-            padding-left: 20px;
-          }
-          .features li {
-            margin-bottom: 10px;
-            color: #495057;
-            font-size: 15px;
-          }
-          .cta-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #302E56 0%, #0E0061 100%);
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            margin: 25px 0;
-            box-shadow: 0 4px 15px rgba(48, 46, 86, 0.3);
-            transition: all 0.3s ease;
-          }
-          .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(48, 46, 86, 0.4);
-          }
-          .footer {
-            border-top: 2px solid #e9ecef;
-            padding-top: 25px;
-            margin-top: 35px;
-            text-align: center;
-            color: #6c757d;
-            font-size: 14px;
-          }
-          .signature {
-            margin-top: 30px;
-            font-style: italic;
-            color: #495057;
-          }
-          .contact-info {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 25px;
-            text-align: center;
-          }
-          .contact-info h4 {
-            color: #302E56;
-            margin: 0 0 10px 0;
-            font-size: 16px;
-          }
-          .contact-info p {
-            margin: 5px 0;
-            color: #495057;
-            font-size: 14px;
-          }
-          .ps-note {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 20px;
-            border-radius: 10px;
-            margin: 25px 0;
-            border-left: 4px solid #302E56;
-            font-style: italic;
-            color: #495057;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            ${(() => {
-              const hasImage = organization.imageUrl;
-              const imageUrl = organization.imageUrl;
-              const baseUrl = process.env.IMAGE_UPLOAD_URL;
-              const fallbackUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
-              
-              if (hasImage) {
-                const logoUrl = `${baseUrl}/${imageUrl}`;
-                return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
-              } else {
-                return `<div style="height: 60px; background: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 14px;">${organization?.name || 'Organization'} Logo</div>`;
-              }
-            })()}
-            <h1>Welcome to ${organization.name}'s round-up community</h1>
-          </div>
-          
-          <div class="content">
-            <p class="greeting">Hello ${donor.name},</p>
-            
-            <p>Thank you for joining ${organization.name}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
-            
-            <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
-            
-            <div class="features">
-              <h3>Your Donor Portal Features:</h3>
-              <ul>
-                <li>Track your monthly round-up totals</li>
-                <li>Adjust or pause your contributions at any time</li>
-                <li>Download donation records for your own files</li>
-              </ul>
-            </div>
-            
-            <p>We're so glad to have you as part of our round-up community, where even pennies can create lasting change.</p>
-            
-            <div class="signature">
-              <p>With gratitude,<br>
-              <strong>${organization.name} Team</strong></p>
-            </div>
-            
-            <div class="ps-note">
-              <p><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
-            </div>
-          </div>
-          
-          <div class="footer">
-            <div class="contact-info">
-              <h4>ChangeWorks Fund</h4>
-              <p>Your trusted platform partner for charitable giving</p>
-              
-              <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
-              
-              <h4>Contact Information</h4>
-              <p><strong>Email:</strong> support@changeworksfund.org</p>
-              
-              <p><strong>Address:</strong> 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609</p>
-            </div>
-          </div>
-        </div>
-      </body>
-      </html>
+    const content = `
+      <h1 style="color: #302E56; font-size: 24px; margin-bottom: 20px;">Welcome to ${orgName}'s Round-Up Community</h1>
+      
+      <p>Hello ${donor.name},</p>
+      
+      <p>Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
+      
+      <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
+      
+      <div class="highlight-box">
+        <h3 style="color: #302E56; margin-top: 0;">Your Donor Portal Features:</h3>
+        <ul>
+          <li>Track your monthly round-up totals</li>
+          <li>Adjust or pause your contributions at any time</li>
+          <li>Download donation records for your own files</li>
+        </ul>
+      </div>
+      
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="${dashboardLink}" class="button">Access Your Donor Portal</a>
+      </div>
+      
+      <p>We're so glad to have you as part of our round-up community, where even pennies can create lasting change.</p>
+      
+      <div style="margin-top: 30px; font-style: italic; color: #495057;">
+        <p>With gratitude,<br>
+        <strong>${orgName} Team</strong></p>
+      </div>
+      
+      <div class="highlight-box" style="background: #e8f4fd; border-left-color: #302E56;">
+        <p style="margin: 0; color: #302E56;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
+      </div>
     `;
 
+    const html = this.generateEmailHtml(content, organization, subject);
+
     const text = `
-Welcome to ${organization.name}'s round-up community
+Welcome to ${orgName}'s Round-Up Community
 
 Hello ${donor.name},
 
-Thank you for joining ${organization.name}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
+Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
 
 You can view your donation activity anytime through your personalized Donor Portal [Dashboard Link] on ChangeWorks, our platform partner. That's where you'll be able to:
 
@@ -1308,10 +944,12 @@ You can view your donation activity anytime through your personalized Donor Port
 - Adjust or pause your contributions at any time
 - Download donation records for your own files
 
+Access Your Donor Portal: ${dashboardLink}
+
 We're so glad to have you as part of our round-up community, where even pennies can create lasting change.
 
 With gratitude,
-${organization.name} Team
+${orgName} Team
 
 P.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.
 
@@ -1321,7 +959,6 @@ Your trusted platform partner for charitable giving
 
 Contact Information:
 Email: support@changeworksfund.org
-
 Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
     `;
 
@@ -1333,283 +970,7 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
     });
   }
 
-  // Send welcome/thank you email to donor
-  async sendWelcomeEmail({ donor, organization, dashboardLink }) {
-    console.log('ðŸ” Welcome email - Organization data:', {
-      id: organization.id,
-      name: organization.name,
-      imageUrl: organization.imageUrl
-    });
-    
-    const subject = `Welcome to ${organization.name}'s Round-Up Community`;
-    
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Welcome to ${organization.name}</title>
-        <style>
-          body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
-          }
-          .container {
-            background-color: #ffffff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-          }
-          .header {
-            text-align: center;
-            border-bottom: 3px solid #0E0061;
-            padding-bottom: 25px;
-            margin-bottom: 35px;
-          }
-          .header h1 {
-            color: #0E0061;
-            margin: 0;
-            font-size: 32px;
-            font-weight: 600;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }
-          .logo {
-            max-width: 150px;
-            height: auto;
-            margin-bottom: 20px;
-          }
-          .content {
-            margin-bottom: 35px;
-          }
-          .content p {
-            margin-bottom: 18px;
-            font-size: 16px;
-            color: #495057;
-          }
-          .greeting {
-            font-size: 18px;
-            font-weight: 500;
-            color: #212529;
-            margin-bottom: 25px;
-          }
-          .features {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 25px;
-            border-radius: 10px;
-            margin: 25px 0;
-            border-left: 4px solid #0E0061;
-          }
-          .features h3 {
-            color: #0E0061;
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 18px;
-            font-weight: 600;
-          }
-          .features ul {
-            margin: 0;
-            padding-left: 20px;
-          }
-          .features li {
-            margin-bottom: 10px;
-            color: #495057;
-            font-size: 15px;
-          }
-          .cta-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #0E0061 0%, #0C0055 100%);
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            margin: 25px 0;
-            box-shadow: 0 4px 15px rgba(14, 0, 97, 0.3);
-            transition: all 0.3s ease;
-          }
-          .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(14, 0, 97, 0.4);
-          }
-          .footer {
-            border-top: 2px solid #e9ecef;
-            padding-top: 25px;
-            margin-top: 35px;
-            text-align: center;
-            color: #6c757d;
-            font-size: 14px;
-          }
-          .signature {
-            margin-top: 30px;
-            font-style: italic;
-            color: #495057;
-          }
-          .ps {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 1px solid #ffeaa7;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 25px 0;
-            border-left: 4px solid #ffc107;
-          }
-          .ps p {
-            margin: 0;
-            color: #856404;
-            font-weight: 500;
-          }
-          .contact-info {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 25px;
-            text-align: center;
-          }
-          .contact-info h4 {
-            color: #0E0061;
-            margin: 0 0 10px 0;
-            font-size: 16px;
-          }
-          .contact-info p {
-            margin: 5px 0;
-            color: #495057;
-            font-size: 14px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            ${(() => {
-              const hasImage = organization.imageUrl;
-              const imageUrl = organization.imageUrl;
-              const baseUrl = process.env.IMAGE_BACK_URL;
-              const fallbackUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
-              
-              console.log('ðŸ” Welcome email - Image debug:', {
-                organizationId: organization.id,
-                organizationName: organization.name,
-                hasImage: !!hasImage,
-                imageUrl: imageUrl,
-                imageUrlType: typeof imageUrl,
-                imageUrlLength: imageUrl ? imageUrl.length : 0,
-                baseUrl: baseUrl,
-                baseUrlEnv: process.env.IMAGE_BACK_URL,
-                fallbackUrl: fallbackUrl,
-                condition: !!hasImage,
-                willUseOrgLogo: !!hasImage,
-                willUseChangeWorksLogo: !hasImage
-              });
-              
-              if (hasImage) {
-                const logoUrl = `${baseUrl}/${imageUrl}`;
-                console.log('âœ… Using organization logo:', logoUrl);
-                return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
-              } else {
-                const logoUrl = `${fallbackUrl}/imgs/changeworks.png`;
-                console.log('âŒ No organization image found, using ChangeWorks logo:', logoUrl);
-                console.log('ðŸ” Organization data for debugging:', {
-                  id: organization.id,
-                  name: organization.name,
-                  imageUrl: organization.imageUrl,
-                  allOrgKeys: Object.keys(organization)
-                });
-                return `<img src="${logoUrl}" alt="ChangeWorks Logo" class="logo">`;
-              }
-            })()}
-            <h1>Welcome to ${organization.name}</h1>
-          </div>
-          
-          <div class="content">
-            <p class="greeting">Dear ${donor.name},</p>
-            
-            <p>We are thrilled to welcome you to the <strong>${organization.name}</strong> community! By connecting your bank account, you’ve turned your everyday purchases into a powerful force for good. Every spare penny now helps support our mission.</p>
-            
-            <p>Your dashboard: <a href="${dashboardLink}" style="color: #0E0061; text-decoration: underline;">${dashboardLink}</a></p>
-            
-            <div class="features">
-              <h3>Here’s what you can expect:</h3>
-              <ul>
-                <li>Track your monthly round-up totals</li>
-                <li>Adjust your monthly cap or pause your contributions at any time</li>
-                <li>Download your donation records</li>
-              </ul>
-            </div>
-            
-            <p>Thank you for being a changemaker. Together, small change makes a big difference!</p>
-            
-            <div class="signature">
-              <p>With gratitude,<br>
-              <strong>${organization.name}</strong></p>
-            </div>
-            
-            <div class="ps">
-              <p><strong>P.S.</strong> Keep an eye on your inbox for monthly updates on your impact!</p>
-            </div>
-          </div>
-          
-          <div class="footer">
-            <div class="contact-info">
-              <h4>ChangeWorks Fund</h4>
-              <p>Your trusted platform partner for charitable giving</p>
-              
-              <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
-              
-              <h4>Contact Information</h4>
-              <p><strong>Email:</strong> support@changeworksfund.org</p>
-              <p><strong>Address:</strong> 5830 E 2nd St. STE 7000 #29896<br>Casper, WY 82609</p>
-              <p><a href="#" style="color: #6c757d; text-decoration: underline;">Unsubscribe</a></p>
-            </div>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
 
-    const text = `
-Welcome to ${organization.name}'s Round-Up Community
-
-Dear ${donor.name},
-
-We are thrilled to welcome you to the ${organization.name} community! By connecting your bank account, you’ve turned your everyday purchases into a powerful force for good. Every spare penny now helps support our mission.
-
-Your dashboard: ${dashboardLink}
-
-Here’s what you can expect:
-- Track your monthly round-up totals
-- Adjust your monthly cap or pause your contributions at any time
-- Download your donation records
-
-Thank you for being a changemaker. Together, small change makes a big difference!
-
-With gratitude,
-${organization.name}
-
-P.S. Keep an eye on your inbox for monthly updates on your impact!
-
----
-ChangeWorks Fund
-Your trusted platform partner for charitable giving
-
-Contact Information:
-Email: support@changeworksfund.org
-Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
-Unsubscribe
-    `;
-
-    return await this.sendEmail({
-      to: donor.email,
-      subject: subject,
-      html: html,
-      text: text
-    });
-  }
 
   // Send password reset email
   async sendPasswordResetEmail({ donor, resetToken, resetLink, organization }) {

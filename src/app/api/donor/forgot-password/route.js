@@ -80,7 +80,10 @@ export async function POST(request) {
         },
         resetToken,
         resetLink: resetUrl,
-        organization: donor.organization || { name: 'ChangeWorks Fund' }
+        organization: donor.organization || { 
+          name: 'ChangeWorks Fund',
+          imageUrl: '/imgs/changeworks.png'
+        }
       });
 
       if (emailResult.success) {

@@ -23,6 +23,10 @@ export async function POST(request) {
         id: true,
         name: true,
         email: true,
+        imageUrl: true,
+        firstName: true,
+        lastName: true,
+        title: true
       }
     });
 
