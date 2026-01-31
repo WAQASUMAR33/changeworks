@@ -39,7 +39,7 @@ export default function VerifySuccessPage() {
           </div>
 
           <div className="mt-6 text-sm text-gray-500">
-            Need help? Contact support at <a href="mailto:info@rapidtechpro.com" className="text-green-700 underline">info@rapidtechpro.com</a>
+            Need help? Contact support at <a href="mailto:support@changeworksfund.org" className="text-green-700 underline">support@changeworksfund.org</a>
           </div>
         </div>
       </div>

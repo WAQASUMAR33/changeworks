@@ -271,9 +271,9 @@ class EmailService {
               <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
               
               <h4>Contact Information</h4>
-              <p><strong>Email:</strong> info@rapidtechpro.com</p>
-              <p><strong>Phone:</strong> +923474308859</p>
-              <p><strong>Address:</strong> NY-123 Younkers, New York</p>
+              <p><strong>Email:</strong> support@changeworksfund.org</p>
+              
+              <p><strong>Address:</strong> 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609</p>
             </div>
           </div>
         </div>
@@ -309,9 +309,9 @@ ChangeWorks Fund
 Your trusted platform partner for charitable giving
 
 Contact Information:
-Email: info@rapidtechpro.com
-Phone: +923474308859
-Address: NY-123 Younkers, New York
+Email: support@changeworksfund.org
+
+Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
     `;
 
     return await this.sendEmail({
@@ -511,9 +511,9 @@ Address: NY-123 Younkers, New York
               <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
               
               <h4>Contact Information</h4>
-              <p><strong>Email:</strong> info@rapidtechpro.com</p>
-              <p><strong>Phone:</strong> +923474308859</p>
-              <p><strong>Address:</strong> NY-123 Younkers, New York</p>
+              <p><strong>Email:</strong> support@changeworksfund.org</p>
+              
+              <p><strong>Address:</strong> 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609</p>
             </div>
           </div>
         </div>
@@ -542,9 +542,9 @@ ChangeWorks Fund
 Your trusted platform partner for charitable giving
 
 Contact Information:
-Email: info@rapidtechpro.com
-Phone: +923474308859
-Address: NY-123 Younkers, New York
+Email: support@changeworksfund.org
+
+Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
     `;
 
     return await this.sendEmail({
@@ -1037,9 +1037,9 @@ Unsubscribe
               <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
               
               <h4>Contact Information</h4>
-              <p><strong>Email:</strong> info@rapidtechpro.com</p>
-              <p><strong>Phone:</strong> +923474308859</p>
-              <p><strong>Address:</strong> NY-123 Younkers, New York</p>
+              <p><strong>Email:</strong> support@changeworksfund.org</p>
+              
+              <p><strong>Address:</strong> 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609</p>
             </div>
           </div>
         </div>
@@ -1070,9 +1070,9 @@ ChangeWorks Fund
 Your trusted platform partner for charitable giving
 
 Contact Information:
-Email: info@rapidtechpro.com
-Phone: +923474308859
-Address: NY-123 Younkers, New York
+Email: support@changeworksfund.org
+
+Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
     `;
 
     return await this.sendEmail({
@@ -1292,9 +1292,9 @@ Address: NY-123 Younkers, New York
               <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
               
               <h4>Contact Information</h4>
-              <p><strong>Email:</strong> info@rapidtechpro.com</p>
-              <p><strong>Phone:</strong> +923474308859</p>
-              <p><strong>Address:</strong> NY-123 Younkers, New York</p>
+              <p><strong>Email:</strong> support@changeworksfund.org</p>
+              
+              <p><strong>Address:</strong> 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609</p>
             </div>
           </div>
         </div>
@@ -1325,9 +1325,9 @@ ChangeWorks Fund
 Your trusted platform partner for charitable giving
 
 Contact Information:
-Email: info@rapidtechpro.com
-Phone: +923474308859
-Address: NY-123 Younkers, New York
+Email: support@changeworksfund.org
+
+Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
     `;
 
     return await this.sendEmail({
@@ -1521,9 +1521,9 @@ Address: NY-123 Younkers, New York
               <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
               
               <h4>Contact Information</h4>
-              <p><strong>Email:</strong> info@rapidtechpro.com</p>
-              <p><strong>Phone:</strong> +923474308859</p>
-              <p><strong>Address:</strong> NY-123 Younkers, New York</p>
+              <p><strong>Email:</strong> support@changeworksfund.org</p>
+              
+              <p><strong>Address:</strong> 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609</p>
             </div>
           </div>
         </div>
@@ -1554,9 +1554,9 @@ ChangeWorks Fund
 Your trusted platform partner for charitable giving
 
 Contact Information:
-Email: info@rapidtechpro.com
-Phone: +923474308859
-Address: NY-123 Younkers, New York
+Email: support@changeworksfund.org
+
+Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
     `;
 
     return await this.sendEmail({
@@ -1750,9 +1750,9 @@ Address: NY-123 Younkers, New York
               <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
               
               <h4>Contact Information</h4>
-              <p><strong>Email:</strong> info@rapidtechpro.com</p>
-              <p><strong>Phone:</strong> +923474308859</p>
-              <p><strong>Address:</strong> NY-123 Younkers, New York</p>
+              <p><strong>Email:</strong> support@changeworksfund.org</p>
+              
+              <p><strong>Address:</strong> 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609</p>
             </div>
           </div>
         </div>
@@ -1783,9 +1783,9 @@ ChangeWorks Fund
 Your trusted platform partner for charitable giving
 
 Contact Information:
-Email: info@rapidtechpro.com
-Phone: +923474308859
-Address: NY-123 Younkers, New York
+Email: support@changeworksfund.org
+
+Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
     `;
 
     return await this.sendEmail({
@@ -1798,7 +1798,7 @@ Address: NY-123 Younkers, New York
 
   // Send successful verification email to donor
   async sendVerificationSuccessEmail({ donor, organization, dashboardLink }) {
-    const subject = `Welcome to ${organization.name}'s round-up community`;
+    const subject = `Welcome to ${organization.name}'s Round-Up Community`;
     
     const html = `
       <!DOCTYPE html>
@@ -1991,9 +1991,9 @@ Address: NY-123 Younkers, New York
               <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
               
               <h4>Contact Information</h4>
-              <p><strong>Email:</strong> info@rapidtechpro.com</p>
-              <p><strong>Phone:</strong> +923474308859</p>
-              <p><strong>Address:</strong> NY-123 Younkers, New York</p>
+              <p><strong>Email:</strong> support@changeworksfund.org</p>
+              
+              <p><strong>Address:</strong> 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609</p>
             </div>
           </div>
         </div>
@@ -2026,9 +2026,9 @@ ChangeWorks Fund
 Your trusted platform partner for charitable giving
 
 Contact Information:
-Email: info@rapidtechpro.com
-Phone: +923474308859
-Address: NY-123 Younkers, New York
+Email: support@changeworksfund.org
+
+Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
     `;
 
     return await this.sendEmail({
@@ -2047,7 +2047,7 @@ Address: NY-123 Younkers, New York
       imageUrl: organization.imageUrl
     });
     
-    const subject = `Welcome to ${organization.name}'s round-up community`;
+    const subject = `Welcome to ${organization.name}'s Round-Up Community`;
     
     const html = `
       <!DOCTYPE html>
@@ -2233,34 +2233,30 @@ Address: NY-123 Younkers, New York
           </div>
           
           <div class="content">
-            <p class="greeting">Hello ${donor.name},</p>
+            <p class="greeting">Dear ${donor.name},</p>
             
-            <p>Thank you for joining <strong>${organization.name}</strong>'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
+            <p>We are thrilled to welcome you to the <strong>${organization.name}</strong> community! By connecting your bank account, you’ve turned your everyday purchases into a powerful force for good. Every spare penny now helps support our mission.</p>
             
-            <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${dashboardLink}" style="color: #0E0061; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
+            <p>Your dashboard: <a href="${dashboardLink}" style="color: #0E0061; text-decoration: underline;">${dashboardLink}</a></p>
             
             <div class="features">
-              <h3>Your Donor Portal Features:</h3>
+              <h3>Here’s what you can expect:</h3>
               <ul>
                 <li>Track your monthly round-up totals</li>
-                <li>Adjust or pause your contributions at any time</li>
-                <li>Download donation records for your own files</li>
+                <li>Adjust your monthly cap or pause your contributions at any time</li>
+                <li>Download your donation records</li>
               </ul>
             </div>
             
-            <div style="text-align: center;">
-              <a href="${dashboardLink}" class="cta-button">Access Your Donor Portal</a>
-            </div>
-            
-            <p>We're so glad to have you as part of our round-up community, where even pennies can create lasting change.</p>
+            <p>Thank you for being a changemaker. Together, small change makes a big difference!</p>
             
             <div class="signature">
               <p>With gratitude,<br>
-              <strong>${organization.name} Team</strong></p>
+              <strong>${organization.name}</strong></p>
             </div>
             
             <div class="ps">
-              <p><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
+              <p><strong>P.S.</strong> Keep an eye on your inbox for monthly updates on your impact!</p>
             </div>
           </div>
           
@@ -2272,9 +2268,9 @@ Address: NY-123 Younkers, New York
               <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
               
               <h4>Contact Information</h4>
-              <p><strong>Email:</strong> info@rapidtechpro.com</p>
-              <p><strong>Phone:</strong> +923474308859</p>
-              <p><strong>Address:</strong> NY-123 Younkers, New York</p>
+              <p><strong>Email:</strong> support@changeworksfund.org</p>
+              <p><strong>Address:</strong> 5830 E 2nd St. STE 7000 #29896<br>Casper, WY 82609</p>
+              <p><a href="#" style="color: #6c757d; text-decoration: underline;">Unsubscribe</a></p>
             </div>
           </div>
         </div>
@@ -2283,35 +2279,34 @@ Address: NY-123 Younkers, New York
     `;
 
     const text = `
-Welcome to ${organization.name}'s round-up community
+Welcome to ${organization.name}'s Round-Up Community
 
-Hello ${donor.name},
+Dear ${donor.name},
 
-Thank you for joining ${organization.name}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
+We are thrilled to welcome you to the ${organization.name} community! By connecting your bank account, you’ve turned your everyday purchases into a powerful force for good. Every spare penny now helps support our mission.
 
-You can view your donation activity anytime through your personalized Donor Portal [Dashboard Link] on ChangeWorks, our platform partner. That's where you'll be able to:
+Your dashboard: ${dashboardLink}
 
+Here’s what you can expect:
 - Track your monthly round-up totals
-- Adjust or pause your contributions at any time
-- Download donation records for your own files
+- Adjust your monthly cap or pause your contributions at any time
+- Download your donation records
 
-Access Your Donor Portal: ${dashboardLink}
-
-We're so glad to have you as part of our round-up community, where even pennies can create lasting change.
+Thank you for being a changemaker. Together, small change makes a big difference!
 
 With gratitude,
-${organization.name} Team
+${organization.name}
 
-P.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.
+P.S. Keep an eye on your inbox for monthly updates on your impact!
 
 ---
 ChangeWorks Fund
 Your trusted platform partner for charitable giving
 
 Contact Information:
-Email: info@rapidtechpro.com
-Phone: +923474308859
-Address: NY-123 Younkers, New York
+Email: support@changeworksfund.org
+Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
+Unsubscribe
     `;
 
     return await this.sendEmail({

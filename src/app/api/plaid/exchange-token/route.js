@@ -150,13 +150,11 @@ export async function POST(request) {
       if (donor && organization) {
         const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://changeworkscollective.org'}/donor/dashboard`;
         
-        console.log('📧 Sending Round Up Active email to:', donor.email);
-        await emailService.sendRecurringChangeDonationEmail({
+        console.log('📧 Sending Welcome Round-Up email to:', donor.email);
+        await emailService.sendWelcomeEmail({
           donor,
           organization,
-          dashboardLink,
-          amount: 'Round Up',
-          donationDate: new Date().toLocaleDateString()
+          dashboardLink
         });
       }
     } catch (emailError) {
