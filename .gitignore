@@ -23,6 +23,7 @@ prisma/dev.db-journal
 # IDE
 .vscode/
 .idea/
+.trae/
 *.swp
 *.swo
 
