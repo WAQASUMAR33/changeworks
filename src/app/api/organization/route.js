@@ -80,8 +80,17 @@ export async function POST(req) {
     });
 
     // Send Welcome Email
+    console.log('📧 Preparing to send organization welcome email to:', input.email);
     try {
       const dashboardLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://changeworkscollective.org'}/organization/login`;
+      
+      console.log('📋 Welcome email details:', {
+        name: input.name,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        dashboardLink
+      });
+
       await emailService.sendOrganizationWelcomeEmail({
         organization: {
           ...organization,
