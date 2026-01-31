@@ -311,9 +311,8 @@ Unsubscribe
       </div>
     `;
 
-    // Pass null for organization to generateEmailHtml to suppress Org Logo and Name in the branding header/footer
-    // The content itself contains the Org Name as requested
-    const html = this.generateEmailHtml(content, null, subject);
+    // Pass organization to generateEmailHtml to show Org Logo and Name in the branding header/footer
+    const html = this.generateEmailHtml(content, organization, subject);
 
     const text = `
 Thanks for Your One-Time Donation to ${orgName}
@@ -551,9 +550,8 @@ Email: support@changeworksfund.org
       </p>
     `;
 
-    // Suppress logo for one-time donation email as requested previously
-    // Pass null for organization to generateEmailHtml to suppress Org Logo and Name in the branding header/footer
-    const html = this.generateEmailHtml(content, null, subject);
+    // Pass organization to generateEmailHtml to show Org Logo and Name in the branding header/footer
+    const html = this.generateEmailHtml(content, organization, subject);
 
     const text = `
 Thanks for Your One-Time Donation
