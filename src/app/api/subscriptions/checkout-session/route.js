@@ -259,9 +259,25 @@ export async function POST(request) {
 
     // Send recurring donation email
     try {
+      console.log('📧 Attempting to send recurring donation email...');
       const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard`;
       
-      await emailService.sendRecurringDonationEmail({
+      console.log('📧 Email details:', {
+        donorEmail: donor.email,
+        orgName: organization.name,
+        amount,
+        transactionId: donorTransaction.trnx_id
+      });
+
+      // Verify email service connection first
+      const verifyResult = await emailService.verifyConnection();
+      console.log('📧 Email service verification:', verifyResult);
+
+      if (!verifyResult.success) {
+        throw new Error(`Email service verification failed: ${verifyResult.error}`);
+      }
+
+      const emailResult = await emailService.sendRecurringDonationEmail({
         donor: {
           name: donor.name,
           email: donor.email
@@ -272,9 +288,16 @@ export async function POST(request) {
         transactionId: donorTransaction.trnx_id,
         dashboardLink: dashboardLink
       });
-      console.log('✅ Recurring donation email sent');
+      
+      console.log('📧 Email send result:', emailResult);
+
+      if (emailResult.success) {
+        console.log('✅ Recurring donation email sent successfully');
+      } else {
+        console.error('❌ Failed to send recurring donation email (service returned failure):', emailResult.error);
+      }
     } catch (emailError) {
-      console.error('Failed to send recurring donation email:', emailError);
+      console.error('❌ Failed to send recurring donation email (exception):', emailError);
     }
 
     return NextResponse.json({

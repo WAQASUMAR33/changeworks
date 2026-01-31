@@ -30,8 +30,18 @@ class EmailService {
   // Send email with HTML and text content
   async sendEmail({ to, subject, html, text, from = null }) {
     try {
+      const fromAddress = from || process.env.EMAIL_FROM || 'info@changeworksfund.org';
+      
+      console.log('📧 Sending email:', {
+        to,
+        subject,
+        from: fromAddress,
+        host: process.env.EMAIL_SERVER_HOST,
+        port: process.env.EMAIL_SERVER_PORT
+      });
+
       const mailOptions = {
-        from: from || process.env.EMAIL_FROM,
+        from: fromAddress,
         to: to,
         subject: subject,
         html: html,
@@ -40,13 +50,15 @@ class EmailService {
 
       const info = await this.transporter.sendMail(mailOptions);
       
+      console.log('✅ Email sent info:', info.messageId);
+
       return {
         success: true,
         messageId: info.messageId,
         message: 'Email sent successfully'
       };
     } catch (error) {
-      console.error('Email sending error:', error);
+      console.error('❌ Email sending error:', error);
       return {
         success: false,
         error: error.message
