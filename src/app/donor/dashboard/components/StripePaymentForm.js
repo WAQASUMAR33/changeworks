@@ -27,6 +27,7 @@ export default function StripePaymentForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [paymentStatus, setPaymentStatus] = useState(''); // 'processing', 'success', 'error'
+  const [emailToast, setEmailToast] = useState(null); // { message: '', type: 'success' | 'error' }
 
   // Show loading state if Stripe is not ready
   if (!stripe || !elements) {
@@ -137,37 +138,23 @@ export default function StripePaymentForm({
         if (!confirmData.success) {
           console.error('Payment confirmation failed:', confirmData.error);
           // Don't throw error here as the payment was successful, just the confirmation failed
+        } else if (confirmData.emailResult) {
+            // Check email sending status
+            if (confirmData.emailResult.sent) {
+                setEmailToast({ message: 'Confirmation email sent!', type: 'success' });
+            } else {
+                console.error('Email sending failed:', confirmData.emailResult);
+                setEmailToast({ message: 'Email sending failed.', type: 'error' });
+            }
+            
+            // Clear toast after 10 seconds (giving enough time to read)
+            setTimeout(() => setEmailToast(null), 10000);
         }
 
-        // Also create a record in the DonorTransaction table
-        console.log('Creating DonorTransaction record for payment intent:', paymentIntent.id);
+        // We rely on the Stripe Webhook to create the DonorTransaction record and send the email.
+        // This prevents duplicate records and ensures backend-only email triggering.
+        console.log('Payment confirmed. Waiting for webhook to process transaction and send email.');
         
-        const donorTransactionResponse = await fetch('/api/donor_transactions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            donor_id: user.id,
-            organization_id: parseInt(organization.id),
-            status: 'completed',
-            amount: parseFloat(amount),
-            currency: 'USD',
-            receipt_url: paymentIntent.receipt_url || null,
-            trnx_id: paymentIntent.id,
-            transaction_type: 'donation',
-            payment_method: 'credit_card',
-          }),
-        });
-
-        const donorTransactionData = await donorTransactionResponse.json();
-        console.log('DonorTransaction creation response:', donorTransactionData);
-        
-        if (!donorTransactionData.message) {
-          console.error('DonorTransaction creation failed:', donorTransactionData.error);
-          // Don't throw error here as the payment was successful, just the record creation failed
-        }
-
         onSuccess(paymentIntent);
       } else {
         throw new Error('Payment was not successful.');
@@ -195,8 +182,28 @@ export default function StripePaymentForm({
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="text-center py-8"
+        className="text-center py-8 relative"
       >
+        {/* Email Toast Notification */}
+        {emailToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`absolute top-0 left-0 right-0 mx-auto w-max max-w-[90%] px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 text-sm font-medium ${
+              emailToast.type === 'success' 
+                ? 'bg-green-100 text-green-800 border border-green-200' 
+                : 'bg-red-100 text-red-800 border border-red-200'
+            }`}
+          >
+            {emailToast.type === 'success' ? (
+                <CheckCircle className="w-4 h-4" />
+            ) : (
+                <AlertCircle className="w-4 h-4" />
+            )}
+            {emailToast.message}
+          </motion.div>
+        )}
+
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <CheckCircle className="w-8 h-8 text-green-600" />
         </div>
@@ -204,6 +211,16 @@ export default function StripePaymentForm({
         <p className="text-gray-600 mb-4">
           Your donation of ${amount} to {organization.name} has been processed successfully.
         </p>
+        
+        {/* Persistent Email Status Message */}
+        {emailToast && (
+             <p className={`text-sm mb-4 font-medium ${emailToast.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                {emailToast.type === 'success' 
+                    ? 'A receipt has been sent to your email.' 
+                    : 'We could not send the receipt email. Please contact support.'}
+             </p>
+        )}
+
         <button
           onClick={onCancel}
           className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all duration-200"

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../lib/prisma";
 import { z } from "zod";
+import { emailService } from "../../lib/email-service";
 
 const transactionSchema = z.object({
   donor_id: z.number().int().positive("Donor ID is required"),
@@ -63,9 +64,12 @@ export async function POST(request) {
       },
       include: {
         donor: { select: { id: true, name: true, email: true } },
-        organization: { select: { id: true, name: true } },
+        organization: { select: { id: true, name: true, email: true } },
       },
     });
+
+    // Note: Email sending is now handled exclusively by the Stripe Webhook (src/app/api/payments/webhook/route.js)
+    // This ensures reliability and prevents frontend-triggered emails.
 
     return NextResponse.json(
       { message: "Transaction created successfully", transaction },

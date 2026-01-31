@@ -166,6 +166,8 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
           where: { trnx_id: paymentIntent.id }
         });
 
+        let transactionCreated = false;
+
         if (!existingTrx) {
           console.log(`Creating missing DonorTransaction for one-time payment ${paymentIntent.id}`);
           
@@ -186,34 +188,73 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
               receipt_url: paymentIntent.receipt_url,
             }
           });
-          
-          // Send Thank You Email (only if we just created the transaction, implying it wasn't handled by confirm-and-record)
-          // Fetch donor and organization details
-          const [donor, organization] = await Promise.all([
-            prisma.donor.findUnique({ where: { id: donorId }, select: { name: true, email: true } }),
-            prisma.organization.findUnique({ where: { id: organizationId }, select: { name: true, email: true } })
-          ]);
-
-          if (donor && organization) {
-            const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://changeworkscollective.org'}/donor/dashboard`;
-            
-            console.log(`📧 [Webhook] Sending one-time donation email to ${donor.email}`);
-            try {
-              const emailResult = await emailService.sendOneTimeDonationEmail({
-                donor,
-                organization,
-                dashboardLink,
-                amount: fullAmount.toFixed(2),
-                donationDate: new Date().toLocaleDateString()
-              });
-              console.log(`📧 [Webhook] Email result: ${JSON.stringify(emailResult)}`);
-            } catch (emailErr) {
-              console.error(`❌ [Webhook] Failed to send email: ${emailErr.message}`);
-            }
-          } else {
-             console.warn(`⚠️ [Webhook] Missing donor/org data for email. Donor: ${!!donor}, Org: ${!!organization}`);
-          }
+          transactionCreated = true;
         }
+          
+        // Send Thank You Email ONLY if we created the transaction (to avoid duplicates with confirm API)
+        // OR if we want to ensure it sends even if confirm API failed to send but created transaction? 
+        // For now, we assume if transaction exists, email was handled.
+        if (transactionCreated) {
+            // Fetch donor and organization details
+            const [donor, organization] = await Promise.all([
+          prisma.donor.findUnique({ 
+            where: { id: donorId }, 
+            select: { 
+              name: true, 
+              email: true 
+            } 
+          }),
+          prisma.organization.findUnique({ 
+            where: { id: organizationId }, 
+            select: { 
+              name: true, 
+              email: true,
+              firstName: true,
+              lastName: true,
+              title: true,
+              imageUrl: true,
+              ein: true,
+              address: true,
+              city: true,
+              state: true,
+              postalCode: true,
+              phone: true
+            } 
+          })
+        ]);
+
+        if (donor && organization) {
+          const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donorId}`;
+          
+          let paymentMethodText = 'Credit Card';
+          // Try to extract card details from payment intent if available
+          if (paymentIntent.payment_method_details?.card?.last4) {
+            paymentMethodText = `Card ending in ${paymentIntent.payment_method_details.card.last4}`;
+          } else if (typeof paymentIntent.payment_method === 'string') {
+              // If we only have ID, we can't easily get last4 without another API call, so default to generic
+              paymentMethodText = 'Credit Card';
+          }
+
+          console.log(`📧 [Webhook] Sending one-time donation email to ${donor.email}`);
+          try {
+            const emailResult = await emailService.sendOneTimeDonationEmail({
+              donor,
+              organization,
+              dashboardLink,
+              amount: fullAmount.toFixed(2),
+              donationDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+              transactionId: paymentIntent.id,
+              paymentMethod: paymentMethodText,
+              campaignName: paymentIntent.metadata.campaign_name || 'General Donation'
+            });
+            console.log(`📧 [Webhook] Email result: ${JSON.stringify(emailResult)}`);
+          } catch (emailErr) {
+            console.error(`❌ [Webhook] Failed to send email: ${emailErr.message}`);
+          }
+        } else {
+            console.warn(`⚠️ [Webhook] Missing donor/org data for email. Donor: ${!!donor}, Org: ${!!organization}`);
+        }
+      }
       } catch (err) {
         console.error('Error handling one-time donation in webhook:', err);
       }

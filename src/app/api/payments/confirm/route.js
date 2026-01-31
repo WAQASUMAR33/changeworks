@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import Stripe from 'stripe';
 import { prisma } from "../../../lib/prisma";
+import emailService from "../../../lib/email-service";
 
 // Initialize Stripe
 let stripe;
@@ -28,26 +29,7 @@ export async function POST(request) {
 
     console.log(`🔍 Confirming payment for intent: ${payment_intent_id}`);
 
-    // 1. Retrieve the PaymentIntent from Stripe
-    let pi;
-    try {
-      pi = await stripe.paymentIntents.retrieve(payment_intent_id);
-    } catch (stripeError) {
-      console.error('❌ Error retrieving payment intent:', stripeError);
-      return NextResponse.json({ 
-        success: false, 
-        error: stripeError.message 
-      }, { status: 400 });
-    }
-
-    if (pi.status !== 'succeeded') {
-      return NextResponse.json({ 
-        success: false, 
-        error: `Payment not succeeded. Status: ${pi.status}` 
-      }, { status: 400 });
-    }
-
-    // 2. Find the pending transaction in the database
+    // 1. Find the pending transaction in the database FIRST
     // We search by trx_id (which usually contains the PI ID) or trx_details
     const transaction = await prisma.saveTrRecord.findFirst({
       where: {
@@ -64,6 +46,31 @@ export async function POST(request) {
         success: false, 
         error: 'Transaction record not found' 
       }, { status: 404 });
+    }
+
+    // 2. Retrieve the PaymentIntent from Stripe (using Connected Account if applicable)
+    let pi;
+    try {
+      const trxDetails = JSON.parse(transaction.trx_details || '{}');
+      const stripeAccountId = trxDetails.destination_account;
+
+      const options = stripeAccountId ? { stripeAccount: stripeAccountId } : undefined;
+      console.log(`🔍 Retrieving PI ${payment_intent_id} from Stripe${stripeAccountId ? ` (Account: ${stripeAccountId})` : ''}...`);
+
+      pi = await stripe.paymentIntents.retrieve(payment_intent_id, options);
+    } catch (stripeError) {
+      console.error('❌ Error retrieving payment intent:', stripeError);
+      return NextResponse.json({ 
+        success: false, 
+        error: stripeError.message 
+      }, { status: 400 });
+    }
+
+    if (pi.status !== 'succeeded') {
+      return NextResponse.json({ 
+        success: false, 
+        error: `Payment not succeeded. Status: ${pi.status}` 
+      }, { status: 400 });
     }
 
     if (transaction.pay_status === 'completed') {
@@ -104,9 +111,98 @@ export async function POST(request) {
 
     console.log(`✅ Payment confirmed and recorded for PI: ${payment_intent_id}`);
 
+    // 5. Create DonorTransaction and Send Email (for One-Time Donations)
+    // This serves as a primary trigger for local dev (where webhooks fail) and a backup for prod
+    // We check for existence to avoid race conditions with webhook
+    const metadata = pi.metadata || {};
+    let emailResult = { sent: false, reason: 'not_applicable' };
+
+    if (metadata.transaction_type === 'one_time') {
+      try {
+        const donorId = transaction.trx_donor_id;
+        const organizationId = transaction.trx_organization_id;
+        
+        // Check if DonorTransaction already exists
+        const existingTrx = await prisma.donorTransaction.findUnique({
+          where: { trnx_id: pi.id }
+        });
+
+        if (!existingTrx) {
+            console.log(`Creating DonorTransaction from confirm API for ${pi.id}`);
+            
+            const paymentMethod = typeof pi.payment_method === 'string' 
+                ? pi.payment_method 
+                : (pi.payment_method?.id || 'card');
+
+            await prisma.donorTransaction.create({
+                data: {
+                  donor_id: donorId,
+                  organization_id: organizationId,
+                  amount: organizationAmount,
+                  currency: 'usd',
+                  transaction_type: 'one_time',
+                  status: 'completed',
+                  trnx_id: pi.id,
+                  payment_method: paymentMethod,
+                  receipt_url: pi.receipt_url,
+                }
+            });
+
+            // Send Email
+            // Since we just created the transaction, we are responsible for sending the email
+            const [donor, organization] = await Promise.all([
+              prisma.donor.findUnique({ where: { id: donorId }, select: { name: true, email: true } }),
+              prisma.organization.findUnique({ 
+                where: { id: organizationId }, 
+                select: { 
+                  name: true, email: true, firstName: true, lastName: true, title: true, 
+                  imageUrl: true, ein: true, address: true, city: true, state: true, postalCode: true, phone: true
+                } 
+              })
+            ]);
+
+            if (donor && organization) {
+                const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donorId}`;
+                
+                let paymentMethodText = 'Credit Card';
+                if (pi.payment_method_details?.card?.last4) {
+                    paymentMethodText = `Card ending in ${pi.payment_method_details.card.last4}`;
+                }
+                
+                console.log(`📧 [Confirm API] Sending one-time donation email to ${donor.email}`);
+                try {
+                  const sendResult = await emailService.sendOneTimeDonationEmail({
+                    donor,
+                    organization,
+                    dashboardLink,
+                    amount: amountDollars.toFixed(2),
+                    donationDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                    transactionId: pi.id,
+                    paymentMethod: paymentMethodText,
+                    campaignName: metadata.campaign_name || 'General Donation'
+                  });
+                  emailResult = { sent: true, details: sendResult };
+                } catch (emailErr) {
+                  console.error('Failed to send email in confirm API:', emailErr);
+                  emailResult = { sent: false, reason: 'error', error: emailErr.message };
+                }
+            } else {
+                emailResult = { sent: false, reason: 'missing_data' };
+            }
+        } else {
+             console.log(`ℹ️ DonorTransaction already exists for ${pi.id}, skipping creation/email in confirm API`);
+             emailResult = { sent: true, reason: 'already_handled_by_webhook' };
+        }
+      } catch (err) {
+        console.error('Error handling DonorTransaction/Email in confirm API:', err);
+        emailResult = { sent: false, reason: 'transaction_creation_error', error: err.message };
+      }
+    }
+
     return NextResponse.json({ 
       success: true, 
-      transaction: updatedTransaction 
+      transaction: updatedTransaction,
+      emailResult
     });
 
   } catch (error) {

@@ -544,198 +544,98 @@ Address: NY-123 Younkers, New York
   }
 
   // Send one-time donation confirmation email
-  async sendOneTimeDonationEmail({ donor, organization, dashboardLink, amount, donationDate }) {
-    const subject = `Thank you for your one-time donation to ${organization.name}`;
+  async sendOneTimeDonationEmail({ donor, organization, dashboardLink, amount, donationDate, transactionId, paymentMethod, campaignName }) {
+    const subject = `Thanks for Your One-Time Donation to ${organization.name}`;
     
+    // Construct address string if available
+    const orgAddress = [
+      organization.address,
+      organization.city,
+      organization.state,
+      organization.postalCode
+    ].filter(Boolean).join(', ');
+
+    // Ensure logo URL is absolute
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
+    const logoUrl = organization.imageUrl 
+      ? (organization.imageUrl.startsWith('http') 
+          ? organization.imageUrl 
+          : `${baseUrl}${organization.imageUrl.startsWith('/') ? '' : '/'}${organization.imageUrl}`)
+      : null;
+
     const html = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Donation Confirmation - ${organization.name}</title>
+        <title>Thanks for Your One-Time Donation to ${organization.name}</title>
         <style>
-          body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
-          }
-          .container {
-            background-color: #ffffff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-          }
-          .header {
-            text-align: center;
-            border-bottom: 3px solid #302E56;
-            padding-bottom: 25px;
-            margin-bottom: 35px;
-          }
-          .header h1 {
-            color: #302E56;
-            margin: 0;
-            font-size: 32px;
-            font-weight: 600;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }
-          .logo {
-            max-width: 150px;
-            height: auto;
-            margin-bottom: 20px;
-          }
-          .content {
-            margin-bottom: 35px;
-          }
-          .content p {
-            margin-bottom: 18px;
-            font-size: 16px;
-            color: #495057;
-          }
-          .greeting {
-            font-size: 18px;
-            font-weight: 500;
-            color: #212529;
-            margin-bottom: 25px;
-          }
-          .donation-highlight {
-            background: linear-gradient(135deg, #302E56 0%, #4A487A 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            margin: 25px 0;
-            text-align: center;
-            box-shadow: 0 8px 25px rgba(48, 46, 86, 0.3);
-          }
-          .donation-highlight h2 {
-            margin: 0 0 15px 0;
-            font-size: 24px;
-            font-weight: 600;
-          }
-          .donation-amount {
-            font-size: 36px;
-            font-weight: 700;
-            margin: 10px 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          }
-          .donation-date {
-            font-size: 18px;
-            opacity: 0.9;
-            margin: 0;
-          }
-          .dashboard-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #302E56 0%, #4A487A 100%);
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            margin: 25px 0;
-            box-shadow: 0 4px 15px rgba(48, 46, 86, 0.3);
-            transition: all 0.3s ease;
-          }
-          .dashboard-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(48, 46, 86, 0.4);
-          }
-          .footer {
-            border-top: 2px solid #e9ecef;
-            padding-top: 25px;
-            margin-top: 35px;
-            text-align: center;
-            color: #6c757d;
-            font-size: 14px;
-          }
-          .signature {
-            margin-top: 30px;
-            font-style: italic;
-            color: #495057;
-          }
-          .gratitude-section {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 1px solid #ffeaa7;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 25px 0;
-            border-left: 4px solid #ffc107;
-          }
-          .gratitude-section p {
-            margin: 0;
-            color: #856404;
-            font-weight: 500;
-            font-size: 16px;
-          }
-          .contact-info {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 25px;
-            text-align: center;
-          }
-          .contact-info h4 {
-            color: #302E56;
-            margin: 0 0 10px 0;
-            font-size: 16px;
-          }
-          .contact-info p {
-            margin: 5px 0;
-            color: #495057;
-            font-size: 14px;
-          }
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+          .container { background-color: #ffffff; padding: 20px; }
+          .header { text-align: center; margin-bottom: 20px; }
+          .logo { max-height: 100px; max-width: 200px; height: auto; }
+          .details-list { list-style: none; padding: 0; }
+          .details-list li { margin-bottom: 8px; }
+          .button { display: inline-block; background-color: #ffffff; color: #302E56; border: 2px solid #302E56; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; margin: 20px 0; }
+          .footer { font-size: 12px; color: #666; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.png" alt="ChangeWorks Logo" class="logo">
-            <h1>Donation Confirmation</h1>
+            ${logoUrl ? `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo">` : `<h1>${organization.name}</h1>`}
           </div>
           
-          <div class="content">
-            <p class="greeting">Hello ${donor.name},</p>
-            
-            <div class="donation-highlight">
-              <h2>Thank You for Your Donation!</h2>
-              <div class="donation-amount">$${amount}</div>
-              <p class="donation-date">${donationDate}</p>
-            </div>
-            
-            <p>Your generous one-time donation of <strong>$${amount}</strong> to <strong>${organization.name}</strong> will make a real difference in our community.</p>
-            
-            <p>If you want to see details of your donation or make changes, log into your Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.</p>
-            
-            <div style="text-align: center;">
-              <a href="${dashboardLink}" class="dashboard-button" style="color: white;">Access Your Donor Portal</a>
-            </div>
-            
-            <div class="gratitude-section">
-              <p>Thank you for carrying our mission forward with your generous support. Your contribution helps create lasting change in our community.</p>
-            </div>
-            
-            <div class="signature">
-              <p>With gratitude,<br>
-              <strong>${organization.name} Team</strong></p>
-            </div>
+          <p>Dear ${donor.name},</p>
+          
+          <p>Thank you for your generous donation to ${organization.name}. Your support helps ensure we can continue showing up for people when help is needed.</p>
+          
+          <p>Your contribution strengthens our ability to provide timely assistance, respond to changing needs, and operate with care and consistency. Support like yours allows us to focus on what matters most: putting resources to work where they can do the most good.</p>
+          
+          <h3 style="border-bottom: 1px solid #eee; padding-bottom: 10px;">Your donation details</h3>
+          
+          <ul class="details-list">
+            <li><strong>Organization:</strong> ${organization.name}</li>
+            <li><strong>Campaign:</strong> ${campaignName || 'General Donation'}</li>
+            <li><strong>Donor:</strong> ${donor.name}</li>
+            <li><strong>Amount:</strong> $${amount}</li>
+            <li><strong>Impact:</strong> Your donation supports our core mission.</li>
+            <li><strong>Period:</strong> ${donationDate}</li>
+            <li><strong>Receipt #:</strong> ${transactionId || 'N/A'}</li>
+            <li><strong>Date:</strong> ${donationDate}</li>
+            <li><strong>Payment method:</strong> ${paymentMethod || 'Credit Card'}</li>
+          </ul>
+          
+          <p>You can access your donor account at any time to update your contribution amount, change your payment method, or resume donations. Step-by-step instructions are available through our trusted donation partner, ChangeWorks.</p>
+          
+          <div style="text-align: center;">
+            <a href="${dashboardLink}" class="button">CLICK HERE TO ACCESS YOUR DONOR DASHBOARD</a>
           </div>
+          
+          <p>At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We’re grateful for your trust and would be glad to keep you informed about the impact of your giving.</p>
+          
+          <p>${organization.name} is a registered 501(c)(3) nonprofit organization in the United States (EIN: ${organization.ein || 'XX-XXXXXXX'}). Your donation may be tax-deductible; please consult a tax professional regarding your specific situation.</p>
+          
+          <p>With sincere gratitude,</p>
+          
+          <p>
+            <strong>${organization.firstName ? `${organization.firstName} ${organization.lastName}` : 'Organization Director'}</strong><br>
+            ${organization.title || 'Director'}<br>
+            ${organization.name}
+          </p>
           
           <div class="footer">
-            <div class="contact-info">
-              <h4>ChangeWorks Fund</h4>
-              <p>Your trusted platform partner for charitable giving</p>
-              
-              <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
-              
-              <h4>Contact Information</h4>
-              <p><strong>Email:</strong> info@rapidtechpro.com</p>
-              <p><strong>Phone:</strong> +923474308859</p>
-              <p><strong>Address:</strong> NY-123 Younkers, New York</p>
-            </div>
+            <p><strong>ChangeWorks</strong><br>
+            Your trusted platform partner for charitable giving</p>
+            
+            <p>
+              Email: support@changeworksfund.org<br>
+              5830 E 2nd St. STE 7000 #29896<br>
+              Casper, WY 82609
+            </p>
+            
+            <p><a href="#" style="color: #666;">Unsubscribe</a></p>
           </div>
         </div>
       </body>
@@ -743,29 +643,48 @@ Address: NY-123 Younkers, New York
     `;
 
     const text = `
-Thank you for your one-time donation to ${organization.name}
+Thanks for Your One-Time Donation to ${organization.name}
 
-Hello ${donor.name},
+Dear ${donor.name},
 
-Your generous one-time donation of $${amount} to ${organization.name} will make a real difference in our community.
+Thank you for your generous donation to ${organization.name}. Your support helps ensure we can continue showing up for people when help is needed.
 
-If you want to see details of your donation or make changes, log into your Donor Portal [Dashboard Link] on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.
+Your contribution strengthens our ability to provide timely assistance, respond to changing needs, and operate with care and consistency. Support like yours allows us to focus on what matters most: putting resources to work where they can do the most good.
 
-Access Your Donor Portal: ${dashboardLink}
+Your donation details
+Organization: ${organization.name}
+Campaign: ${campaignName || 'General Donation'}
+Donor: ${donor.name}
+Amount: $${amount}
+Impact: Your donation supports our core mission.
+Period: ${donationDate}
+Receipt #: ${transactionId || 'N/A'}
+Date: ${donationDate}
+Payment method: ${paymentMethod || 'Credit Card'}
 
-Thank you for carrying our mission forward with your generous support. Your contribution helps create lasting change in our community.
+You can access your donor account at any time to update your contribution amount, change your payment method, or resume donations. Step-by-step instructions are available through our trusted donation partner, ChangeWorks.
 
-With gratitude,
-${organization.name} Team
+CLICK HERE TO ACCESS YOUR DONOR DASHBOARD: ${dashboardLink}
 
----
-ChangeWorks Fund
+At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We’re grateful for your trust and would be glad to keep you informed about the impact of your giving.
+
+${organization.name} is a registered 501(c)(3) nonprofit organization in the United States (EIN: ${organization.ein || 'XX-XXXXXXX'}). Your donation may be tax-deductible; please consult a tax professional regarding your specific situation.
+
+With sincere gratitude,
+
+${organization.firstName ? `${organization.firstName} ${organization.lastName}` : 'Organization Director'}
+${organization.title || 'Director'}
+${organization.name}
+
+----------------------------------------
+ChangeWorks
 Your trusted platform partner for charitable giving
 
-Contact Information:
-Email: info@rapidtechpro.com
-Phone: +923474308859
-Address: NY-123 Younkers, New York
+Contact Information
+Email: support@changeworksfund.org
+5830 E 2nd St. STE 7000 #29896
+Casper, WY 82609
+Unsubscribe
     `;
 
     return await this.sendEmail({

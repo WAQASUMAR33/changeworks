@@ -5,25 +5,37 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 
 // Get the Stripe publishable key from environment variables
-// In client-side code, only NEXT_PUBLIC_ prefixed variables are available
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
-// Debug logging for environment variables
-console.log('Environment check:', {
-  hasStripeKey: !!stripePublishableKey,
-  keyLength: stripePublishableKey?.length || 0,
-  keyPrefix: stripePublishableKey?.substring(0, 10) || 'none',
-  allEnvKeys: Object.keys(process.env).filter(key => key.includes('STRIPE')),
-  ACTION_REQUIRED: 'Please verify that this key prefix matches the account used in your backend (STRIPE_SECRET_KEY).'
-});
-
-// Initialize Stripe once globally for the platform
-let stripePromise = null;
+// Initialize global promise for platform account (optimization)
+let platformStripePromise = null;
 if (stripePublishableKey && stripePublishableKey.trim().startsWith('pk_')) {
-  stripePromise = loadStripe(stripePublishableKey);
+  platformStripePromise = loadStripe(stripePublishableKey);
 }
 
-export default function StripeProvider({ children }) {
+export default function StripeProvider({ children, stripeAccount }) {
+  // Initialize state based on the initial prop to avoid race conditions
+  const [stripePromise, setStripePromise] = useState(() => {
+    if (stripeAccount && stripePublishableKey && stripePublishableKey.trim().startsWith('pk_')) {
+      console.log(`🏦 Initializing Stripe for connected account (Sync): ${stripeAccount}`);
+      return loadStripe(stripePublishableKey, { stripeAccount });
+    }
+    return platformStripePromise;
+  });
+
+  useEffect(() => {
+    if (!stripePublishableKey || !stripePublishableKey.trim().startsWith('pk_')) return;
+
+    if (stripeAccount) {
+      console.log(`🏦 Switching Stripe to connected account: ${stripeAccount}`);
+      const connectedPromise = loadStripe(stripePublishableKey, { stripeAccount });
+      setStripePromise(connectedPromise);
+    } else {
+      console.log('🏦 Switching Stripe to platform account');
+      setStripePromise(platformStripePromise);
+    }
+  }, [stripeAccount]);
+
   // Handle missing key
   if (!stripePublishableKey || !stripePublishableKey.trim()) {
     return (
@@ -49,13 +61,13 @@ export default function StripeProvider({ children }) {
     return (
       <div className="p-4 flex flex-col items-center justify-center min-h-[100px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-        <p className="text-gray-500 text-sm font-medium">Initializing secure gateway.</p>
+        <p className="text-gray-500 text-sm font-medium">Initializing secure gateway...</p>
       </div>
     );
   }
 
   return (
-    <Elements stripe={stripePromise}>
+    <Elements stripe={stripePromise} key={stripeAccount || 'platform'}>
       {children}
     </Elements>
   );

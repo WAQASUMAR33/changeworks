@@ -1,4 +1,4 @@
-﻿﻿﻿﻿import { NextResponse } from "next/server";
+﻿﻿﻿﻿﻿﻿﻿﻿﻿import { NextResponse } from "next/server";
 import { z } from "zod";
 import Stripe from 'stripe';
 import { prisma } from "../../../lib/prisma";
@@ -114,24 +114,27 @@ export async function POST(request) {
     const amountInCents = Math.round(amount);
     const amountDollars = amountInCents / 100;
 
-    // Calculate 90% for the organization transfer
-    const transferAmountCents = Math.round(amountInCents * 0.90);
-    const applicationFeeAmount = amountInCents - transferAmountCents;
+    // Calculate 7% platform fee
+    // Note: Stripe fees (approx 2.9% + 30c) are deducted from the Connected Account's balance automatically by Stripe
+    // We only need to specify our Application Fee
+    const applicationFeeAmount = Math.round(amountInCents * 0.07);
 
     console.log(`💰 Total: $${amountDollars} (${amountInCents} cents)`);
-    console.log(`💸 Platform Commission (10%): ${amountInCents - transferAmountCents} cents`);
-    console.log(`🏦 Transfer to Org (90%): ${transferAmountCents} cents to ${destinationAccountId}`);
+    console.log(`💸 Platform Commission (7%): ${applicationFeeAmount} cents`);
+    console.log(`🏦 Direct Charge to Org: ${destinationAccountId}`);
 
-    console.log(`🏦 Initiating Destination Charge: Total=${amountInCents}, Transfer=${transferAmountCents} to ${destinationAccountId}`);
+    console.log(`🏦 Initiating Direct Charge: Total=${amountInCents}, AppFee=${applicationFeeAmount} on account ${destinationAccountId}`);
 
-    // Create payment intent with Stripe Destination Charge
-    // ChangeWorks processes the full amount, then transfers 90% to the organization automatically
+    // Create payment intent with Stripe Direct Charge
+    // The Connected Account is the Merchant of Record
+    // The Platform takes an application fee
     let paymentIntent;
     try {
       paymentIntent = await stripe.paymentIntents.create({
         amount: amountInCents,
         currency: currency.toLowerCase(),
         payment_method_types: ['card'],
+        application_fee_amount: applicationFeeAmount,
         description: description || `Donation to ${organization.name}`,
         metadata: {
           donor_id: donor_id.toString(),
@@ -142,16 +145,14 @@ export async function POST(request) {
           ...(metadata || {}),
         },
         receipt_email: donor.email,
-        transfer_data: {
-          amount: transferAmountCents,
-          destination: destinationAccountId,
-        },
+      }, {
+        stripeAccount: destinationAccountId,
       });
     } catch (stripeError) {
       console.error('❌ Stripe Payment Intent Creation Failed:', stripeError);
       
       let errorMessage = stripeError.message;
-      if (stripeError.code === 'account_invalid' || stripeError.param === 'transfer_data[destination]') {
+      if (stripeError.code === 'account_invalid') {
         errorMessage = `The organization's Stripe account (${destinationAccountId}) is invalid or not connected in ${process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'Live' : 'Test'} mode.`;
       }
 
@@ -182,7 +183,8 @@ export async function POST(request) {
           description: description || `Donation to ${organization.name}`,
           platform_fee_cents: applicationFeeAmount,
           destination_account: organization.stripeAccountId,
-          stripe_metadata: paymentIntent.metadata
+          stripe_metadata: paymentIntent.metadata,
+          charge_type: 'direct_charge'
         }),
         pay_status: 'pending'
       }
@@ -190,11 +192,15 @@ export async function POST(request) {
 
     // Immediately check the payment status and update if already completed
     try {
-      console.log(`ðŸ” Immediately checking payment status for ${paymentIntent.id}...`);
+      console.log(`🔍 Immediately checking payment status for ${paymentIntent.id}...`);
 
       // Check if payment was already completed in Stripe
-      const currentStripePayment = await stripe.paymentIntents.retrieve(paymentIntent.id);
-      console.log(`ðŸ“Š Current Stripe status: ${currentStripePayment.status}`);
+      // For Direct Charges, we must retrieve from the connected account
+      const currentStripePayment = await stripe.paymentIntents.retrieve(
+        paymentIntent.id, 
+        { stripeAccount: destinationAccountId }
+      );
+      console.log(`📊 Current Stripe status: ${currentStripePayment.status}`);
 
       if (currentStripePayment.status === 'succeeded') {
         // Payment already succeeded, update to completed immediately
@@ -253,8 +259,12 @@ export async function POST(request) {
         // Set up additional checking for payments that are still pending
         setTimeout(async () => {
           try {
-            console.log(`ðŸ”„ Delayed check for payment ${paymentIntent.id}...`);
-            const delayedStripePayment = await stripe.paymentIntents.retrieve(paymentIntent.id);
+            console.log(`🔄 Delayed check for payment ${paymentIntent.id}...`);
+            // Must retrieve from the connected account for Direct Charges
+            const delayedStripePayment = await stripe.paymentIntents.retrieve(
+              paymentIntent.id, 
+              { stripeAccount: destinationAccountId }
+            );
 
             if (delayedStripePayment.status === 'succeeded') {
               await prisma.saveTrRecord.update({

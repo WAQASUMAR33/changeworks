@@ -1,52 +1,32 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { 
   Loader2, 
   AlertCircle, 
   CheckCircle, 
-  X, 
   ArrowLeft, 
   ArrowRight,
   DollarSign,
   Building2,
-  CreditCard,
   Search,
   Heart
 } from 'lucide-react';
 import { buildOrgLogoUrl } from '@/lib/image-utils';
-
-const CARD_ELEMENT_OPTIONS = {
-  style: {
-    base: {
-      fontSize: '16px',
-      color: '#000000',
-      '::placeholder': {
-        color: '#666666',
-      },
-    },
-    invalid: {
-      color: '#9e2146',
-    },
-  },
-};
+import StripeProvider from './StripeProvider';
+import PaymentConfirmationStep from './PaymentConfirmationStep';
 
 export default function MultiStepPaymentForm({ 
   onSuccess, 
   onError, 
   onCancel 
 }) {
-  const stripe = useStripe();
-  const elements = useElements();
-  
   // Step management
   const [currentStep, setCurrentStep] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // Used for steps 1-3 transitions if needed
   const [error, setError] = useState('');
-  const [paymentStatus, setPaymentStatus] = useState(''); // 'processing', 'success', 'error'
   
   // Step 1: Donation Amount
   const [donationAmount, setDonationAmount] = useState('');
@@ -62,21 +42,6 @@ export default function MultiStepPaymentForm({
   useEffect(() => {
     fetchOrganizations();
   }, []);
-  
-  // Early return if Stripe is not ready
-  if (!stripe || !elements) {
-    return (
-      <div className="text-center py-8">
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-        </div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-2">Loading Payment Form.</h4>
-        <p className="text-gray-600 mb-4">
-          Please wait while we initialize the secure payment system...
-        </p>
-      </div>
-    );
-  }
   
   const fetchOrganizations = async () => {
     try {
@@ -146,113 +111,6 @@ export default function MultiStepPaymentForm({
     org.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!stripe || !elements) {
-      setError('Payment system not ready. Please try again.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      // Get donor info from localStorage
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      console.log('🔍 MultiStepPaymentForm - User data:', user);
-      
-      if (!user.id) {
-        setError('Please log in to make a payment');
-        return;
-      }
-
-      // Create payment intent
-      const response = await fetch('/api/payments/create-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          amount: Math.round(parseFloat(donationAmount) * 100), // send in cents
-          currency: 'USD',
-          donor_id: parseInt(user.id),
-          organization_id: selectedOrganization.id,
-          description: `Donation to ${selectedOrganization.name}`,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        const detailedError = errorData.details 
-          ? `${errorData.error}: ${typeof errorData.details === 'object' ? JSON.stringify(errorData.details) : errorData.details}`
-          : (errorData.error || 'Failed to create payment intent');
-        throw new Error(detailedError);
-      }
-
-      const { client_secret } = await response.json();
-
-      // Confirm payment
-      console.log('💳 Starting card confirmation...');
-      const cardElement = elements.getElement(CardElement);
-      
-      const result = await stripe.confirmCardPayment(client_secret, {
-        payment_method: {
-          card: cardElement,
-          billing_details: {
-            name: user.name || 'Donor',
-            email: user.email,
-          },
-        },
-        return_url: window.location.href,
-      });
-
-      console.log('📨 Stripe confirmation result:', result);
-
-      const { error: stripeError, paymentIntent } = result;
-
-      if (stripeError) {
-        console.error('❌ Payment Confirmation Failed:', stripeError);
-        
-        let errorMessage = stripeError.message;
-        
-        // Detect Environment Mismatch (Frontend Key vs Backend Key)
-        if (errorMessage.includes('No such payment_intent')) {
-          errorMessage = `Configuration Error: The Payment Intent was created but could not be found. \n\nThis almost always means your Frontend 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY' and Backend 'STRIPE_SECRET_KEY' belong to DIFFERENT Stripe accounts. \n\nPlease verify your deployment environment variables.`;
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      if (paymentIntent) {
-        console.log(`✅ Payment Intent Status: ${paymentIntent.status}, Livemode: ${paymentIntent.livemode}`);
-        
-        if (paymentIntent.status === 'succeeded') {
-          setPaymentStatus('success');
-          onSuccess(paymentIntent);
-        } else if (paymentIntent.status === 'processing') {
-          setPaymentStatus('success'); // Treat processing as success for now (will settle later)
-          onSuccess(paymentIntent);
-        } else {
-          console.warn(`⚠️ Payment not succeeded. Status: ${paymentIntent.status}`);
-          throw new Error(`Payment status is ${paymentIntent.status}. Please try again.`);
-        }
-      } else {
-        throw new Error('No payment response received');
-      }
-
-    } catch (err) {
-      console.error('Payment error:', err);
-      setError(err.message || 'Payment failed. Please try again.');
-      setPaymentStatus('error');
-      onError(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
   const renderStep1 = () => (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -310,7 +168,7 @@ export default function MultiStepPaymentForm({
 
       <div className="max-w-md mx-auto">
         <label className="block text-sm font-semibold text-black mb-2">
-          Donation Amount *.
+          Donation Amount *
         </label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black text-lg">$</span>
@@ -346,8 +204,8 @@ export default function MultiStepPaymentForm({
             }}
             className={`p-3 rounded-lg border-2 transition-all duration-200 ${
               donationAmount === amount.toString()
-                ? 'border-blue-500 bg-blue-50 text-black'
-                : 'border-gray-200 hover:border-gray-300 text-black'
+              ? 'border-blue-500 bg-blue-50 text-black'
+              : 'border-gray-200 hover:border-gray-300 text-black'
             }`}
           >
             <span className="font-semibold">${amount}</span>
@@ -368,7 +226,7 @@ export default function MultiStepPaymentForm({
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Building2 className="w-8 h-8 text-green-600" />
         </div>
-        <h3 className="text-xl font-semibold text-black mb-2">Select Organization.</h3>
+        <h3 className="text-xl font-semibold text-black mb-2">Select Organization</h3>
         <p className="text-black">Choose which organization will receive your donation.</p>
       </div>
 
@@ -450,68 +308,38 @@ export default function MultiStepPaymentForm({
     </motion.div>
   );
 
-  const renderStep4 = () => (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      className="space-y-6"
-    >
-      <div className="text-center">
-        <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CreditCard className="w-8 h-8 text-purple-600" />
-        </div>
-        <h3 className="text-xl font-semibold text-black mb-2">Complete Payment.</h3>
-        <p className="text-black">Enter your payment details to complete the donation.</p>
-      </div>
+  const renderStep4 = () => {
+    console.log('🔄 Rendering Step 4');
+    console.log('🏢 Selected Organization:', selectedOrganization);
+    console.log('🆔 Stripe Account ID:', selectedOrganization?.stripeAccountId);
 
-      <div className="max-w-md mx-auto space-y-6">
-        {/* Donation Summary */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="font-semibold text-black mb-3">Donation Summary</h4>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-black">Amount:</span>
-              <span className="font-semibold">${donationAmount}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-black">Organization:</span>
-              <span className="font-semibold text-right max-w-48 truncate">{selectedOrganization?.name}</span>
-            </div>
-            <div className="border-t pt-2 mt-2">
-              <div className="flex justify-between">
-                <span className="font-semibold text-black">Total:</span>
-                <span className="font-bold text-lg text-blue-600">${donationAmount}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+    return (
+      <StripeProvider stripeAccount={selectedOrganization?.stripeAccountId}>
+        <PaymentConfirmationStep 
+          amount={donationAmount}
+          organization={selectedOrganization}
+          onSuccess={onSuccess}
+          onError={onError}
+          onBack={handleBack}
+        />
+      </StripeProvider>
+    );
+  };
 
+  const renderNavigation = () => {
+    // Navigation is handled by PaymentConfirmationStep for step 4
+    if (currentStep === 4) return null;
 
-        {/* Card Element */}
-        <div>
-          <label className="block text-sm font-semibold text-black mb-2">
-            Payment Information *.
-          </label>
-          <div className="p-4 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all duration-200">
-            <CardElement options={CARD_ELEMENT_OPTIONS} />
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
+    return (
+      <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+        <button
+          onClick={currentStep === 1 ? onCancel : handleBack}
+          className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-black">{currentStep === 1 ? 'Cancel' : 'Back'}</span>
+        </button>
 
-  const renderNavigation = () => (
-    <div className="flex justify-between items-center pt-6 border-t border-gray-200">
-      <button
-        onClick={currentStep === 1 ? onCancel : handleBack}
-        className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        <span className="text-black">{currentStep === 1 ? 'Cancel' : 'Back'}</span>
-      </button>
-
-      {currentStep < 4 ? (
         <button
           onClick={handleNext}
           disabled={loading}
@@ -520,42 +348,9 @@ export default function MultiStepPaymentForm({
           <span className="text-white">Next</span>
           <ArrowRight className="w-4 h-4" />
         </button>
-      ) : (
-        <button
-          onClick={handleSubmit}
-          disabled={loading || !stripe || !elements}
-          className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-white">Processing...</span>
-            </>
-          ) : (
-            <>
-              <span className="text-white">Complete Donation</span>
-              <CheckCircle className="w-4 h-4" />
-            </>
-          )}
-        </button>
-      )}
-    </div>
-  );
-
-  // Show loading state if Stripe is not ready
-  if (!stripe || !elements) {
-    return (
-      <div className="text-center py-8">
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-        </div>
-        <h4 className="text-lg font-semibold text-gray-900 mb-2">Loading Payment Form</h4>
-        <p className="text-gray-600 mb-4">
-          Please wait while we initialize the secure payment system...
-        </p>
       </div>
     );
-  }
+  };
 
   return (
     <div className="space-y-6">

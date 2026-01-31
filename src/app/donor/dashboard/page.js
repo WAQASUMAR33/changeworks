@@ -34,6 +34,7 @@ export default function DonorDashboard() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(''); // 'processing', 'success', 'error'
   const [paymentResult, setPaymentResult] = useState(null);
+  const [emailStatus, setEmailStatus] = useState(null);
 
   // Subscription modal state
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -203,9 +204,15 @@ export default function DonorDashboard() {
   }, []);
 
   // Payment handlers
-  const handlePaymentSuccess = (paymentIntent) => {
+  const handlePaymentSuccess = (result) => {
+    // Check if result has nested structure (from new PaymentConfirmationStep)
+    const paymentIntent = result.paymentIntent || result;
+    const emailRes = result.emailStatus || null;
+
     setPaymentStatus('success');
     setPaymentResult(paymentIntent);
+    setEmailStatus(emailRes);
+    
     fetchDashboardData(); // Refresh dashboard data
   };
 
@@ -219,6 +226,7 @@ export default function DonorDashboard() {
     setShowPaymentModal(false);
     setPaymentStatus('');
     setPaymentResult(null);
+    setEmailStatus(null);
   };
 
   // Quick action handlers
@@ -403,14 +411,14 @@ export default function DonorDashboard() {
         <div className="space-y-6">
           {/* Quick Actions */}
           <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-6">Quick Actions</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-6">Donation Menu</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Donate Now */}
               <motion.button
                 onClick={handleStripePayment}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-[#0E0061] hover:from-blue-600 hover:via-blue-700 hover:to-[#0C0055] shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+                className="group relative overflow-hidden bg-gradient-to-br from-green-700 via-green-800 to-green-900 hover:from-green-800 hover:via-green-900 hover:to-green-950 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
               >
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-4">
@@ -423,7 +431,7 @@ export default function DonorDashboard() {
                   </div>
                   <div className="space-y-2">
                     <h4 className="text-lg font-bold text-white">Donate Now</h4>
-                    <p className="text-sm text-blue-100">Make a One Time Donation</p>
+                    <p className="text-sm text-green-100">Make a One Time Donation</p>
                   </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
@@ -445,7 +453,7 @@ export default function DonorDashboard() {
               ) : subscriptionStatus.hasActiveSubscription ? (
                 <motion.div
                   whileHover={{ scale: 1.05, y: -2 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-green-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
                 >
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-4">
@@ -479,7 +487,7 @@ export default function DonorDashboard() {
                   onClick={handleStripeSubscription}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 hover:from-green-600 hover:via-green-700 hover:to-emerald-800 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-green-800 hover:from-green-700 hover:via-green-800 hover:to-green-900 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
                 >
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-4">
@@ -515,7 +523,7 @@ export default function DonorDashboard() {
               ) : plaidConnectionStatus.isConnected ? (
                 <motion.div
                   whileHover={{ scale: 1.05, y: -2 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-violet-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-400 via-green-500 to-green-600 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
                 >
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-4">
@@ -528,7 +536,7 @@ export default function DonorDashboard() {
                     </div>
                     <div className="space-y-2 mb-4">
                       <h4 className="text-lg font-bold text-white">Join Our Round-Up Program </h4>
-                      <p className="text-sm text-purple-100">
+                      <p className="text-sm text-green-100">
                         {plaidConnectionStatus.connections.length > 0
                           ? `Connected to ${plaidConnectionStatus.connections[0].institution_name || 'Bank'}`
                           : 'Bank account connected'
@@ -549,7 +557,7 @@ export default function DonorDashboard() {
                   onClick={handlePlaidIntegration}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-violet-700 hover:from-purple-600 hover:via-purple-700 hover:to-violet-800 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-400 via-green-500 to-green-600 hover:from-green-500 hover:via-green-600 hover:to-green-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
                 >
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-4">
@@ -562,7 +570,7 @@ export default function DonorDashboard() {
                     </div>
                     <div className="space-y-2">
                       <h4 className="text-lg font-bold text-white">Join Our Round-Up Program</h4>
-                      <p className="text-sm text-purple-100">Connect your bank account</p>
+                      <p className="text-sm text-green-100">Connect your bank account</p>
                     </div>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
@@ -638,24 +646,44 @@ export default function DonorDashboard() {
                 </div>
 
                 {paymentStatus === 'success' && (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="text-center py-8 relative">
+                    {/* Email Toast */}
+                    {emailStatus && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`absolute top-0 left-0 right-0 mx-auto w-max max-w-[90%] px-4 py-2 rounded-full shadow-lg flex items-center justify-center gap-2 text-sm font-medium ${
+                          emailStatus.sent 
+                            ? 'bg-green-100 text-green-800 border border-green-200' 
+                            : 'bg-red-100 text-red-800 border border-red-200'
+                        }`}
+                      >
+                        {emailStatus.sent ? (
+                            <CheckCircle className="w-4 h-4" />
+                        ) : (
+                            <AlertCircle className="w-4 h-4" />
+                        )}
+                        {emailStatus.sent ? 'Confirmation email sent!' : 'Email sending failed.'}
+                      </motion.div>
+                    )}
+
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 mt-8">
                       <CheckCircle className="w-8 h-8 text-green-600" />
                     </div>
                     <h4 className="text-xl font-bold text-gray-900 mb-2">Payment Successful!</h4>
                     <p className="text-gray-600 mb-4">
                       Your donation has been processed successfully.
                     </p>
-                    {paymentResult && (
-                      <div className="bg-green-50 rounded-lg p-4 text-left mb-4">
-                        <p className="text-sm text-green-700">
-                          <strong>Amount:</strong> ${paymentResult.amount}
+
+                    {/* Persistent Email Status Message */}
+                    {emailStatus && (
+                        <p className={`text-sm mb-6 font-medium ${emailStatus.sent ? 'text-green-600' : 'text-red-600'}`}>
+                            {emailStatus.sent 
+                                ? 'A receipt has been sent to your email.' 
+                                : 'We could not send the receipt email. Please contact support.'}
                         </p>
-                        <p className="text-sm text-green-700">
-                          <strong>Transaction ID:</strong> {paymentResult.transaction_id}
-                        </p>
-                      </div>
                     )}
+
                     <button
                       onClick={closePaymentModal}
                       className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all duration-200"
