@@ -80,29 +80,49 @@ export async function POST(req) {
     });
 
     // Send Welcome Email
+    let welcomeEmailStatus = 'not_attempted';
     console.log('📧 Preparing to send organization welcome email to:', input.email);
     try {
-      const dashboardLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://changeworkscollective.org'}/organization/login`;
-      
-      console.log('📋 Welcome email details:', {
-        name: input.name,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        dashboardLink
-      });
+      const hasEmailConfig =
+        process.env.EMAIL_SERVER_HOST &&
+        process.env.EMAIL_SERVER_PORT &&
+        process.env.EMAIL_SERVER_USER &&
+        process.env.EMAIL_SERVER_PASSWORD &&
+        process.env.EMAIL_FROM;
 
-      await emailService.sendOrganizationWelcomeEmail({
-        organization: {
-          ...organization,
+      if (!hasEmailConfig) {
+        console.warn('⚠️ Email server not configured. Skipping welcome email.');
+        welcomeEmailStatus = 'skipped - email not configured';
+      } else {
+        const dashboardLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://changeworkscollective.org'}/organization/login`;
+        
+        console.log('📋 Welcome email details:', {
+          name: input.name,
           firstName: input.firstName,
           lastName: input.lastName,
-        },
-        dashboardLink
-      });
-      console.log('✅ Organization welcome email sent to:', input.email);
+          dashboardLink
+        });
+
+        const welcomeResult = await emailService.sendOrganizationWelcomeEmail({
+          organization: {
+            ...organization,
+            firstName: input.firstName,
+            lastName: input.lastName,
+          },
+          dashboardLink
+        });
+
+        if (welcomeResult.success) {
+          console.log('✅ Organization welcome email sent to:', input.email);
+          welcomeEmailStatus = 'sent';
+        } else {
+          console.error('❌ Failed to send organization welcome email (service error):', welcomeResult.error);
+          welcomeEmailStatus = `failed - ${welcomeResult.error}`;
+        }
+      }
     } catch (welcomeError) {
-      console.error('❌ Failed to send organization welcome email:', welcomeError);
-      // Don't fail the request
+      console.error('❌ Failed to send organization welcome email (exception):', welcomeError);
+      welcomeEmailStatus = `failed - ${welcomeError.message}`;
     }
 
     let ghlAccount = null;
@@ -458,6 +478,7 @@ export async function POST(req) {
       // Include onboarding link in response so user can access it even if email fails
       stripeOnboardingLink: stripeAccountLink?.url || null,
       emailSent: emailSentStatus || (stripeAccountLink ? 'skipped - not requested' : null),
+      welcomeEmailStatus: welcomeEmailStatus,
     }, { status: 201 });
 
   } catch (error) {
