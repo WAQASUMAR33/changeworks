@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { prisma } from "../../lib/prisma";
 import { hash } from "bcryptjs";
 import { z } from "zod";
@@ -9,9 +9,6 @@ import emailService from "../../lib/email-service";
 // Validation schema
 const organizationSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  title: z.string().optional(),
   email: z.string().email("Invalid email").max(100),
   phone: z.string().optional(),
   company: z.string().optional(),
@@ -22,10 +19,9 @@ const organizationSchema = z.object({
   country: z.string().optional(),
   postalCode: z.string().optional(),
   ghlId: z.string().optional(),
-  ein: z.string().min(10, "EIN must be at least 10 characters (including hyphen)"),
   imageUrl: z.string().optional(),
   logo: z.string().optional(), // Base64 encoded logo
-  logoUrl: z.string().min(1, "Organization logo is required"), // URL returned from PHP API
+  logoUrl: z.string().optional(), // URL returned from PHP API
   // Stripe Connect Account Information
   createStripeAccount: z.boolean().optional().default(false),
   // Organization Login Details (single password)
@@ -48,8 +44,8 @@ export async function POST(req) {
 
     // Validate organization password confirmation
     if (input.orgPassword !== input.confirmOrgPassword) {
-      return NextResponse.json({
-        error: "Organization passwords do not match"
+      return NextResponse.json({ 
+        error: "Organization passwords do not match" 
       }, { status: 400 });
     }
 
@@ -59,9 +55,6 @@ export async function POST(req) {
     const organization = await prisma.organization.create({
       data: {
         name: input.name,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        title: input.title,
         email: input.email,
         password: hashedOrgPassword, // Use orgPassword as main password
         phone: input.phone,
@@ -73,28 +66,10 @@ export async function POST(req) {
         country: input.country,
         postalCode: input.postalCode,
         ghlId: input.ghlId,
-        ein: input.ein,
         imageUrl: input.logoUrl || input.imageUrl, // Use logoUrl if available, fallback to imageUrl
         orgPassword: hashedOrgPassword, // Store same password in orgPassword field
       },
     });
-
-    // Send Welcome Email
-    try {
-      const dashboardLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://changeworkscollective.org'}/organization/login`;
-      await emailService.sendOrganizationWelcomeEmail({
-        organization: {
-          ...organization,
-          firstName: input.firstName,
-          lastName: input.lastName,
-        },
-        dashboardLink
-      });
-      console.log('✅ Organization welcome email sent to:', input.email);
-    } catch (welcomeError) {
-      console.error('❌ Failed to send organization welcome email:', welcomeError);
-      // Don't fail the request
-    }
 
     let ghlAccount = null;
     let ghlLocationId = null;
@@ -104,14 +79,14 @@ export async function POST(req) {
     try {
       // Check if we have a valid GHL Agency API key
       if (!process.env.GHL_AGENCY_API_KEY || process.env.GHL_AGENCY_API_KEY.length < 200) {
-        console.log('⚠️ GHL Agency API key not configured or too short. Skipping GHL account creation.');
+        console.log('âš ï¸ GHL Agency API key not configured or too short. Skipping GHL account creation.');
         console.log('To enable GHL integration, add a valid GHL_AGENCY_API_KEY (250+ characters) to your environment variables.');
         console.log('Current key appears to be a Location API key, which cannot create sub-accounts.');
         throw new Error('GHL Agency API key not configured');
       }
-
+      
       const ghlClient = new GHLClient(process.env.GHL_AGENCY_API_KEY);
-
+      
       const ghlData = {
         businessName: input.name, // Use organization name as business name
         firstName: input.name.split(' ')[0] || input.name,
@@ -134,10 +109,10 @@ export async function POST(req) {
       if (ghlResult.success) {
         ghlLocationId = ghlResult.locationId;
         ghlApiKey = ghlResult.data.apiKey; // Extract the sub-account API key
-
+        
         console.log('GHL Location ID:', ghlLocationId);
         console.log('GHL API Key:', ghlApiKey ? `${ghlApiKey.substring(0, 20)}...` : 'NOT FOUND');
-
+        
         // Save GHL account details to database
         ghlAccount = await prisma.gHLAccount.create({
           data: {
@@ -162,7 +137,7 @@ export async function POST(req) {
         // Update organization with GHL location ID and API key
         await prisma.organization.update({
           where: { id: organization.id },
-          data: {
+          data: { 
             ghlId: ghlLocationId,
             ghlApiKey: ghlApiKey
           }
@@ -176,11 +151,11 @@ export async function POST(req) {
           console.log('Using ChangeWorks Location ID:', process.env.CHANGEWORKS_LOCAION_ID);
           console.log('Using ChangeWorks API Key:', process.env.CHANGEWORKS_LOCATION_API_KEY ? `${process.env.CHANGEWORKS_LOCATION_API_KEY.substring(0, 20)}...` : 'NOT SET');
           console.log('Using Contact Create API URL:', process.env.GHL_CONTACT_CREATE_API_URL);
-
+          
           // Prepare contact data for the organization
           const contactData = {
-            firstName: input.firstName || input.name.split(' ')[0] || input.name,
-            lastName: input.lastName || input.name.split(' ').slice(1).join(' ') || 'Organization',
+            firstName: input.name.split(' ')[0] || input.name,
+            lastName: input.name.split(' ').slice(1).join(' ') || 'Organization',
             email: input.email,
             phone: input.phone || '',
             address: input.address || '',
@@ -223,14 +198,14 @@ export async function POST(req) {
           // If GHL client fails, try direct API call as fallback
           if (!contactResult.success) {
             console.log('GHL client failed, trying direct API call...');
-
+            
             try {
               const directApiUrl = process.env.GHL_CONTACT_CREATE_API_URL || 'https://rest.gohighlevel.com/v1/contacts/';
               const directApiKey = process.env.CHANGEWORKS_LOCATION_API_KEY; // Use ChangeWorks API key
-
+              
               console.log('Direct API URL:', directApiUrl);
               console.log('Using ChangeWorks API key:', directApiKey ? `${directApiKey.substring(0, 20)}...` : 'NOT SET');
-
+              
               const directResponse = await fetch(directApiUrl, {
                 method: 'POST',
                 headers: {
@@ -266,9 +241,9 @@ export async function POST(req) {
                   contactId: directData.id || directData.contactId,
                   data: directData
                 };
-                console.log('✅ GHL contact created successfully via direct API:', contactResult.contactId);
+                console.log('âœ… GHL contact created successfully via direct API:', contactResult.contactId);
               } else {
-                console.error('❌ Direct API contact creation failed:', directData);
+                console.error('âŒ Direct API contact creation failed:', directData);
                 contactResult = {
                   success: false,
                   error: directData.message || 'Direct API call failed',
@@ -277,7 +252,7 @@ export async function POST(req) {
                 };
               }
             } catch (directError) {
-              console.error('❌ Direct API contact creation error:', directError);
+              console.error('âŒ Direct API contact creation error:', directError);
               contactResult = {
                 success: false,
                 error: directError.message,
@@ -285,10 +260,10 @@ export async function POST(req) {
               };
             }
           } else {
-            console.log('✅ GHL contact created successfully via client:', contactResult.contactId);
+            console.log('âœ… GHL contact created successfully via client:', contactResult.contactId);
           }
         } catch (contactError) {
-          console.error('❌ GHL contact creation error:', contactError);
+          console.error('âŒ GHL contact creation error:', contactError);
           console.error('Contact error stack:', contactError.stack);
           // Don't fail the entire signup if contact creation fails
         }
@@ -304,39 +279,28 @@ export async function POST(req) {
     let stripeAccount = null;
     let stripeAccountLink = null;
     let emailSentStatus = null; // Track email sending status
-
+    
     if (input.createStripeAccount) {
       try {
         const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-
+        
         if (!stripeSecretKey) {
-          console.log('⚠️ Stripe not configured. Skipping Stripe Connect account creation.');
+          console.log('âš ï¸ Stripe not configured. Skipping Stripe Connect account creation.');
           console.log('To enable Stripe integration, add STRIPE_SECRET_KEY to your environment variables.');
         } else {
-          console.log('🔵 Creating Stripe Connect account for organization:', organization.id);
-
+          console.log('ðŸ”µ Creating Stripe Connect account for organization:', organization.id);
+          
           // Create Stripe Connect Express account using direct API
           const accountResult = await createStripeAccountDirect(organization.country || 'US');
-
+          
           if (!accountResult.success) {
-            console.error('❌ Failed to create Stripe Connect account:', accountResult.error);
+            console.error('âŒ Failed to create Stripe Connect account:', accountResult.error);
             console.error('Error details:', accountResult.details);
-
-            // Return error to client
-            return NextResponse.json({
-              message: "Organization registered, but Stripe account creation failed",
-              organization: {
-                ...organization,
-                ghlId: ghlLocationId,
-                stripeAccountId: null,
-              },
-              ghlAccount: ghlAccount,
-              warning: `Stripe API Error: ${accountResult.error}`,
-              stripeError: accountResult.error,
-            }, { status: 201 });
+            // Don't fail the entire signup if Stripe account creation fails
+            // Organization can still be created without Stripe Connect account
           } else {
             stripeAccount = accountResult.account;
-
+            
             // Update organization with Stripe Connect account ID
             await prisma.organization.update({
               where: { id: organization.id },
@@ -344,45 +308,45 @@ export async function POST(req) {
                 stripeAccountId: stripeAccount.id,
               }
             });
-
-            console.log('✅ Stripe Connect account created and stored successfully');
+            
+            console.log('âœ… Stripe Connect account created and stored successfully');
             console.log('  - Account ID:', stripeAccount.id);
-
+            
             // Generate onboarding link
             const refreshUrl = 'https://changeworkscollective.org/stripe/refresh';
             const returnUrl = 'https://changeworkscollective.org/stripe/success';
-
+            
             const linkResult = await createStripeAccountLinkDirect(
               stripeAccount.id,
               refreshUrl,
               returnUrl
             );
-
+            
             if (!linkResult.success) {
-              console.error('❌ Failed to create Stripe onboarding link:', linkResult.error);
+              console.error('âŒ Failed to create Stripe onboarding link:', linkResult.error);
               console.error('Error details:', linkResult.details);
               // Don't fail the entire signup if link creation fails
             } else {
               stripeAccountLink = linkResult.accountLink;
-              console.log('✅ Stripe onboarding link created successfully');
+              console.log('âœ… Stripe onboarding link created successfully');
               console.log('  - Onboarding URL:', stripeAccountLink.url);
-
+              
               // Send onboarding email to organization
               try {
                 // Check if email is configured before attempting to send
-                const hasEmailConfig =
-                  process.env.EMAIL_SERVER_HOST &&
-                  process.env.EMAIL_SERVER_PORT &&
-                  process.env.EMAIL_SERVER_USER &&
-                  process.env.EMAIL_SERVER_PASSWORD &&
+                const hasEmailConfig = 
+                  process.env.EMAIL_SERVER_HOST && 
+                  process.env.EMAIL_SERVER_PORT && 
+                  process.env.EMAIL_SERVER_USER && 
+                  process.env.EMAIL_SERVER_PASSWORD && 
                   process.env.EMAIL_FROM;
-
+                
                 if (!hasEmailConfig) {
-                  console.warn('⚠️ Email server not configured. Skipping email send.');
+                  console.warn('âš ï¸ Email server not configured. Skipping email send.');
                   console.warn('Missing email configuration. Please set: EMAIL_SERVER_HOST, EMAIL_SERVER_PORT, EMAIL_SERVER_USER, EMAIL_SERVER_PASSWORD, EMAIL_FROM');
                   emailSentStatus = 'skipped - email not configured';
                 } else {
-                  console.log('📧 Attempting to send Stripe onboarding email to:', organization.email);
+                  console.log('ðŸ“§ Attempting to send Stripe onboarding email to:', organization.email);
                   const emailResult = await emailService.sendStripeOnboardingEmail({
                     organization: {
                       name: organization.name,
@@ -390,19 +354,19 @@ export async function POST(req) {
                     },
                     onboardingUrl: stripeAccountLink.url
                   });
-
+                  
                   if (emailResult.success) {
-                    console.log('✅ Stripe onboarding email sent successfully to:', organization.email);
+                    console.log('âœ… Stripe onboarding email sent successfully to:', organization.email);
                     console.log('   Message ID:', emailResult.messageId);
                     emailSentStatus = 'sent';
                   } else {
-                    console.error('❌ Failed to send Stripe onboarding email:', emailResult.error);
+                    console.error('âŒ Failed to send Stripe onboarding email:', emailResult.error);
                     console.error('   Email error details:', JSON.stringify(emailResult, null, 2));
                     emailSentStatus = `failed - ${emailResult.error}`;
                   }
                 }
               } catch (emailError) {
-                console.error('❌ Error sending Stripe onboarding email:', emailError);
+                console.error('âŒ Error sending Stripe onboarding email:', emailError);
                 console.error('   Error stack:', emailError.stack);
                 emailSentStatus = `failed - ${emailError.message}`;
                 // Don't fail the entire signup if email fails
@@ -411,22 +375,10 @@ export async function POST(req) {
           }
         }
       } catch (connectError) {
-        console.error('❌ Stripe Connect account creation error:', connectError);
+        console.error('âŒ Stripe Connect account creation error:', connectError);
         console.error('Stripe Connect error details:', connectError.message);
-
-        // Return the error to the client so they know why Stripe is failing
-        return NextResponse.json({
-          message: "Organization registered, but Stripe account creation failed",
-          organization: {
-            ...organization,
-            ghlId: ghlLocationId,
-            stripeAccountId: null,
-          },
-          ghlAccount: ghlAccount,
-          warning: `Stripe account creation failed: ${connectError.message}. Please check your Stripe configuration.`,
-          stripeError: connectError.message,
-          // Still return success status as organization WAS created
-        }, { status: 201 });
+        // Don't fail the entire signup if Stripe Connect account creation fails
+        // Organization can still be created without Stripe Connect account
       }
     }
 
