@@ -1009,7 +1009,7 @@ ${organization.email ? `Email: ${organization.email}` : ''}
     `;
 
     const text = `
-Thanks for Your One-Time Donation to ${organization.name}
+Thanks for Your One-Time Donation
 
 Dear ${donor.name},
 
