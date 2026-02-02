@@ -176,7 +176,7 @@ export default function MultiStepPaymentForm({
             type="number"
             value={donationAmount}
             onChange={handleAmountChange}
-            placeholder="0.00"
+            placeholder="Add custom Donation Amount"
             className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-lg text-black ${
               amountError ? 'border-red-300' : 'border-gray-300'
             }`}

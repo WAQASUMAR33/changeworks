@@ -4,8 +4,8 @@ export function middleware(request) {
   console.log('🔍 Middleware executing for:', request.nextUrl.pathname);
   
   // Only apply to admin routes (except login)
-  if (request.nextUrl.pathname.startsWith('/admin') && 
-      !request.nextUrl.pathname.startsWith('/admin/login')) {
+  if (request.nextUrl.pathname.startsWith('/changeworksadmin') && 
+      !request.nextUrl.pathname.startsWith('/changeworksadmin/login')) {
     
     console.log('🔍 Admin route detected, checking authentication...');
     
@@ -21,7 +21,7 @@ export function middleware(request) {
     // Only redirect server-side requests without tokens
     if (!adminToken && request.headers.get('accept')?.includes('text/html')) {
       console.log('❌ No admin token found for server-side request, redirecting to login');
-      return NextResponse.redirect(new URL('/admin/login', request.url));
+      return NextResponse.redirect(new URL('/changeworksadmin/login', request.url));
     }
     
     console.log('✅ Admin token found or client-side navigation, allowing access');
@@ -32,7 +32,7 @@ export function middleware(request) {
 
 export const config = {
   matcher: [
-    '/admin',
-    '/admin/((?!login).)*'
+    '/changeworksadmin',
+    '/changeworksadmin/((?!login).)*'
   ]
 };

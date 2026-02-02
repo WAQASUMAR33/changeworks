@@ -44,7 +44,8 @@ const buildOrgLogoUrl = (imageUrl) => {
   const baseUrl = process.env.NEXT_PUBLIC_IMAGE_BACK_URL;
   if (!baseUrl) {
     console.warn('NEXT_PUBLIC_IMAGE_BACK_URL is not set. Cannot build image URL.');
-    return imageUrl; // Fallback to original imageUrl if base URL is not configured
+    // Ensure relative paths start with / to satisfy next/image
+    return imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
   }
   
   // Ensure the base URL ends with a slash and the image URL doesn't start with one
@@ -198,7 +199,7 @@ export default function OrganizationManagementPage() {
         imageUrl: org?.imageUrl || '',
         status: org?.status !== undefined ? org.status : true,
       });
-      setImagePreview(org?.imageUrl || '');
+      setImagePreview(buildOrgLogoUrl(org?.imageUrl) || '');
     } else if (mode === 'add') {
       setFormData({
         name: '',
@@ -296,20 +297,11 @@ export default function OrganizationManagementPage() {
           body: JSON.stringify(payload),
         });
       } else if (modalMode === 'edit' && selectedOrganization) {
+        // When editing, only update the GHL ID as requested
         const payload = {
-          name,
-          email,
-          phone: phone || null,
-          address: address || null,
-          website: website || null,
-          city: city || null,
-          state: state || null,
-          country: country || null,
-          postalCode: postalCode || null,
           ghlId: ghlId || null,
-          imageUrl: imageUrl || selectedOrganization.imageUrl || null,
-          status,
         };
+        
         response = await fetch(`/api/organization/${selectedOrganization.id}`, {
           method: 'PUT',
           headers: {
@@ -656,7 +648,7 @@ export default function OrganizationManagementPage() {
                     fullWidth
                     margin="normal"
                     required
-                    disabled={modalMode === 'view'}
+                    disabled={modalMode === 'view' || modalMode === 'edit'}
                     sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
@@ -668,7 +660,7 @@ export default function OrganizationManagementPage() {
                     fullWidth
                     margin="normal"
                     required
-                    disabled={modalMode === 'view'}
+                    disabled={modalMode === 'view' || modalMode === 'edit'}
                     sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   {modalMode === 'add' && (
@@ -691,7 +683,7 @@ export default function OrganizationManagementPage() {
                     onChange={handleInputChange}
                     fullWidth
                     margin="normal"
-                    disabled={modalMode === 'view'}
+                    disabled={modalMode === 'view' || modalMode === 'edit'}
                     sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
@@ -701,7 +693,7 @@ export default function OrganizationManagementPage() {
                     onChange={handleInputChange}
                     fullWidth
                     margin="normal"
-                    disabled={modalMode === 'view'}
+                    disabled={modalMode === 'view' || modalMode === 'edit'}
                     sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
@@ -713,7 +705,7 @@ export default function OrganizationManagementPage() {
                     margin="normal"
                     multiline
                     rows={2}
-                    disabled={modalMode === 'view'}
+                    disabled={modalMode === 'view' || modalMode === 'edit'}
                     sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
@@ -723,7 +715,7 @@ export default function OrganizationManagementPage() {
                     onChange={handleInputChange}
                     fullWidth
                     margin="normal"
-                    disabled={modalMode === 'view'}
+                    disabled={modalMode === 'view' || modalMode === 'edit'}
                     sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
@@ -733,7 +725,7 @@ export default function OrganizationManagementPage() {
                     onChange={handleInputChange}
                     fullWidth
                     margin="normal"
-                    disabled={modalMode === 'view'}
+                    disabled={modalMode === 'view' || modalMode === 'edit'}
                     sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
@@ -743,7 +735,7 @@ export default function OrganizationManagementPage() {
                     onChange={handleInputChange}
                     fullWidth
                     margin="normal"
-                    disabled={modalMode === 'view'}
+                    disabled={modalMode === 'view' || modalMode === 'edit'}
                     sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
@@ -753,7 +745,7 @@ export default function OrganizationManagementPage() {
                     onChange={handleInputChange}
                     fullWidth
                     margin="normal"
-                    disabled={modalMode === 'view'}
+                    disabled={modalMode === 'view' || modalMode === 'edit'}
                     sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
                   <TextField
@@ -766,7 +758,7 @@ export default function OrganizationManagementPage() {
                     disabled={modalMode === 'view'}
                     sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
                   />
-                  {modalMode !== 'view' && (
+                  {modalMode !== 'view' && modalMode !== 'edit' && (
                     <TextField
                       type="file"
                       label="Organization Image"
@@ -798,7 +790,7 @@ export default function OrganizationManagementPage() {
                         checked={formData.status}
                         onChange={handleInputChange}
                         color="success"
-                        disabled={modalMode === 'view'}
+                        disabled={modalMode === 'view' || modalMode === 'edit'}
                       />
                     }
                     label="Active"

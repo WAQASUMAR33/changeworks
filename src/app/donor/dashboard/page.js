@@ -418,20 +418,19 @@ export default function DonorDashboard() {
                 onClick={handleStripePayment}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="group relative overflow-hidden bg-gradient-to-br from-green-700 via-green-800 to-green-900 hover:from-green-800 hover:via-green-900 hover:to-green-950 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+                className="group relative overflow-hidden bg-gradient-to-br from-green-700 via-green-800 to-green-900 hover:from-green-800 hover:via-green-900 hover:to-green-950 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left h-full flex flex-col justify-between"
               >
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <div className="relative z-10 flex flex-col h-full w-full">
+                  <div className="flex flex-col items-start gap-4 flex-1 w-full">
+                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
                       <DollarSign className="w-6 h-6 text-white" />
                     </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+                    <div className="w-full">
+                      <h4 className="text-lg font-bold text-white leading-tight">Make a One-Time Donation</h4>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <h4 className="text-lg font-bold text-white">Donate Now</h4>
-                    <p className="text-sm text-green-100">Make a One Time Donation</p>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute top-0 right-0">
+                    <div className="w-3 h-3 bg-white/30 rounded-full"></div>
                   </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
@@ -439,43 +438,41 @@ export default function DonorDashboard() {
 
               {/* Recurring Donations */}
               {subscriptionStatus.loading ? (
-                <div className="bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 rounded-2xl p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-gray-400 rounded-xl flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 text-white animate-spin" />
-                    </div>
+                <div className="bg-gradient-to-br from-gray-100 to-gray-200 border-0 rounded-2xl p-6 shadow-sm flex flex-col items-start gap-4 h-full">
+                  <div className="w-12 h-12 bg-gray-400 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Loader2 className="w-6 h-6 text-white animate-spin" />
                   </div>
-                  <div className="space-y-2">
-                    <h4 className="text-lg font-bold text-gray-700">Checking Status...</h4>
+                  <div className="flex-1 w-full">
+                    <h4 className="text-lg font-bold text-gray-700 leading-tight">Checking Status...</h4>
                     <p className="text-sm text-gray-500">Loading subscription status</p>
                   </div>
                 </div>
               ) : subscriptionStatus.hasActiveSubscription ? (
                 <motion.div
                   whileHover={{ scale: 1.05, y: -2 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-green-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-green-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 h-full flex flex-col justify-between"
                 >
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="relative z-10 flex flex-col h-full w-full">
+                    <div className="flex flex-col items-start gap-4 mb-4 flex-1 w-full">
+                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
                         <CheckCircle className="w-6 h-6 text-white" />
                       </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="flex-1 w-full">
+                        <h4 className="text-lg font-bold text-white leading-tight">Start and Manage your Monthly Donations</h4>
+                        <p className="text-sm text-green-100 mt-1">
+                          {subscriptionStatus.subscriptions.length > 0
+                            ? `${subscriptionStatus.subscriptions.length} active subscription${subscriptionStatus.subscriptions.length > 1 ? 's' : ''}`
+                            : 'Recurring donations active'
+                          }
+                        </p>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute top-0 right-0">
                         <div className="w-3 h-3 bg-white/30 rounded-full"></div>
                       </div>
                     </div>
-                    <div className="space-y-2 mb-4">
-                      <h4 className="text-lg font-bold text-white">Start and Manage your Monthly Donations</h4>
-                      <p className="text-sm text-green-100">
-                        {subscriptionStatus.subscriptions.length > 0
-                          ? `${subscriptionStatus.subscriptions.length} active subscription${subscriptionStatus.subscriptions.length > 1 ? 's' : ''}`
-                          : 'Recurring donations active'
-                        }
-                      </p>
-                    </div>
                     <button
                       onClick={() => window.location.href = '/donor/dashboard/subscriptions'}
-                      className="w-full bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors duration-200 text-sm font-semibold"
+                      className="w-full bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors duration-200 text-sm font-semibold mt-auto"
                     >
                       Manage
                     </button>
@@ -487,20 +484,20 @@ export default function DonorDashboard() {
                   onClick={handleStripeSubscription}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-green-800 hover:from-green-700 hover:via-green-800 hover:to-green-900 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-green-800 hover:from-green-700 hover:via-green-800 hover:to-green-900 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left h-full flex flex-col justify-between"
                 >
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="relative z-10 flex flex-col h-full w-full">
+                    <div className="flex flex-col items-start gap-4 flex-1 w-full">
+                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
                         <TrendingUp className="w-6 h-6 text-white" />
                       </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="flex-1 w-full">
+                        <h4 className="text-lg font-bold text-white leading-tight">Start and Manage your Monthly Donations</h4>
+                        <p className="text-sm text-green-100 mt-1">Set Up Recurring Donations</p>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute top-0 right-0">
                         <div className="w-3 h-3 bg-white/30 rounded-full"></div>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className="text-lg font-bold text-white">Start and Manage your Monthly Donations</h4>
-                      <p className="text-sm text-green-100">Set Up Recurring Donations</p>
                     </div>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
@@ -509,43 +506,41 @@ export default function DonorDashboard() {
 
               {/* Start Change Donation Now */}
               {plaidConnectionStatus.loading ? (
-                <div className="bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 rounded-2xl p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-gray-400 rounded-xl flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 text-white animate-spin" />
-                    </div>
+                <div className="bg-gradient-to-br from-gray-100 to-gray-200 border-0 rounded-2xl p-6 shadow-sm flex flex-col items-start gap-4 h-full">
+                  <div className="w-12 h-12 bg-gray-400 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Loader2 className="w-6 h-6 text-white animate-spin" />
                   </div>
-                  <div className="space-y-2">
-                    <h4 className="text-lg font-bold text-gray-700">Checking Status...</h4>
+                  <div className="flex-1 w-full">
+                    <h4 className="text-lg font-bold text-gray-700 leading-tight">Checking Status...</h4>
                     <p className="text-sm text-gray-500">Loading Plaid connection</p>
                   </div>
                 </div>
               ) : plaidConnectionStatus.isConnected ? (
                 <motion.div
                   whileHover={{ scale: 1.05, y: -2 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-green-400 via-green-500 to-green-600 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-400 via-green-500 to-green-600 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 h-full flex flex-col justify-between"
                 >
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="relative z-10 flex flex-col h-full w-full">
+                    <div className="flex flex-col items-start gap-4 mb-4 flex-1 w-full">
+                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
                         <CheckCircle className="w-6 h-6 text-white" />
                       </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="flex-1 w-full">
+                        <h4 className="text-lg font-bold text-white leading-tight">Join Our Round-Up Program</h4>
+                        <p className="text-sm text-green-100 mt-1">
+                          {plaidConnectionStatus.connections.length > 0
+                            ? `Connected to ${plaidConnectionStatus.connections[0].institution_name || 'Bank'}`
+                            : 'Bank account connected'
+                          }
+                        </p>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute top-0 right-0">
                         <div className="w-3 h-3 bg-white/30 rounded-full"></div>
                       </div>
                     </div>
-                    <div className="space-y-2 mb-4">
-                      <h4 className="text-lg font-bold text-white">Join Our Round-Up Program </h4>
-                      <p className="text-sm text-green-100">
-                        {plaidConnectionStatus.connections.length > 0
-                          ? `Connected to ${plaidConnectionStatus.connections[0].institution_name || 'Bank'}`
-                          : 'Bank account connected'
-                        }
-                      </p>
-                    </div>
                     <button
                       onClick={() => setShowPlaidDisconnectModal(true)}
-                      className="w-full bg-red-500/80 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-red-600/80 transition-colors duration-200 text-sm font-semibold"
+                      className="w-full bg-red-500/80 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-red-600/80 transition-colors duration-200 text-sm font-semibold mt-auto"
                     >
                       Cancel
                     </button>
@@ -557,20 +552,20 @@ export default function DonorDashboard() {
                   onClick={handlePlaidIntegration}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-green-400 via-green-500 to-green-600 hover:from-green-500 hover:via-green-600 hover:to-green-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-400 via-green-500 to-green-600 hover:from-green-500 hover:via-green-600 hover:to-green-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left h-full flex flex-col justify-between"
                 >
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="relative z-10 flex flex-col h-full w-full">
+                    <div className="flex flex-col items-start gap-4 flex-1 w-full">
+                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
                         <Target className="w-6 h-6 text-white" />
                       </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="flex-1 w-full">
+                        <h4 className="text-lg font-bold text-white leading-tight">Join Our Round-Up Program</h4>
+                        <p className="text-sm text-green-100 mt-1">Connect your bank account</p>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute top-0 right-0">
                         <div className="w-3 h-3 bg-white/30 rounded-full"></div>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className="text-lg font-bold text-white">Join Our Round-Up Program</h4>
-                      <p className="text-sm text-green-100">Connect your bank account</p>
                     </div>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
@@ -633,7 +628,7 @@ export default function DonorDashboard() {
                       <CreditCard className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-gray-800">Donate Now</h3>
+                      <h3 className="text-xl font-bold text-gray-800">Make a One-Time Donation</h3>
                       <p className="text-sm text-gray-600">Secure payment with Stripe</p>
                     </div>
                   </div>

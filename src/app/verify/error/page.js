@@ -7,6 +7,7 @@ const reasonMessages = {
   invalid_or_expired: 'This verification link is invalid or has already been used.',
   expired: 'This verification link has expired. Please request a new one.',
   donor_not_found: 'We could not find your account. Please contact support.',
+  user_not_found: 'We could not find your account. Please contact support.',
   server_error: 'Something went wrong on our end. Please try again later.'
 };
 
@@ -27,7 +28,7 @@ export default function VerifyErrorPage() {
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <a
-              href="/admin/login"
+              href="/changeworksadmin/login"
               className="inline-flex items-center px-6 py-3 bg-gray-800 hover:bg-black text-white font-medium rounded-lg shadow-sm transition"
             >
               Go to Login

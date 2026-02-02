@@ -43,7 +43,7 @@ export default function Header() {
         console.log('🔍 Logout button clicked');
         clearAdminAuth();
         console.log('🔍 Admin auth cleared, redirecting to login');
-        router.push('/admin/secure-portal');
+        router.push('/changeworksadmin/secure-portal');
     };
 
 

@@ -58,7 +58,7 @@ export default function SecureAdminLoginPage() {
       try {
         const userData = JSON.parse(adminUser);
         if (userData.role === 'SUPERADMIN' || userData.role === 'ADMIN' || userData.role === 'MANAGER') {
-          router.push('/admin');
+          router.push('/changeworksadmin');
         }
       } catch (error) {
         console.error('Error parsing user data:', error);
@@ -132,7 +132,7 @@ export default function SecureAdminLoginPage() {
         localStorage.setItem('adminToken', data.token);
         localStorage.setItem('adminUser', JSON.stringify(data.user));
         localStorage.setItem('userRole', data.user.role);
-        router.push('/admin');
+        router.push('/changeworksadmin');
       } else {
         setErrorMsg('Access denied. This portal is for administrators only.');
         // Clear any stored credentials
@@ -172,7 +172,7 @@ export default function SecureAdminLoginPage() {
         localStorage.setItem('adminToken', data.token);
         localStorage.setItem('adminUser', JSON.stringify(data.user));
         localStorage.setItem('userRole', data.user.role);
-        router.push('/admin');
+        router.push('/changeworksadmin');
       } else {
         throw new Error('Access denied. This portal is for administrators only.');
       }

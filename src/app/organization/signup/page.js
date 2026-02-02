@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿'use client';
+﻿﻿﻿﻿﻿'use client';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -466,7 +466,7 @@ export default function OrganizationSignupPage() {
                 <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   name="website"
-                  type="url"
+                  type="text"
                   placeholder="https://your-website.com"
                   value={form.website}
                   onChange={handleChange}

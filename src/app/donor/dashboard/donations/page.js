@@ -345,7 +345,7 @@ export default function DonorDonationsPage() {
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Organization.</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Amount.</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Type.</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Method.</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date.</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status.</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions.</th>

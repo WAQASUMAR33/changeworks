@@ -273,104 +273,124 @@ Unsubscribe
     });
   }
 
-  // Send verification email to donor (formatted as One-Time Donation Receipt)
-  async sendVerificationEmail({ donor, verificationToken, verificationLink, organization, amount, campaignName, transactionId, paymentMethod, impactDescription, donationDate }) {
-    const orgName = organization?.name || 'ChangeWorks Fund';
-    // Subject as requested
-    const subject = `Thanks for Your One-Time Donation to ${orgName}`;
+  // Send admin verification email
+  async sendAdminVerificationEmail({ email, name, verificationLink }) {
+    const subject = 'Verify your ChangeWorks Admin Email';
     
-    // Default values for missing donation details (since this might be called from signup without donation info)
-    const safeAmount = amount || 'X';
-    const safeCampaign = campaignName || 'General Campaign';
-    const safeTransactionId = transactionId || 'N/A';
-    const safeDate = donationDate || new Date().toLocaleDateString();
-    const safeTime = new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit' });
-    const safePaymentMethod = paymentMethod || 'Card ending in XXXX';
-    const directorName = (organization?.firstName && organization?.lastName) 
-      ? `${organization.firstName} ${organization.lastName}` 
-      : 'Director';
-
     const content = `
-      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Dear ${donor.name},</p>
+      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello ${name || 'Admin'},</p>
       
-      <p>Thank you for your generous donation to ${orgName}. Your support helps ensure we can continue showing up for people when help is needed.</p>
-      
-      <p>Your contribution strengthens our ability to provide timely assistance, respond to changing needs, and operate with care and consistency. Support like yours allows us to focus on what matters most: putting resources to work where they can do the most good.</p>
-      
-      <div class="highlight-box">
-        <h3 style="color: #302E56; margin-top: 0; border-bottom: 1px solid #dee2e6; padding-bottom: 10px;">Your donation details</h3>
-        <ul style="list-style: none; padding: 0;">
-          <li style="margin-bottom: 8px;"><strong>Organization:</strong> ${orgName}</li>
-          <li style="margin-bottom: 8px;"><strong>Campaign:</strong> ${safeCampaign}</li>
-          <li style="margin-bottom: 8px;"><strong>Donor:</strong> ${donor.name}</li>
-          <li style="margin-bottom: 8px;"><strong>Amount:</strong> $${safeAmount}</li>
-          ${impactDescription ? `<li style="margin-bottom: 8px;"><strong>Impact:</strong> ${impactDescription}</li>` : ''}
-          <li style="margin-bottom: 8px;"><strong>Period:</strong> ${safeDate}</li>
-          <li style="margin-bottom: 8px;"><strong>Receipt #:</strong> ${safeTransactionId}</li>
-          <li style="margin-bottom: 8px;"><strong>Date:</strong> ${safeDate} at ${safeTime} EST</li>
-          <li style="margin-bottom: 8px;"><strong>Payment method:</strong> ${safePaymentMethod}</li>
-        </ul>
-      </div>
-      
-      <p>You can access your donor account at any time to update your contribution amount, change your payment method, or resume donations. Step-by-step instructions are available through our trusted donation partner, ChangeWorks.</p>
+      <p>Welcome to ChangeWorks! To complete your admin account setup, please verify your email address by clicking the button below.</p>
       
       <div style="text-align: center; margin: 25px 0;">
-        <a href="${verificationLink}" class="button">CLICK HERE TO ACCESS YOUR DONOR DASHBOARD</a>
+        <a href="${verificationLink}" class="button">Verify Email Address</a>
       </div>
       
-      <p>At ${orgName}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We’re grateful for your trust and would be glad to keep you informed about the impact of your giving.</p>
-      
-      <p>${orgName} is a registered 501(c)(3) nonprofit organization in the United States (EIN: 99-XXXXXXX). Your donation may be tax-deductible; please consult a tax professional regarding your specific situation.</p>
+      <p>If you did not create an account, you can safely ignore this email.</p>
       
       <div style="margin-top: 30px; font-style: italic; color: #495057;">
-        <p>With sincere gratitude,</p>
-        <p><strong>${directorName}</strong><br>
-        ChangeWorks<br>
-        Your trusted platform partner for charitable giving</p>
+        <p>Best regards,<br>ChangeWorks Team</p>
       </div>
     `;
 
-    // Pass organization to generateEmailHtml to show Org Logo and Name in the branding header/footer
-    const html = this.generateEmailHtml(content, organization, subject);
+    // No organization specific branding for super/admin usually, but we can pass null or a default context
+    const html = this.generateEmailHtml(content, null, subject);
+    
+    const text = `
+Verify your ChangeWorks Admin Email
+
+Hello ${name || 'Admin'},
+
+Welcome to ChangeWorks! To complete your admin account setup, please verify your email address by clicking the link below:
+
+${verificationLink}
+
+If you did not create an account, you can safely ignore this email.
+
+Best regards,
+ChangeWorks Team
+    `;
+
+    return await this.sendEmail({
+      to: email,
+      subject: subject,
+      html: html,
+      text: text
+    });
+  }
+
+  // Send verification email to donor
+  async sendVerificationEmail({ donor, verificationToken, verificationLink }) {
+    const orgName = 'ChangeWorks';
+    const subject = `Welcome to ${orgName}'s Donation Community`;
+    
+    const content = `
+      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello!</p>
+      
+      <p>Thank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.</p>
+      
+      <p>That’s why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:</p>
+      
+      <ul>
+        <li>See your monthly donation totals whenever you’d like</li>
+        <li>Adjust or pause your contributions if your needs change</li>
+        <li>Download your donation records for easy reference or tax time</li>
+      </ul>
+      
+      <p>You can visit your dashboard anytime once your verify your email using the link below:</p>
+      
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="${verificationLink}" class="button">VERIFY YOUR EMAIL HERE</a>
+      </div>
+      
+      <p>If you ever have a question or just want to reach out, we’d love to hear from you. We’re grateful to have you with us.</p>
+      
+      <div style="margin-top: 30px; font-style: italic; color: #495057;">
+        <p>Warm regards,<br>The ${orgName} Team</p>
+      </div>
+      
+      <p style="margin-top: 20px; font-size: 14px;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
+    `;
+
+    // Use ChangeWorks branding as requested (ChangeWorks instead of organization name)
+    const changeWorksOrg = {
+      name: 'ChangeWorks',
+      imageUrl: '/imgs/changeworks.png'
+    };
+
+    const html = this.generateEmailHtml(content, changeWorksOrg, subject);
 
     const text = `
-Thanks for Your One-Time Donation to ${orgName}
+Welcome to ${orgName}'s Donation Community
 
-Dear ${donor.name},
+Hello!
 
-Thank you for your generous donation to ${orgName}. Your support helps ensure we can continue showing up for people when help is needed.
+Thank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.
 
-Your contribution strengthens our ability to provide timely assistance, respond to changing needs, and operate with care and consistency. Support like yours allows us to focus on what matters most: putting resources to work where they can do the most good.
+That’s why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:
+● See your monthly donation totals whenever you’d like
+● Adjust or pause your contributions if your needs change
+● Download your donation records for easy reference or tax time
 
-Your donation details
-● Organization: ${orgName}
-● Campaign: ${safeCampaign}
-● Donor: ${donor.name}
-● Amount: $${safeAmount}
-${impactDescription ? `● Impact: ${impactDescription}` : ''}
-● Period: ${safeDate}
-● Receipt #: ${safeTransactionId}
-● Date: ${safeDate} at ${safeTime} EST
-● Payment method: ${safePaymentMethod}
+You can visit your dashboard anytime once your verify your email using the link below:
 
-You can access your donor account at any time to update your contribution amount, change your payment method, or resume donations. Step-by-step instructions are available through our trusted donation partner, ChangeWorks.
+VERIFY YOUR EMAIL HERE: ${verificationLink}
 
-CLICK HERE TO ACCESS YOUR DONOR DASHBOARD: ${verificationLink}
+If you ever have a question or just want to reach out, we’d love to hear from you. We’re grateful to have you with us.
 
-At ${orgName}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We’re grateful for your trust and would be glad to keep you informed about the impact of your giving.
+Warm regards,
+The ${orgName} Team
 
-${orgName} is a registered 501(c)(3) nonprofit organization in the United States (EIN: 99-XXXXXXX). Your donation may be tax-deductible; please consult a tax professional regarding your specific situation.
+P.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.
 
-With sincere gratitude,
-${directorName}
-ChangeWorks
+ChangeWorks Fund
 Your trusted platform partner for charitable giving
-
 ________________________________________
 Contact Information
 Email: support@changeworksfund.org
 5830 E 2nd St. STE 7000 #29896
 Casper, WY 82609
+
 Unsubscribe
     `;
 

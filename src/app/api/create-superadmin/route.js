@@ -105,7 +105,7 @@ export async function POST(request) {
       credentials: {
         email: email.toLowerCase().trim(),
         password: '****** (hidden for security)',
-        loginUrl: '/admin/login'
+        loginUrl: '/changeworksadmin/login'
       }
     });
 

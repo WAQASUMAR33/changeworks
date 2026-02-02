@@ -33,7 +33,12 @@ export async function POST(request) {
         });
     }
 
-    const donor = donorRaw ? { ...donorRaw, organization } : null;
+    const donor = donorRaw ? { 
+      ...donorRaw, 
+      organization,
+      twoFactorEnabled: donorRaw.two_factor_enabled ? Boolean(donorRaw.two_factor_enabled) : false,
+      twoFactorSecret: donorRaw.two_factor_secret
+    } : null;
 
     if (!donor) {
       return NextResponse.json({ 

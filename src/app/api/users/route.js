@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../lib/prisma"; // Named import
 import { hash } from "bcryptjs";
 import { z } from "zod";
-import nodemailer from "nodemailer";
+import emailService from "../../lib/email-service";
+import crypto from "crypto";
 
 const signupSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -51,22 +52,12 @@ export async function POST(request) {
     });
 
     // Send verification email
-    const transport = nodemailer.createTransport({
-      host: process.env.EMAIL_SERVER_HOST,
-      port: Number(process.env.EMAIL_SERVER_PORT),
-      auth: {
-        user: process.env.EMAIL_SERVER_USER,
-        pass: process.env.EMAIL_SERVER_PASSWORD,
-      },
-    });
-
     const verificationUrl = `${process.env.NEXTAUTH_URL}/api/auth/verify-email?token=${token}`;
-    await transport.sendMail({
-      to: email,
-      from: process.env.EMAIL_FROM,
-      subject: "Verify Your Email",
-      text: `Please verify your email by clicking: ${verificationUrl}`,
-      html: `<p>Please verify your email by clicking: <a href="${verificationUrl}">${verificationUrl}</a></p>`,
+    
+    await emailService.sendAdminVerificationEmail({
+      email,
+      name,
+      verificationLink: verificationUrl
     });
 
     return NextResponse.json({ message: "User created. Please verify your email." }, { status: 201 });

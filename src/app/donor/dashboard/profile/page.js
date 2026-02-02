@@ -36,7 +36,8 @@ export default function DonorProfilePage() {
     confirm: false
   });
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [errors, setErrors] = useState({});
@@ -161,7 +162,7 @@ export default function DonorProfilePage() {
       return;
     }
 
-    setSaving(true);
+    setSavingProfile(true);
     setError('');
     setMessage('');
 
@@ -190,7 +191,7 @@ export default function DonorProfilePage() {
       console.error('Error updating profile:', err);
       setError('Failed to update profile');
     } finally {
-      setSaving(false);
+      setSavingProfile(false);
     }
   };
 
@@ -201,7 +202,7 @@ export default function DonorProfilePage() {
       return;
     }
 
-    setSaving(true);
+    setSavingPassword(true);
     setError('');
     setMessage('');
 
@@ -232,7 +233,7 @@ export default function DonorProfilePage() {
       console.error('Error changing password:', err);
       setError('Failed to change password.');
     } finally {
-      setSaving(false);
+      setSavingPassword(false);
     }
   };
 
@@ -332,7 +333,7 @@ export default function DonorProfilePage() {
                       ? 'border-red-300 bg-red-50' 
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                   }`}
-                  disabled={saving}
+                  disabled={savingProfile}
                 />
               </div>
               <AnimatePresence>
@@ -367,7 +368,7 @@ export default function DonorProfilePage() {
                       ? 'border-red-300 bg-red-50' 
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                   }`}
-                  disabled={saving}
+                  disabled={savingProfile}
                 />
               </div>
               <AnimatePresence>
@@ -398,7 +399,7 @@ export default function DonorProfilePage() {
                   value={formData.phone}
                   onChange={handleInputChange}
                   className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
-                  disabled={saving}
+                  disabled={savingProfile}
                 />
               </div>
             </div>
@@ -417,7 +418,7 @@ export default function DonorProfilePage() {
                   value={formData.postal_code}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
-                  disabled={saving}
+                  disabled={savingProfile}
                 />
               </div>
               <div>
@@ -431,17 +432,17 @@ export default function DonorProfilePage() {
                   value={formData.country}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
-                  disabled={saving}
+                  disabled={savingProfile}
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              disabled={saving}
+              disabled={savingProfile}
               className="w-full bg-[#0E0061] text-white py-3 px-6 rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-[#0E0061]/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
             >
-              {saving ? (
+              {savingProfile ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Saving...</span>
@@ -477,13 +478,13 @@ export default function DonorProfilePage() {
                       ? 'border-red-300 bg-red-50' 
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                   }`}
-                  disabled={saving}
+                  disabled={savingPassword}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                  disabled={saving}
+                  disabled={savingPassword}
                 >
                   {showPasswords.current ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -519,13 +520,13 @@ export default function DonorProfilePage() {
                       ? 'border-red-300 bg-red-50' 
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                   }`}
-                  disabled={saving}
+                  disabled={savingPassword}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                  disabled={saving}
+                  disabled={savingPassword}
                 >
                   {showPasswords.new ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -561,13 +562,13 @@ export default function DonorProfilePage() {
                       ? 'border-red-300 bg-red-50' 
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                   }`}
-                  disabled={saving}
+                  disabled={savingPassword}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                  disabled={saving}
+                  disabled={savingPassword}
                 >
                   {showPasswords.confirm ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -589,10 +590,10 @@ export default function DonorProfilePage() {
 
             <button
               type="submit"
-              disabled={saving}
+              disabled={savingPassword}
               className="w-full bg-[#0E0061] text-white py-3 px-6 rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-[#0E0061]/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
             >
-              {saving ? (
+              {savingPassword ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Updating...</span>

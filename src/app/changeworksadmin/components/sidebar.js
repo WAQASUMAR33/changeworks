@@ -74,7 +74,7 @@ const Sidebar = () => {
     document.cookie = 'adminToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict';
     
     console.log('🔍 Admin auth cleared from sidebar, redirecting to login');
-    router.push('/admin/secure-portal');
+    router.push('/changeworksadmin/secure-portal');
   };
 
   const togglePin = () => {
@@ -88,52 +88,46 @@ const Sidebar = () => {
     { 
       name: 'Dashboard', 
       icon: LayoutDashboard, 
-      path: '/admin',
+      path: '/changeworksadmin',
     },
     {
       name: 'Donors',
       icon: Gift,
-      path: '/admin/donor-accounts',
+      path: '/changeworksadmin/donor-accounts',
       subItems: [
-        { name: 'List Donors', path: '/admin/donor-accounts' },
-        { name: 'Transactions', path: '/admin/transactions_page' },
+        { name: 'List Donors', path: '/changeworksadmin/donor-accounts' },
+        { name: 'Transactions', path: '/changeworksadmin/transactions_page' },
       ],
     },
     {
       name: 'Organizations',
       icon: Users,
-      path: '/admin/organization',
+      path: '/changeworksadmin/organization',
       subItems: [
-        { name: 'List Organizations', path: '/admin/organization' },
-        { name: 'Transactions', path: '/admin/transactions_page' },
+        { name: 'List Organizations', path: '/changeworksadmin/organization' },
+        { name: 'Transactions', path: '/changeworksadmin/transactions_page' },
       ],
     },
     {
       name: 'Transactions',
       icon: ArrowRightLeft,
-      path: '/admin/transactions_page',
-    },
-    {
-      name: 'Fund Transfer',
-      icon: ArrowRightLeft,
-      path: '/admin/fund-transfer',
-      requiresRole: 'SUPERADMIN', // Only visible to SUPERADMIN
+      path: '/changeworksadmin/transactions_page',
     },
     {
       name: 'User Management',
       icon: CircleUserRound,
-      path: '/admin/users_management',
+      path: '/changeworksadmin/users_management',
       requiresRole: 'SUPERADMIN', // Only visible to SUPERADMIN
     },
     {
       name: 'Profile',
       icon: User,
-      path: '/admin/profile',
+      path: '/changeworksadmin/profile',
     },
     {
       name: 'Settings',
       icon: Settings,
-      path: '/admin/settings',
+      path: '/changeworksadmin/settings',
       requiresRole: 'SUPERADMIN',
     },
   ];

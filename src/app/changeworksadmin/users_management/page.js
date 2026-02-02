@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, 
@@ -100,7 +100,7 @@ export default function UserManagementPage() {
   const [submitting, setSubmitting] = useState(false);
 
   // Debounced search
-  const [searchTimeout, setSearchTimeout] = useState(null);
+  const searchTimeoutRef = useRef(null);
 
   // Fetch users with error handling and loading states
   const fetchUsers = useCallback(async () => {
@@ -149,11 +149,11 @@ export default function UserManagementPage() {
 
   // Debounced filtering
   useEffect(() => {
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
     
-    const timeout = setTimeout(() => {
+    searchTimeoutRef.current = setTimeout(() => {
       const filtered = users.filter((user) => {
         const matchesNameEmail = filterNameEmail
           ? (user.name?.toLowerCase().includes(filterNameEmail.toLowerCase())) ||
@@ -168,8 +168,12 @@ export default function UserManagementPage() {
       setPage(0);
     }, 300);
     
-    setSearchTimeout(timeout);
-  }, [users, filterNameEmail, filterRole, searchTimeout]);
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [users, filterNameEmail, filterRole]);
 
   // Calculate summary stats
   const totalUsers = users.length;
