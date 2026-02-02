@@ -148,7 +148,9 @@ export async function POST(request) {
       const organization = await prisma.organization.findUnique({ where: { id: organization_id } });
 
       if (donor && organization) {
-        const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://changeworkscollective.org'}/donor/dashboard`;
+        let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+        if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+        const dashboardLink = `${appBase}/donor/login`;
         
         console.log('📧 Sending Welcome Round-Up email to:', donor.email);
         await emailService.sendWelcomeEmail({

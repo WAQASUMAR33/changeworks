@@ -224,7 +224,9 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
         ]);
 
         if (donor && organization) {
-          const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donorId}`;
+          let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+          if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+          const dashboardLink = `${appBase}/donor/login`;
           
           let paymentMethodText = 'Credit Card';
           // Try to extract card details from payment intent if available
@@ -643,7 +645,9 @@ async function handleInvoicePaymentSucceeded(invoice) {
       await sendMonthlyImpactEmail(subscription.donor_id, subscription.organization_id, fullAmount);
 
       // Send recurring payment confirmation email
-      const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://changeworkscollective.org'}/donor/dashboard`;
+      let appBase2 = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+      if (!/^https?:\/\//i.test(appBase2)) appBase2 = `https://${appBase2}`;
+      const dashboardLink = `${appBase2}/donor/login`;
       
       // Calculate next payment date (approximated from current period end)
       let nextPaymentDate = 'Next month';
@@ -793,7 +797,9 @@ async function sendMonthlyImpactEmail(donorId, organizationId, amount) {
     }
 
     // Generate dashboard link
-    const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
+    let appBase3 = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+    if (!/^https?:\/\//i.test(appBase3)) appBase3 = `https://${appBase3}`;
+    const dashboardLink = `${appBase3}/donor/login`;
 
     // Send monthly impact email
     const emailResult = await emailService.sendMonthlyImpactEmail({

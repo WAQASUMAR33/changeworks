@@ -71,9 +71,28 @@ class EmailService {
     if (!organization?.imageUrl) return null;
     if (organization.imageUrl.startsWith('http')) return organization.imageUrl;
     
-    // Prioritize configured image base URL, fallback to app URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
-    // Ensure no double slash
+    // Check if it's a static asset (starts with /imgs/)
+    // If so, use the app base URL
+    if (organization.imageUrl.startsWith('/imgs/')) {
+      let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+      if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+      const cleanBase = appBase.endsWith('/') ? appBase.slice(0, -1) : appBase;
+      return `${cleanBase}${organization.imageUrl}`;
+    }
+
+    // For uploaded images, use NEXT_PUBLIC_IMAGE_BACK_URL
+    if (process.env.NEXT_PUBLIC_IMAGE_BACK_URL) {
+       let imageBase = process.env.NEXT_PUBLIC_IMAGE_BACK_URL;
+       const cleanBase = imageBase.endsWith('/') ? imageBase.slice(0, -1) : imageBase;
+       const cleanPath = organization.imageUrl.startsWith('/') ? organization.imageUrl : `/${organization.imageUrl}`;
+       return `${cleanBase}${cleanPath}`;
+    }
+
+    // Fallback to app URL if image back URL is not set
+    let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+    if (!/^https?:\/\//i.test(baseUrl)) {
+      baseUrl = `https://${baseUrl}`;
+    }
     const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     const cleanPath = organization.imageUrl.startsWith('/') ? organization.imageUrl : `/${organization.imageUrl}`;
     

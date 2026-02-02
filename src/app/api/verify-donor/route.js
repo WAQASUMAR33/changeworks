@@ -176,7 +176,9 @@ export async function GET(req) {
 
     try {
       if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD) {
-        const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
+        let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+        if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+        const dashboardLink = `${appBase}/donor/login`;
         
         const emailResult = await emailService.sendVerificationSuccessEmail({
           donor: {

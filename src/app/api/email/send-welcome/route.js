@@ -61,7 +61,9 @@ export async function POST(request) {
     }
 
     // Generate dashboard link if not provided
-    const dashboardLink = dashboard_link || `${process.env.NEXT_PUBLIC_BASE_URL}/donor/dashboard?donor_id=${donor.id}`;
+    let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+    if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+    const dashboardLink = dashboard_link || `${appBase}/donor/login`;
 
     // Send welcome email
     const emailResult = await emailService.sendWelcomeEmail({

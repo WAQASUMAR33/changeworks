@@ -225,7 +225,9 @@ export async function POST(request) {
 
         // Send welcome email and monthly impact email for auto-created subscription
         try {
-          const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
+          let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+          if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+          const dashboardLink = `${appBase}/donor/login`;
           
           // Send welcome email
           const welcomeResult = await emailService.sendWelcomeEmail({

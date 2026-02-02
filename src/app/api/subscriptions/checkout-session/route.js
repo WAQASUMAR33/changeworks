@@ -260,7 +260,9 @@ export async function POST(request) {
     // Send recurring donation email
     try {
       console.log('📧 Attempting to send recurring donation email...');
-      const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard`;
+      let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+      if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+      const dashboardLink = `${appBase}/donor/login`;
       
       console.log('📧 Email details:', {
         donorEmail: donor.email,

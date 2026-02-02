@@ -77,7 +77,9 @@ export async function POST(request) {
     // Send Welcome Email
     if (updatedDonor.organization) {
       try {
-        const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${updatedDonor.id}`;
+        let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+        if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+        const dashboardLink = `${appBase}/donor/login`;
         
         await emailService.sendWelcomeEmail({
           donor: {
