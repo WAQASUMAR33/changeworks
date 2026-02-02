@@ -450,7 +450,7 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
   }
 
   // Send recurring donation confirmation email
-  async sendRecurringDonationEmail({ donor, organization, amount, startDate, transactionId, dashboardLink }) {
+  async sendRecurringDonationEmail({ donor, organization, amount, startDate, transactionId, dashboardLink, campaignName, paymentMethod, receiptNumber }) {
     const subject = `Thanks for Your Recurring Monthly Donation to ${organization.name}`;
 
     const formattedDate = new Date(startDate).toLocaleDateString('en-US', {
@@ -458,63 +458,101 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
       month: 'long',
       day: 'numeric'
     });
+    
+    const formattedTime = new Date(startDate).toLocaleTimeString('en-US', {
+        timeZone: 'America/New_York',
+        hour: '2-digit',
+        minute: '2-digit'
+    }) + ' EST';
+
+    const directorName = (organization?.firstName && organization?.lastName) 
+      ? `${organization.firstName} ${organization.lastName}` 
+      : 'Organization Director';
+      
+    const ein = organization?.ein || '99-XXXXXXX';
+    const safeCampaign = campaignName || 'General Campaign';
+    const safePaymentMethod = paymentMethod || 'Card ending in XXXX';
+    const safeReceiptNumber = receiptNumber || transactionId;
 
     const content = `
-      <p>Hello ${donor.name || ''}!</p>
+      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello!</p>
 
-      <p>Thank you for your generous recurring monthly donation to ${organization.name}. Your support helps us continue our mission and make a difference.</p>
+      <p>Thank you for your generous recurring monthly donation to ${organization.name}. Your support helps ensure we can continue showing up for people when help is needed.</p>
 
-      <p>Here are the details of your recurring donation:</p>
+      <p>Your contribution strengthens our ability to provide timely assistance, respond to changing needs, and operate with care and consistency. Support like yours allows us to focus on what matters most: putting resources to work where they can do the most good.</p>
+
+      <h3 style="border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 30px;">Your donation details</h3>
       <ul style="list-style: none; padding: 0;">
-        <li style="margin-bottom: 8px;"><strong>Organization:</strong> ${organization.name}</li>
-        <li style="margin-bottom: 8px;"><strong>Donation Amount:</strong> $${amount}</li>
-        <li style="margin-bottom: 8px;"><strong>Frequency:</strong> Monthly</li>
-        <li style="margin-bottom: 8px;"><strong>Start Date:</strong> ${formattedDate}</li>
-        <li style="margin-bottom: 8px;"><strong>Transaction ID:</strong> ${transactionId}</li>
+        <li style="margin-bottom: 8px;"><strong>● Organization:</strong> ${organization.name}</li>
+        <li style="margin-bottom: 8px;"><strong>● Campaign:</strong> ${safeCampaign}</li>
+        <li style="margin-bottom: 8px;"><strong>● Donor:</strong> ${donor.name}</li>
+        <li style="margin-bottom: 8px;"><strong>● Amount:</strong> $${amount} (monthly)</li>
+        <li style="margin-bottom: 8px;"><strong>● Impact:</strong> Your donation supports our core mission.</li>
+        <li style="margin-bottom: 8px;"><strong>● Period:</strong> ${formattedDate}</li>
+        <li style="margin-bottom: 8px;"><strong>● Receipt #:</strong> ${safeReceiptNumber}</li>
+        <li style="margin-bottom: 8px;"><strong>● Date:</strong> ${formattedDate} at ${formattedTime}</li>
+        <li style="margin-bottom: 8px;"><strong>● Payment method:</strong> ${safePaymentMethod}</li>
       </ul>
 
-      <p>You will receive a receipt for each monthly payment. You can manage or cancel your subscription at any time through your donor dashboard.</p>
+      <p style="margin-top: 30px;">You can access your donor account at any time to update your contribution amount, change your payment method, or pause or resume recurring donations. Step-by-step instructions are available through our trusted donation partner, ChangeWorks.</p>
       
-      <div style="text-align: center;">
-        <a href="${dashboardLink}" class="button">Manage Subscription</a>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${dashboardLink}" style="background-color: #302E56; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">CLICK HERE TO ACCESS YOUR DONOR DASHBOARD</a>
       </div>
 
-      <p>If you have any questions, please contact us at ${organization.email || 'support'} ${organization.phone ? ' or ' + organization.phone : ''}.</p>
+      <p>At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We’re grateful for your trust and would be glad to keep you informed about the impact of your giving.</p>
 
-      <p>Sincerely,<br>
-      The ${organization.name} Team</p>
+      <p style="font-size: 14px; color: #6c757d; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+        ${organization.name} is a registered 501(c)(3) nonprofit organization in the United States (EIN: ${ein}). Your donation may be tax-deductible; please consult a tax professional regarding your specific situation.
+      </p>
+
+      <p style="margin-top: 20px;">
+        With sincere gratitude,<br>
+        <strong>${directorName}</strong>
+      </p>
     `;
 
     const html = this.generateEmailHtml(content, organization, subject);
 
     const text = `
-Thanks for Your Recurring Monthly Donation to ${organization.name}
+Subject: ${subject}
 
-Hello ${donor.name || ''}!
+Hello!
 
-Thank you for your generous recurring monthly donation to ${organization.name}. Your support helps us continue our mission and make a difference.
+Thank you for your generous recurring monthly donation to ${organization.name}. Your support helps ensure we can continue showing up for people when help is needed.
 
-Here are the details of your recurring donation:
-• Organization: ${organization.name}
-• Donation Amount: $${amount}
-• Frequency: Monthly
-• Start Date: ${formattedDate}
-• Transaction ID: ${transactionId}
+Your contribution strengthens our ability to provide timely assistance, respond to changing needs, and operate with care and consistency. Support like yours allows us to focus on what matters most: putting resources to work where they can do the most good.
 
-You will receive a receipt for each monthly payment. You can manage or cancel your subscription at any time through your donor dashboard:
-${dashboardLink}
+Your donation details
+● Organization: ${organization.name}
+● Campaign: ${safeCampaign}
+● Donor: ${donor.name}
+● Amount: $${amount} (monthly)
+● Impact: Your donation supports our core mission.
+● Period: ${formattedDate}
+● Receipt #: ${safeReceiptNumber}
+● Date: ${formattedDate} at ${formattedTime}
+● Payment method: ${safePaymentMethod}
 
-If you have any questions, please contact us at ${organization.email || 'support'} ${organization.phone ? ' or ' + organization.phone : ''}.
+You can access your donor account at any time to update your contribution amount, change your payment method, or pause or resume recurring donations. Step-by-step instructions are available through our trusted donation partner, ChangeWorks.
 
-Sincerely,
-The ${organization.name} Team
+CLICK HERE TO ACCESS YOUR DONOR DASHBOARD: ${dashboardLink}
 
----
-ChangeWorks Fund
+At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We’re grateful for your trust and would be glad to keep you informed about the impact of your giving.
+
+${organization.name} is a registered 501(c)(3) nonprofit organization in the United States (EIN: ${ein}). Your donation may be tax-deductible; please consult a tax professional regarding your specific situation.
+
+With sincere gratitude,
+${directorName}
+
+ChangeWorks
 Your trusted platform partner for charitable giving
-
-Contact Information:
+________________________________________
+Contact Information
 Email: support@changeworksfund.org
+5830 E 2nd St. STE 7000 #29896
+Casper, WY 82609
+Unsubscribe
     `;
 
     return await this.sendEmail({

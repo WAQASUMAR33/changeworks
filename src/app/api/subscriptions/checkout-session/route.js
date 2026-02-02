@@ -64,7 +64,7 @@ export async function POST(request) {
     // Get subscription details from Stripe
     const stripeSubscription = await stripe.subscriptions.retrieve(
       typeof subscription === 'string' ? subscription : subscription.id,
-      { expand: ['items.data.price'] },
+      { expand: ['items.data.price', 'default_payment_method', 'latest_invoice'] },
       stripeAccount ? { stripeAccount } : undefined
     );
 
@@ -84,6 +84,7 @@ export async function POST(request) {
     const organizationId = parseInt(stripeSubscription.metadata.organization_id);
     const productId = stripeSubscription.metadata.product_id;
     const priceId = stripeSubscription.metadata.price_id;
+    const campaignName = stripeSubscription.metadata.campaign_name || session.metadata?.campaign_name || 'General Campaign';
 
     // Get donor and organization details
     const [donor, organization] = await Promise.all([
@@ -93,7 +94,10 @@ export async function POST(request) {
       }),
       prisma.organization.findUnique({
         where: { id: organizationId },
-        select: { id: true, name: true, email: true, imageUrl: true }
+        select: { 
+          id: true, name: true, email: true, imageUrl: true, 
+          firstName: true, lastName: true, ein: true, phone: true 
+        }
       })
     ]);
 
@@ -279,6 +283,13 @@ export async function POST(request) {
         throw new Error(`Email service verification failed: ${verifyResult.error}`);
       }
 
+      let paymentMethodText = 'Credit Card';
+      if (stripeSubscription.default_payment_method?.card?.last4) {
+        paymentMethodText = `Card ending in ${stripeSubscription.default_payment_method.card.last4}`;
+      }
+
+      const receiptNumber = stripeSubscription.latest_invoice?.number || donorTransaction.trnx_id;
+
       const emailResult = await emailService.sendRecurringDonationEmail({
         donor: {
           name: donor.name,
@@ -288,7 +299,10 @@ export async function POST(request) {
         amount: amount,
         startDate: new Date(),
         transactionId: donorTransaction.trnx_id,
-        dashboardLink: dashboardLink
+        dashboardLink: dashboardLink,
+        campaignName: campaignName,
+        paymentMethod: paymentMethodText,
+        receiptNumber: receiptNumber
       });
       
       console.log('📧 Email send result:', emailResult);

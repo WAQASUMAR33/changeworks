@@ -38,12 +38,18 @@ export async function POST(request) {
         city: "Hopeville",
         state: "NY",
         postalCode: "10001",
-        imageUrl: "/imgs/changeworks.png" // Use a local image or absolute URL if available
+        imageUrl: "/imgs/changeworks.png", // Use a local image or absolute URL if available
+        firstName: "John",
+        lastName: "Director",
+        ein: "12-3456789"
       },
       amount: 50.00,
       startDate: new Date(),
       transactionId: `test_sub_${Date.now()}`,
-      dashboardLink: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard`
+      dashboardLink: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard`,
+      campaignName: "Test Campaign",
+      paymentMethod: "Card ending in 4242",
+      receiptNumber: `REC-${Date.now()}`
     };
 
     console.log('🧪 Testing recurring donation email with data:', mockData);
