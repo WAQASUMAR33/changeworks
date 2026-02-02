@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿'use client';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -415,7 +415,10 @@ export default function StripeProductsPage() {
 
               {/* Donation Option Info */}
               <h3 className="text-lg font-bold text-gray-900 mb-2">
-                {product.name}
+                {(() => {
+                  const stripeProduct = stripeProductDetails.find(p => p.id === product.stripeId);
+                  return stripeProduct ? stripeProduct.name : product.name;
+                })()}
               </h3>
               <p className="text-sm text-gray-600 mb-4">
                 {product.description}
