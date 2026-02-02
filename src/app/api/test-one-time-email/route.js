@@ -17,7 +17,7 @@ export async function GET(request) {
 
     // Mock data
     const donor = { name: 'Test Donor', email: to };
-    const organization = { name: 'Test Organization', email: 'org@example.com' };
+    const organization = { name: 'Test Organization', email: 'org@example.com', imageUrl: '/imgs/changeworks.png' };
     const dashboardLink = 'https://example.com/dashboard';
     const amount = '50.00';
     const donationDate = new Date().toLocaleDateString();

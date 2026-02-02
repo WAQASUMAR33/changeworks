@@ -52,7 +52,8 @@ export async function POST(request) {
       select: {
         id: true,
         name: true,
-        email: true
+        email: true,
+        imageUrl: true
       }
     });
 
@@ -69,7 +70,8 @@ export async function POST(request) {
       select: {
         id: true,
         name: true,
-        email: true
+        email: true,
+        imageUrl: true
       }
     });
 

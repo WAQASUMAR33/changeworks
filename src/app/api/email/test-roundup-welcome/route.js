@@ -20,7 +20,7 @@ export async function GET(request) {
       name: 'Test Organization',
       email: 'org@example.com',
       phone: '123-456-7890',
-      imageUrl: null // Test fallback to ChangeWorks logo
+      imageUrl: '/imgs/changeworks.png' // Test fallback to ChangeWorks logo
     };
     
     const dashboardLink = 'https://app.changeworksfund.org/donor/dashboard';

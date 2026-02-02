@@ -98,7 +98,8 @@ export async function POST(request) {
     const emailResult = await emailService.sendStripeOnboardingEmail({
       organization: {
         name: organization.name,
-        email: organization.email
+        email: organization.email,
+        imageUrl: organization.imageUrl
       },
       onboardingUrl: accountLink.url
     });

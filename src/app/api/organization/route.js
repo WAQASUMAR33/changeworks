@@ -108,6 +108,7 @@ export async function POST(req) {
             ...organization,
             firstName: input.firstName,
             lastName: input.lastName,
+            imageUrl: organization.imageUrl
           },
           dashboardLink
         });

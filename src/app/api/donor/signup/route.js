@@ -162,7 +162,7 @@ export async function POST(request) {
       if (validOrganizationId) {
         organization = await prisma.organization.findUnique({
           where: { id: validOrganizationId },
-          select: { id: true, name: true, email: true }
+          select: { id: true, name: true, email: true, imageUrl: true }
         });
       }
 

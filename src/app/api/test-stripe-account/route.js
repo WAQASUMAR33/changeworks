@@ -96,12 +96,13 @@ export async function POST(request) {
       console.log('\n--- Step 3: Sending Test Email ---');
       try {
         emailResult = await emailService.sendStripeOnboardingEmail({
-          organization: {
-            name: 'Test Organization',
-            email: testEmail
-          },
-          onboardingUrl: accountLink.url
-        });
+        organization: {
+          name: 'Test Organization',
+          email: testEmail,
+          imageUrl: '/imgs/changeworks.png'
+        },
+        onboardingUrl: accountLink.url
+      });
 
         if (emailResult.success) {
           console.log('✅ Test email sent successfully to:', testEmail);

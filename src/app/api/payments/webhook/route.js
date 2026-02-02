@@ -784,7 +784,7 @@ async function sendMonthlyImpactEmail(donorId, organizationId, amount) {
       }),
       prisma.organization.findUnique({
         where: { id: organizationId },
-        select: { id: true, name: true, email: true }
+        select: { id: true, name: true, email: true, imageUrl: true }
       })
     ]);
 
@@ -827,7 +827,7 @@ async function sendCardFailureAlertEmail(donorId, organizationId) {
       }),
       prisma.organization.findUnique({
         where: { id: organizationId },
-        select: { id: true, name: true, email: true }
+        select: { id: true, name: true, email: true, imageUrl: true }
       })
     ]);
 

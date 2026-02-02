@@ -72,7 +72,7 @@ class EmailService {
     if (organization.imageUrl.startsWith('http')) return organization.imageUrl;
     
     // Prioritize configured image base URL, fallback to app URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
     // Ensure no double slash
     const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     const cleanPath = organization.imageUrl.startsWith('/') ? organization.imageUrl : `/${organization.imageUrl}`;
@@ -1138,8 +1138,8 @@ Your trusted platform partner for charitable giving
       ? `${organization.firstName} ${organization.lastName}` 
       : organization.name;
     
-    // ChangeWorks branding for this email
-    const brandingOrg = {
+    // Use organization branding if available, otherwise fallback to ChangeWorks
+    const brandingOrg = (organization.imageUrl) ? organization : {
       name: 'ChangeWorks',
       imageUrl: '/imgs/changeworks.png'
     };

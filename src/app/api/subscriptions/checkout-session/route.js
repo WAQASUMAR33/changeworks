@@ -93,7 +93,7 @@ export async function POST(request) {
       }),
       prisma.organization.findUnique({
         where: { id: organizationId },
-        select: { id: true, name: true, email: true }
+        select: { id: true, name: true, email: true, imageUrl: true }
       })
     ]);
 
