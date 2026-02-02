@@ -104,7 +104,7 @@ export async function POST(request) {
         ],
         mode: 'subscription',
         success_url: `${baseUrl.replace(/\/$/, '')}/donor/subscription-success?session_id={CHECKOUT_SESSION_ID}&org_id=${organization_id}`,
-        cancel_url: `${baseUrl.replace(/\/$/, '')}/donor/dashboard/subscriptions?subscription=cancelled`,
+        cancel_url: `${baseUrl.replace(/\/$/, '')}/donor/login`,
         metadata: {
           donor_id: donor_id.toString(),
           organization_id: organization_id.toString(),

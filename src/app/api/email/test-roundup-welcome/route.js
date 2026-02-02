@@ -23,7 +23,7 @@ export async function GET(request) {
       imageUrl: '/imgs/changeworks.png' // Test fallback to ChangeWorks logo
     };
     
-    const dashboardLink = 'https://app.changeworksfund.org/donor/dashboard';
+    const dashboardLink = 'https://app.changeworksfund.org/donor/login';
     
     await emailService.sendWelcomeEmail({
       donor,

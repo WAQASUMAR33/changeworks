@@ -162,7 +162,10 @@ export async function POST(request) {
             ]);
 
             if (donor && organization) {
-                const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donorId}`;
+                // Generate dashboard link - FORCE login URL for donor dashboard access
+                let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+                if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+                const dashboardLink = `${appBase}/donor/login`;
                 
                 let paymentMethodText = 'Credit Card';
                 if (pi.payment_method_details?.card?.last4) {
