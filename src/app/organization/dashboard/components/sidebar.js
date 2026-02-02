@@ -23,6 +23,7 @@ import {
   Pin,
   PinOff,
   CreditCard,
+  RefreshCw,
 } from 'lucide-react';
 
 const OrgSidebar = () => {
