@@ -211,8 +211,8 @@ class GHLClient {
         email: userData.email,
         password: userData.password,
         phone: userData.phone,
-        type: 'account',
-        role: 'admin',
+        type: userData.type || 'account',
+        role: userData.role || 'admin',
         locationIds: [userData.locationId],
         permissions: userData.permissions || {}
       };

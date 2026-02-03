@@ -74,7 +74,8 @@ export async function POST(request) {
       where: { id: verificationToken.id }
     });
 
-    // Send Welcome Email
+    /* 
+    // Send Welcome Email - DISABLED as per requirement (only verification email should be sent)
     if (updatedDonor.organization) {
       try {
         let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
@@ -95,6 +96,7 @@ export async function POST(request) {
         // Don't fail the verification response if email fails
       }
     }
+    */
 
     return NextResponse.json({
       success: true,

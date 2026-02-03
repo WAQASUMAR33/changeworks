@@ -131,9 +131,15 @@ export default function DonorSignupPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // If not on the final step (Review), just go to next step
+    if (currentStep < 4) {
+      goNext();
+      return;
+    }
+
     if (!validateStep(currentStep)) return;
 
-    // Final submit (step 5)
+    // Final submit (step 4)
     setLoading(true);
     setMessage('');
     setError('');

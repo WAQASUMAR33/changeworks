@@ -206,14 +206,18 @@ export async function POST(req) {
           // Use GHL_COMPANY_ID from env, or fallback to the one used for sub-account if needed
           const companyId = process.env.GHL_COMPANY_ID || 'BWID4bp77xwMfmzh1iud';
           
+          const ghlLastName = input.lastName || input.name.split(' ').slice(1).join(' ') || 'Admin';
+
           const userData = {
              companyId: companyId,
              firstName: input.firstName || input.name.split(' ')[0] || input.name,
-             lastName: input.lastName || input.name.split(' ').slice(1).join(' ') || '',
+             lastName: ghlLastName,
              email: input.email,
              password: input.orgPassword, 
              phone: input.phone || '',
              locationId: ghlLocationId,
+             type: 'account',
+             role: 'admin',
              permissions: {
                 campaignsEnabled: true,
                 campaignsReadOnly: false,
@@ -266,6 +270,9 @@ export async function POST(req) {
           } else {
              console.error('❌ Failed to create GHL User:', userResult.error);
              console.error('User creation details:', JSON.stringify(userResult.details, null, 2));
+             if (userResult.error && userResult.error.toLowerCase().includes('password')) {
+               console.error('⚠️ Password might not meet GHL complexity requirements (8+ chars, 1 uppercase, 1 lowercase, 1 number, 1 special char).');
+             }
           }
         } catch (userErr) {
            console.error('❌ Exception creating GHL User:', userErr);
