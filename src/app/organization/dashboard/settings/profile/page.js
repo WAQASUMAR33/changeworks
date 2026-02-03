@@ -23,6 +23,22 @@ import {
 } from 'lucide-react';
 import TwoFactorSetup from '@/app/components/TwoFactorSetup';
 
+// Helper function to build organization logo URL
+const buildOrgLogoUrl = (imageUrl) => {
+  if (!imageUrl) return null;
+  if (imageUrl.startsWith('blob:')) return imageUrl; // Handle local preview
+  if (imageUrl.startsWith('data:')) return imageUrl; // Handle base64
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
+
+  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_BACK_URL;
+  if (!baseUrl) return imageUrl;
+
+  const cleanedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const cleanedImageUrl = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+
+  return `${cleanedBaseUrl}${cleanedImageUrl}`;
+};
+
 const ProfilePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -411,7 +427,7 @@ const ProfilePage = () => {
               <div className="w-16 h-16 bg-[#0E0061] rounded-full flex items-center justify-center mr-6 overflow-hidden">
                 {profileData.imageUrl ? (
                   <img 
-                    src={profileData.imageUrl} 
+                    src={buildOrgLogoUrl(profileData.imageUrl)} 
                     alt={profileData.name} 
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -618,7 +634,7 @@ const ProfilePage = () => {
                   <div className="flex items-start space-x-4">
                     <div className="w-20 h-20 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200 relative">
                       {previewUrl ? (
-                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                        <img src={buildOrgLogoUrl(previewUrl)} alt="Preview" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Camera className="w-8 h-8 text-gray-400" />
