@@ -418,7 +418,7 @@ export default function DonorDashboard() {
                 onClick={handleStripePayment}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="group relative overflow-hidden bg-gradient-to-br from-green-700 via-green-800 to-green-900 hover:from-green-800 hover:via-green-900 hover:to-green-950 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left h-full flex flex-col justify-between"
+                className="group relative overflow-hidden bg-gradient-to-br from-green-800 via-green-900 to-green-950 hover:from-green-900 hover:via-green-950 hover:to-black shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left h-full flex flex-col justify-between"
               >
                 <div className="relative z-10 flex flex-col h-full w-full">
                   <div className="flex flex-col items-start gap-4 flex-1 w-full">
@@ -433,7 +433,7 @@ export default function DonorDashboard() {
                     <div className="w-3 h-3 bg-white/30 rounded-full"></div>
                   </div>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none"></div>
               </motion.button>
 
               {/* Recurring Donations */}
@@ -450,7 +450,7 @@ export default function DonorDashboard() {
               ) : subscriptionStatus.hasActiveSubscription ? (
                 <motion.div
                   whileHover={{ scale: 1.05, y: -2 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-green-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 h-full flex flex-col justify-between"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-green-800 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 h-full flex flex-col justify-between"
                 >
                   <div className="relative z-10 flex flex-col h-full w-full">
                     <div className="flex flex-col items-start gap-4 mb-4 flex-1 w-full">
@@ -477,7 +477,7 @@ export default function DonorDashboard() {
                       Manage
                     </button>
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none"></div>
                 </motion.div>
               ) : (
                 <motion.button
@@ -500,7 +500,7 @@ export default function DonorDashboard() {
                       </div>
                     </div>
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none"></div>
                 </motion.button>
               )}
 
@@ -545,7 +545,7 @@ export default function DonorDashboard() {
                       Cancel
                     </button>
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none"></div>
                 </motion.div>
               ) : (
                 <motion.button
@@ -568,7 +568,7 @@ export default function DonorDashboard() {
                       </div>
                     </div>
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none"></div>
                 </motion.button>
               )}
             </div>
