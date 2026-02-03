@@ -492,8 +492,7 @@ export default function DonorDashboard() {
                         <TrendingUp className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1 w-full">
-                        <h4 className="text-lg font-bold text-white leading-tight">Start and Manage your Monthly Donations</h4>
-                        <p className="text-sm text-green-100 mt-1">Set Up Recurring Donations</p>
+                        <h4 className="text-lg font-bold text-white leading-tight">Set up a recurring monthly donation</h4>
                       </div>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute top-0 right-0">
                         <div className="w-3 h-3 bg-white/30 rounded-full"></div>
