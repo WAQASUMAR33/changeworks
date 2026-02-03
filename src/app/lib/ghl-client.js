@@ -199,6 +199,53 @@ class GHLClient {
     }
   }
 
+  async createUser(userData) {
+    try {
+      console.log('=== CREATING GHL USER ===');
+      const usersApiUrl = process.env.GHL_USER_CREATE_API_URL || 'https://rest.gohighlevel.com/v1/users/';
+      
+      const requestData = {
+        companyId: userData.companyId || process.env.GHL_COMPANY_ID,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        password: userData.password,
+        phone: userData.phone,
+        type: 'account',
+        role: 'admin',
+        locationIds: [userData.locationId],
+        permissions: userData.permissions || {}
+      };
+
+      console.log('User API URL:', usersApiUrl);
+      console.log('Request Data:', JSON.stringify({ ...requestData, password: '***' }, null, 2));
+
+      const response = await this.client.post(usersApiUrl, requestData);
+
+      console.log('=== GHL USER API SUCCESS ===');
+      console.log('Status:', response.status);
+      console.log('Response Data:', JSON.stringify(response.data, null, 2));
+
+      return {
+        success: true,
+        data: response.data,
+        userId: response.data.id
+      };
+    } catch (error) {
+      console.error('=== GHL USER API ERROR ===');
+      console.error('Error Message:', error.message);
+      console.error('Status:', error.response?.status);
+      console.error('Error Data:', JSON.stringify(error.response?.data, null, 2));
+      
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message,
+        statusCode: error.response?.status || 500,
+        details: error.response?.data || null
+      };
+    }
+  }
+
   async createContact(locationId, contactData, overrideToken) {
     try {
       // Use the sub-account API key directly (no need for location token generation)

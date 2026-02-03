@@ -16,7 +16,7 @@ const organizationSchema = z.object({
   phone: z.string().optional(),
   company: z.string().optional(),
   address: z.string().optional(),
-  website: z.string().url("Invalid url").optional().or(z.literal("")),
+  website: z.string().optional().or(z.literal("")),
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
@@ -199,6 +199,77 @@ export async function POST(req) {
         });
 
         console.log('GHL account created successfully:', ghlLocationId);
+
+        // Create GHL User for the new sub-account
+        try {
+          console.log('Creating GHL User for location:', ghlLocationId);
+          // Use GHL_COMPANY_ID from env, or fallback to the one used for sub-account if needed
+          const companyId = process.env.GHL_COMPANY_ID || 'BWID4bp77xwMfmzh1iud';
+          
+          const userData = {
+             companyId: companyId,
+             firstName: input.firstName || input.name.split(' ')[0] || input.name,
+             lastName: input.lastName || input.name.split(' ').slice(1).join(' ') || '',
+             email: input.email,
+             password: input.orgPassword, 
+             phone: input.phone || '',
+             locationId: ghlLocationId,
+             permissions: {
+                campaignsEnabled: true,
+                campaignsReadOnly: false,
+                contactsEnabled: true,
+                contactsReadOnly: false,
+                funnelsEnabled: true,
+                funnelsReadOnly: false,
+                triggersEnabled: true,
+                triggersReadOnly: false,
+                opportunitiesEnabled: true,
+                opportunitiesReadOnly: false,
+                conversationsEnabled: true,
+                conversationsReadOnly: false,
+                onlineListingsEnabled: true,
+                onlineListingsReadOnly: false,
+                settingsEnabled: true,
+                settingsReadOnly: false,
+                tagsEnabled: true,
+                tagsReadOnly: false,
+                leadValueEnabled: true,
+                leadValueReadOnly: false,
+                marketingEnabled: true,
+                marketingReadOnly: false,
+                agentReportingEnabled: true,
+                agentReportingReadOnly: false,
+                botServiceEnabled: true,
+                botServiceReadOnly: false,
+                socialPlannerEnabled: true,
+                socialPlannerReadOnly: false,
+                bloggingEnabled: true,
+                bloggingReadOnly: false,
+                invoiceEnabled: true,
+                invoiceReadOnly: false,
+                affiliateManagerEnabled: true,
+                affiliateManagerReadOnly: false,
+                contentAiEnabled: true,
+                contentAiReadOnly: false,
+                refundsEnabled: true,
+                refundsReadOnly: false,
+                recordPaymentEnabled: true,
+                recordPaymentReadOnly: false,
+                cancelSubscriptionEnabled: true,
+                cancelSubscriptionReadOnly: false
+             }
+          };
+          
+          const userResult = await ghlClient.createUser(userData);
+          if (userResult.success) {
+             console.log('✅ GHL User created successfully:', userResult.userId);
+          } else {
+             console.error('❌ Failed to create GHL User:', userResult.error);
+             console.error('User creation details:', JSON.stringify(userResult.details, null, 2));
+          }
+        } catch (userErr) {
+           console.error('❌ Exception creating GHL User:', userErr);
+        }
 
         // Create GHL contact for the organization using ChangeWorks credentials
         try {

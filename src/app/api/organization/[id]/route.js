@@ -10,7 +10,7 @@ const updateOrganizationSchema = z.object({
   phone: z.string().optional(),
   company: z.string().optional(),
   address: z.string().optional(),
-  website: z.string().url().optional(),
+  website: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),

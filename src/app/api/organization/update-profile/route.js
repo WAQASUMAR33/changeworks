@@ -10,7 +10,7 @@ const updateProfileSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
-  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
+  website: z.string().optional().or(z.literal("")),
   company: z.string().optional(),
   postalCode: z.string().optional(),
 });
