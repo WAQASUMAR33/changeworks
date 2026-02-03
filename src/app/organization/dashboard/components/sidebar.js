@@ -96,6 +96,11 @@ const OrgSidebar = () => {
       path: '/organization/dashboard/transactions',
     },
     {
+      name: 'Monthly Donors',
+      icon: RefreshCw,
+      path: '/organization/dashboard/subscriptions',
+    },
+    {
       name: 'Settings',
       icon: Settings,
       path: '/organization/dashboard/settings',

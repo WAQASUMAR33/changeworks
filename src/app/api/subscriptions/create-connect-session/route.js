@@ -97,7 +97,7 @@ export async function POST(request) {
                 ],
                 mode: 'subscription',
                 subscription_data: {
-                    application_fee_percent: 10, // 10% platform fee
+                    application_fee_percent: 6.8, // 6.8% platform fee
                     metadata: {
                         donor_id: donor_id.toString(),
                         organization_id: organization_id.toString(),

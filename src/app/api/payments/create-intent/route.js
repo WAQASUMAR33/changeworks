@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { NextResponse } from "next/server";
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { NextResponse } from "next/server";
 import { z } from "zod";
 import Stripe from 'stripe';
 import { prisma } from "../../../lib/prisma";
@@ -114,13 +114,13 @@ export async function POST(request) {
     const amountInCents = Math.round(amount);
     const amountDollars = amountInCents / 100;
 
-    // Calculate 7% platform fee
+    // Calculate 6.8% platform fee
     // Note: Stripe fees (approx 2.9% + 30c) are deducted from the Connected Account's balance automatically by Stripe
     // We only need to specify our Application Fee
-    const applicationFeeAmount = Math.round(amountInCents * 0.07);
+    const applicationFeeAmount = Math.round(amountInCents * 0.068);
 
     console.log(`💰 Total: $${amountDollars} (${amountInCents} cents)`);
-    console.log(`💸 Platform Commission (7%): ${applicationFeeAmount} cents`);
+    console.log(`💸 Platform Commission (6.8%): ${applicationFeeAmount} cents`);
     console.log(`🏦 Direct Charge to Org: ${destinationAccountId}`);
 
     console.log(`🏦 Initiating Direct Charge: Total=${amountInCents}, AppFee=${applicationFeeAmount} on account ${destinationAccountId}`);

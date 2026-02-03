@@ -128,7 +128,7 @@ export async function POST(request) {
         customer: customer.id,
         transfer_data: organization.stripeAccountId ? {
           destination: organization.stripeAccountId,
-          amount_percent: 90,
+          amount_percent: 93.2, // 93.2% to org (6.8% platform fee)
         } : undefined,
         items: [{
           price_data: {
