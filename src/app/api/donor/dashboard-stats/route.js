@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../lib/prisma";
+import { prisma } from "@/app/lib/prisma";
 import jwt from "jsonwebtoken";
+
+export const dynamic = 'force-dynamic';
 
 // GET /api/donor/dashboard-stats - Get donor dashboard statistics from save_tr_record table
 export async function GET(request) {

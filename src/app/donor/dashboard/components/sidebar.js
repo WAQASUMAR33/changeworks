@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { buildOrgLogoUrl } from '@/lib/image-utils';
 import {
   LayoutDashboard,
   User,
@@ -19,7 +17,6 @@ import {
   PinOff,
   Menu,
   X,
-  Building2,
 } from 'lucide-react';
 
 const DonorSidebar = () => {
@@ -124,29 +121,7 @@ const DonorSidebar = () => {
         {/* Organization Logo and Donor Info */}
         {isExpanded && (
           <div className="flex items-center space-x-3 flex-1 min-w-0">
-            {/* Organization Image */}
-            {selectedOrganization && (
-              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
-                {selectedOrganization.imageUrl ? (
-                  <Image
-                    src={buildOrgLogoUrl(selectedOrganization.imageUrl)}
-                    alt={selectedOrganization.name || 'Organization'}
-                    width={40}
-                    height={40}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                <div
-                  className={`w-full h-full flex items-center justify-center ${selectedOrganization.imageUrl ? 'hidden' : 'flex'}`}
-                >
-                  <Building2 className="w-5 h-5 text-gray-600" />
-                </div>
-              </div>
-            )}
+            {/* Organization Image - Removed as per request */}
 
             {/* Donor Name */}
             {user && (

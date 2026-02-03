@@ -223,7 +223,9 @@ export default function DonorDonationsPage() {
             <div>
               <p className="text-xs sm:text-sm font-medium text-gray-600">Total Donated.</p>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                {formatAmount(donations.reduce((sum, donation) => sum + (donation.amount || 0), 0))}
+                {formatAmount(donations
+                  .filter(donation => ['completed', 'succeeded'].includes(donation.status?.toLowerCase()))
+                  .reduce((sum, donation) => sum + (donation.amount || 0), 0))}
               </p>
             </div>
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -255,7 +257,8 @@ export default function DonorDonationsPage() {
                       const donationDate = new Date(donation.created_at);
                       const now = new Date();
                       return donationDate.getMonth() === now.getMonth() && 
-                             donationDate.getFullYear() === now.getFullYear();
+                             donationDate.getFullYear() === now.getFullYear() &&
+                             ['completed', 'succeeded'].includes(donation.status?.toLowerCase());
                     })
                     .reduce((sum, donation) => sum + (donation.amount || 0), 0)
                 )}
