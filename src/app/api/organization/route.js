@@ -29,7 +29,9 @@ const organizationSchema = z.object({
   // Stripe Connect Account Information
   createStripeAccount: z.boolean().optional().default(false),
   // Organization Login Details (single password)
-  orgPassword: z.string().min(6, "Organization password must be at least 6 characters"),
+  orgPassword: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, "Password must include uppercase, lowercase, number, and special character"),
   confirmOrgPassword: z.string(),
 });
 
@@ -133,14 +135,15 @@ export async function POST(req) {
     // Automatically create GHL account using organization information
     try {
       // Check if we have a valid GHL Agency API key
-      if (!process.env.GHL_AGENCY_API_KEY || process.env.GHL_AGENCY_API_KEY.length < 200) {
+      const ghlAgencyKey = process.env.GHL_AGENCY_API_KEY || process.env.GHL_API_KEY;
+
+      if (!ghlAgencyKey || ghlAgencyKey.length < 30) {
         console.log('⚠️ GHL Agency API key not configured or too short. Skipping GHL account creation.');
-        console.log('To enable GHL integration, add a valid GHL_AGENCY_API_KEY (250+ characters) to your environment variables.');
-        console.log('Current key appears to be a Location API key, which cannot create sub-accounts.');
+        console.log('To enable GHL integration, add a valid GHL_AGENCY_API_KEY to your environment variables.');
         throw new Error('GHL Agency API key not configured');
       }
 
-      const ghlClient = new GHLClient(process.env.GHL_AGENCY_API_KEY);
+      const ghlClient = new GHLClient(ghlAgencyKey);
 
       const ghlData = {
         businessName: input.name, // Use organization name as business name

@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿'use client';
+﻿﻿﻿﻿﻿﻿'use client';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -165,8 +165,11 @@ export default function OrganizationSignupPage() {
 
       if (!form.orgPassword) {
         newErrors.orgPassword = 'Organization password is required.';
-      } else if (form.orgPassword.length < 6) {
-        newErrors.orgPassword = 'Organization password must be at least 6 characters long.';
+      } else {
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(form.orgPassword)) {
+          newErrors.orgPassword = 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.';
+        }
       }
       if (!form.confirmOrgPassword) {
         newErrors.confirmOrgPassword = 'Please confirm your organization password.';
