@@ -134,7 +134,7 @@ export async function PUT(request) {
         postal_code: updatedDonor.postal_code,
         country: updatedDonor.country,
         imageUrl: updatedDonor.imageUrl,
-        organization: updatedDonor.organization.name,
+        organization: updatedDonor.organization?.name || null,
         updated_at: updatedDonor.updated_at
       },
       updated_fields: Object.keys(updateData).filter(key => key !== 'updated_at'),

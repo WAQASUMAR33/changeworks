@@ -128,15 +128,14 @@ export default function DonorSignupPage() {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  const handleSubmit = async (e) => {
+  const handleFormSubmit = (e) => {
     e.preventDefault();
-
-    // If not on the final step (Review), just go to next step
     if (currentStep < 4) {
       goNext();
-      return;
     }
+  };
 
+  const createAccount = async () => {
     if (!validateStep(currentStep)) return;
 
     // Final submit (step 4)
@@ -155,7 +154,6 @@ export default function DonorSignupPage() {
           phone: formData.phone.trim(),
           postal_code: formData.postal_code.trim(),
           country: formData.country,
-          // organization_id removed
         })
       });
 
@@ -352,7 +350,7 @@ export default function DonorSignupPage() {
                 )}
               </AnimatePresence>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleFormSubmit} className="space-y-6">
                 {/* Step 1: Personal Information */}
                 {currentStep === 1 && (
                   <motion.div
@@ -822,7 +820,8 @@ export default function DonorSignupPage() {
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      type="submit"
+                      type="button"
+                      onClick={createAccount}
                       disabled={loading}
                       className="flex items-center space-x-2 px-6 py-3 bg-[#0E0061] text-white rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-[#0E0061]/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                     >

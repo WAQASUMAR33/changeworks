@@ -100,7 +100,7 @@ class EmailService {
   }
 
   // Centralized HTML generator
-  generateEmailHtml(content, organization, title = '') {
+  generateEmailHtml(content, organization, title = '', showOrgName = true) {
     const logoUrl = this.getOrganizationLogoUrl(organization);
     const orgName = organization?.name || 'ChangeWorks Fund';
     
@@ -171,7 +171,7 @@ class EmailService {
                     ${organization ? `
                       <div style="text-align: center; margin-bottom: 30px;">
                         ${logoUrl ? `<img src="${logoUrl}" alt="${orgName}" style="max-height: 80px; max-width: 200px; height: auto; border: 0; display: inline-block; margin-bottom: 15px;">` : ''}
-                        <h2 style="color: #302E56; margin: 0; font-size: 24px; font-weight: 700;">${orgName}</h2>
+                        ${showOrgName ? `<h2 style="color: #302E56; margin: 0; font-size: 24px; font-weight: 700;">${orgName}</h2>` : ''}
                       </div>
                     ` : ''}
                     
@@ -358,7 +358,7 @@ ChangeWorks Team
       imageUrl: '/imgs/changeworks.png'
     };
 
-    const html = this.generateEmailHtml(content, changeWorksOrg, subject);
+    const html = this.generateEmailHtml(content, changeWorksOrg, subject, false);
 
     const text = `
 Welcome to ${orgName}'s Donation Community

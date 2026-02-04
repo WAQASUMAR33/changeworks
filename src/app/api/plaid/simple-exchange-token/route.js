@@ -81,26 +81,26 @@ export async function POST(request) {
       mockAccessToken
     );
 
-    // Send Round Up Welcome Email
-    try {
-      // Fetch donor and organization details
-      const donor = await prisma.donor.findUnique({ where: { id: donorId } });
-      const organization = await prisma.organization.findUnique({ where: { id: organization_id } });
-
-      if (donor && organization) {
-        const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://changeworkscollective.org'}/donor/dashboard`;
-        
-        console.log('📧 Sending Welcome Round-Up email to:', donor.email);
-        await emailService.sendWelcomeEmail({
-          donor,
-          organization,
-          dashboardLink
-        });
-      }
-    } catch (emailError) {
-      console.error('❌ Failed to send Round Up Welcome email:', emailError);
-      // Don't fail the request if email fails
-    }
+    // Send Round Up Welcome Email - DISABLED as per requirement
+    // try {
+    //   // Fetch donor and organization details
+    //   const donor = await prisma.donor.findUnique({ where: { id: donorId } });
+    //   const organization = await prisma.organization.findUnique({ where: { id: organization_id } });
+    //
+    //   if (donor && organization) {
+    //     const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://changeworkscollective.org'}/donor/dashboard`;
+    //     
+    //     console.log('📧 Sending Welcome Round-Up email to:', donor.email);
+    //     // await emailService.sendWelcomeEmail({
+    //     //   donor,
+    //     //   organization,
+    //     //   dashboardLink
+    //     // });
+    //   }
+    // } catch (emailError) {
+    //   console.error('❌ Failed to send Round Up Welcome email:', emailError);
+    //   // Don't fail the request if email fails
+    // }
 
     return NextResponse.json({
       success: true,
