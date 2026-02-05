@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿'use client';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -186,18 +186,7 @@ export default function StripeProductsPage() {
           </div>
 
           <div className="flex items-center space-x-3">
-            {allProductsCreated && organization?.stripeAccountId && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => createProducts(true)}
-                disabled={creating}
-                className="px-6 py-3 bg-white text-blue-600 border-2 border-blue-600 rounded-xl font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50 flex items-center space-x-2"
-              >
-                <RefreshCw className={`w-5 h-5 ${creating ? 'animate-spin' : ''}`} />
-                <span>Update to Monthly</span>
-              </motion.button>
-            )}
+            {/* Update to Monthly button removed */}
 
             {!allProductsCreated && organization?.stripeAccountId && (
               <motion.button

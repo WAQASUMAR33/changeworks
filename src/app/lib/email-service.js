@@ -207,7 +207,7 @@ class EmailService {
       
       <p>Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
       
-      <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
+      <p>You can view your donation activity anytime through your personalized <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">Donor Portal</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
       
       <div class="highlight-box">
         <h3 style="color: #302E56; margin-top: 0;">Your Donor Portal Features:</h3>
@@ -240,7 +240,7 @@ Hello ${donor.name},
 
 Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
 
-You can view your donation activity anytime through your personalized Donor Portal [Dashboard Link] on ChangeWorks, our platform partner. That's where you'll be able to:
+You can view your donation activity anytime through your personalized Donor Portal on ChangeWorks, our platform partner. That's where you'll be able to:
 
 - Track your monthly round-up totals
 - Adjust or pause your contributions at any time
@@ -977,7 +977,7 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
       
       <p>Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
       
-      <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
+      <p>You can view your donation activity anytime through your personalized <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">Donor Portal</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
       
       <div class="highlight-box">
         <h3 style="color: #302E56; margin-top: 0;">Your Donor Portal Features:</h3>
@@ -1013,7 +1013,7 @@ Hello ${donor.name},
 
 Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
 
-You can view your donation activity anytime through your personalized Donor Portal [Dashboard Link] on ChangeWorks, our platform partner. That's where you'll be able to:
+You can view your donation activity anytime through your personalized Donor Portal on ChangeWorks, our platform partner. That's where you'll be able to:
 
 - Track your monthly round-up totals
 - Adjust or pause your contributions at any time
