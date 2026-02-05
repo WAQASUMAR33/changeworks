@@ -170,47 +170,15 @@ export async function GET(req) {
       });
     });
 
-    // Send success verification email
-    let emailSent = false;
-    let emailError = null;
-
-    try {
-      if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD) {
-        let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
-        if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
-        const dashboardLink = `${appBase}/donor/login`;
-        
-        const emailResult = await emailService.sendVerificationSuccessEmail({
-          donor: {
-            name: donor.name,
-            email: donor.email
-          },
-          organization: donor.organization,
-          dashboardLink: dashboardLink
-        });
-
-        if (emailResult.success) {
-          emailSent = true;
-          console.log('✅ Verification success email sent successfully');
-        } else {
-          emailError = emailResult.error;
-          console.error('❌ Verification success email failed:', emailResult.error);
-        }
-      } else {
-        console.log('⚠️ Email server not configured, skipping success email');
-        emailError = 'Email server not configured';
-      }
-    } catch (emailErr) {
-      emailError = emailErr.message;
-      console.error('❌ Verification success email sending failed:', emailErr.message);
-    }
-
+    // Send success verification email - REMOVED as per requirement
+    // No welcome email should be sent upon verification
+    
     return createHtmlResponse(
       "Email Verified Successfully", 
       "Your email has been verified and your account is now active.",
       true,
       donor.email,
-      !emailSent && emailError ? "email_not_sent" : null
+      null
     );
   } catch (error) {
     console.error("Verification error:", error);

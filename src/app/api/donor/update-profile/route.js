@@ -139,6 +139,7 @@ export async function PUT(request) {
         postal_code: updatedDonor.postal_code,
         country: updatedDonor.country,
         imageUrl: updatedDonor.imageUrl,
+        role: 'DONOR',
         organization: updatedDonor.organization || null,
         updated_at: updatedDonor.updated_at
       },

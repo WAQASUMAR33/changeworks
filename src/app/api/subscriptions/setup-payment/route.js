@@ -230,6 +230,8 @@ export async function POST(request) {
           const dashboardLink = `${appBase}/donor/login`;
           
           // Send welcome email
+          /* 
+          // Removed as per requirement: Only send Round-Up Welcome email when connecting Plaid
           const welcomeResult = await emailService.sendWelcomeEmail({
             donor: {
               name: donor.name,
@@ -244,6 +246,7 @@ export async function POST(request) {
           } else {
             console.error(`❌ Failed to send welcome email to ${donor.email}:`, welcomeResult.error);
           }
+          */
 
           // Send monthly impact email for the subscription
           const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
