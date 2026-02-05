@@ -180,38 +180,38 @@ export async function GET(req) {
       });
     });
 
-    // Send success verification email
-    let emailSent = false;
-    let emailError = null;
+    // Send success verification email - REMOVED as per requirement
+    // let emailSent = false;
+    // let emailError = null;
 
-    try {
-      if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD) {
-        const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
+    // try {
+    //   if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD) {
+    //     const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
         
-        const emailResult = await emailService.sendVerificationSuccessEmail({
-          donor: {
-            name: donor.name,
-            email: donor.email
-          },
-          organization: donor.organization,
-          dashboardLink: dashboardLink
-        });
+    //     const emailResult = await emailService.sendVerificationSuccessEmail({
+    //       donor: {
+    //         name: donor.name,
+    //         email: donor.email
+    //       },
+    //       organization: donor.organization,
+    //       dashboardLink: dashboardLink
+    //     });
 
-        if (emailResult.success) {
-          emailSent = true;
-          console.log('✅ Verification success email sent successfully');
-        } else {
-          emailError = emailResult.error;
-          console.error('❌ Verification success email failed:', emailResult.error);
-        }
-      } else {
-        console.log('⚠️ Email server not configured, skipping success email');
-        emailError = 'Email server not configured';
-      }
-    } catch (emailErr) {
-      emailError = emailErr.message;
-      console.error('❌ Verification success email sending failed:', emailErr.message);
-    }
+    //     if (emailResult.success) {
+    //       emailSent = true;
+    //       console.log('✅ Verification success email sent successfully');
+    //     } else {
+    //       emailError = emailResult.error;
+    //       console.error('❌ Verification success email failed:', emailResult.error);
+    //     }
+    //   } else {
+    //     console.log('⚠️ Email server not configured, skipping success email');
+    //     emailError = 'Email server not configured';
+    //   }
+    // } catch (emailErr) {
+    //   emailError = emailErr.message;
+    //   console.error('❌ Verification success email sending failed:', emailErr.message);
+    // }
 
     return createHtmlResponse(
       "Email Verified Successfully", 
