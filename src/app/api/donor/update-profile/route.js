@@ -4,6 +4,7 @@ import { z } from "zod";
 import jwt from "jsonwebtoken";
 
 const updateProfileSchema = z.object({
+  name: z.string().min(1, "Name is required").optional(),
   phone: z.string().optional(),
   postal_code: z.string().optional(),
   country: z.string().optional(),
@@ -13,7 +14,7 @@ const updateProfileSchema = z.object({
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { phone, postal_code, country, imageUrl } = updateProfileSchema.parse(body);
+    const { name, phone, postal_code, country, imageUrl } = updateProfileSchema.parse(body);
 
     console.log('🔍 Profile update request received');
 
@@ -73,6 +74,9 @@ export async function PUT(request) {
     // Prepare update data (only include fields that are provided and not empty)
     const updateData = {};
     
+    if (name !== undefined) {
+      updateData.name = name;
+    }
     if (phone !== undefined) {
       updateData.phone = phone || null; // Allow clearing phone
     }
@@ -113,6 +117,7 @@ export async function PUT(request) {
         updated_at: true,
         organization: {
           select: {
+            id: true,
             name: true
           }
         }
@@ -134,14 +139,14 @@ export async function PUT(request) {
         postal_code: updatedDonor.postal_code,
         country: updatedDonor.country,
         imageUrl: updatedDonor.imageUrl,
-        organization: updatedDonor.organization?.name || null,
+        organization: updatedDonor.organization || null,
         updated_at: updatedDonor.updated_at
       },
       updated_fields: Object.keys(updateData).filter(key => key !== 'updated_at'),
       security_info: {
         profile_updated: true,
-        protected_fields: ["name", "email"],
-        editable_fields: ["phone", "city", "address", "postal_code", "country", "imageUrl"]
+        protected_fields: ["email"],
+        editable_fields: ["name", "phone", "city", "address", "postal_code", "country", "imageUrl"]
       }
     });
 
