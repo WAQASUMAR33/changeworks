@@ -63,8 +63,8 @@ export async function POST(request) {
 
     // Step 2: Create onboarding link
     console.log('\n--- Step 2: Creating Onboarding Link ---');
-    const refreshUrl = 'https://changeworkscollective.org/stripe/refresh';
-    const returnUrl = 'https://changeworkscollective.org/stripe/success';
+    const refreshUrl = 'http://localhost:3000/organization/dashboard/stripe-products';
+    const returnUrl = 'http://localhost:3000/organization/dashboard/stripe-products';
 
     const linkResult = await createStripeAccountLinkDirect(
       stripeAccount.id,

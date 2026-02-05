@@ -70,8 +70,8 @@ export async function POST(request) {
     }
 
     // Generate new onboarding link
-    const refreshUrl = 'https://changeworkscollective.org/stripe/refresh';
-    const returnUrl = 'https://changeworkscollective.org/stripe/success';
+    const refreshUrl = 'http://localhost:3000/organization/dashboard/stripe-products';
+    const returnUrl = 'http://localhost:3000/organization/dashboard/stripe-products';
 
     console.log('🔄 Generating new onboarding link for organization:', organization.id);
     const linkResult = await createStripeAccountLinkDirect(
