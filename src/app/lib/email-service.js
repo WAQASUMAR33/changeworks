@@ -1255,7 +1255,7 @@ Your trusted platform partner for charitable giving
       </div>
     `;
 
-    const html = this.generateEmailHtml(content, brandingOrg, subject);
+    const html = this.generateEmailHtml(content, brandingOrg, subject, false);
 
     const text = `
 Welcome to your ChangeWorks partnership!
@@ -1344,7 +1344,7 @@ Unsubscribe
       </div>
     `;
 
-    const html = this.generateEmailHtml(content, brandingOrg, subject);
+    const html = this.generateEmailHtml(content, brandingOrg, subject, false);
 
     const text = `
 Complete Your Stripe Account Setup - ${organization.name}
