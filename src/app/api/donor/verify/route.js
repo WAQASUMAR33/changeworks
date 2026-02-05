@@ -74,30 +74,6 @@ export async function POST(request) {
       where: { id: verificationToken.id }
     });
 
-    /* 
-    // Send Welcome Email - DISABLED as per requirement (only verification email should be sent)
-    if (updatedDonor.organization) {
-      try {
-        let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
-        if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
-        const dashboardLink = `${appBase}/donor/login`;
-        
-        await emailService.sendWelcomeEmail({
-          donor: {
-            name: updatedDonor.name,
-            email: updatedDonor.email
-          },
-          organization: updatedDonor.organization,
-          dashboardLink
-        });
-        console.log(`📧 Welcome email sent to ${updatedDonor.email}`);
-      } catch (emailError) {
-        console.error('❌ Failed to send welcome email:', emailError);
-        // Don't fail the verification response if email fails
-      }
-    }
-    */
-
     return NextResponse.json({
       success: true,
       message: 'Email verified successfully',

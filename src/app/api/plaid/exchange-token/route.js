@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import jwt from "jsonwebtoken";
+import { emailService } from "@/app/lib/email-service";
 
 // Plaid configuration
 const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
@@ -141,28 +142,31 @@ export async function POST(request) {
     `;
     const plaidConnection = plaidConnections[0];
 
-    // Send Round Up Active Email - DISABLED as per requirement
-    // try {
-    //   // Fetch donor and organization details
-    //   const donor = await prisma.donor.findUnique({ where: { id: donorId } });
-    //   const organization = await prisma.organization.findUnique({ where: { id: organization_id } });
-    //
-    //   if (donor && organization) {
-    //     let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
-    //     if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
-    //     const dashboardLink = `${appBase}/donor/login`;
-    //     
-    //     console.log('📧 Sending Welcome Round-Up email to:', donor.email);
-    //     // await emailService.sendWelcomeEmail({
-    //     //   donor,
-    //     //   organization,
-    //     //   dashboardLink
-    //     // });
-    //   }
-    // } catch (emailError) {
-    //   console.error('❌ Failed to send Round Up Active email:', emailError);
-    //   // Don't fail the request if email fails
-    // }
+    // Send Round Up Welcome Email
+    try {
+      // Fetch donor and organization details
+      const donor = await prisma.donor.findUnique({ where: { id: donorId } });
+      const organization = await prisma.organization.findUnique({ where: { id: organization_id } });
+
+      if (donor && organization) {
+        let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+        if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+        const dashboardLink = `${appBase}/donor/login`;
+        
+        console.log('📧 Sending Welcome Round-Up email to:', donor.email);
+        await emailService.sendWelcomeEmail({
+          donor: {
+            name: donor.name,
+            email: donor.email
+          },
+          organization,
+          dashboardLink
+        });
+      }
+    } catch (emailError) {
+      console.error('❌ Failed to send Round Up Welcome email:', emailError);
+      // Don't fail the request if email fails
+    }
 
     return NextResponse.json({
       success: true,
