@@ -8,7 +8,6 @@ import {
   Building2, 
   Search,
   Filter,
-  Download,
   Loader2,
   AlertCircle,
   Eye
@@ -207,12 +206,6 @@ export default function DonorDonationsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Donations.</h1>
           <p className="text-gray-600 mt-2">View and manage your donation history.</p>
-        </div>
-        <div className="mt-4 sm:mt-0">
-          <button className="flex items-center space-x-2 px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200">
-            <Download className="w-4 h-4" />
-            <span>Export.</span>
-          </button>
         </div>
       </motion.div>
 
