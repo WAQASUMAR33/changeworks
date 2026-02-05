@@ -17,10 +17,6 @@ try {
   }
 
   endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (endpointSecret) {
-    endpointSecret = endpointSecret.trim();
-  }
-  
   if (!endpointSecret) {
     console.warn('STRIPE_WEBHOOK_SECRET environment variable is not set');
   }
@@ -45,9 +41,7 @@ export async function POST(request) {
       }, { status: 503 });
     }
 
-    // Use arrayBuffer and Buffer to preserve raw body for signature verification
-    const buf = await request.arrayBuffer();
-    const body = Buffer.from(buf);
+    const body = await request.text();
     const sig = request.headers.get('stripe-signature');
 
     let event;
@@ -56,13 +50,8 @@ export async function POST(request) {
       event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
     } catch (err) {
       console.error('Webhook signature verification failed:', err.message);
-      console.error('Debug Info:');
-      console.error('- Endpoint Secret (partial):', endpointSecret ? `...${endpointSecret.slice(-5)}` : 'Missing');
-      console.error('- Body Length:', body ? body.length : 'Missing');
-      console.error('- Signature Header:', sig);
       return NextResponse.json({
-        error: 'Webhook signature verification failed',
-        details: err.message
+        error: 'Webhook signature verification failed'
       }, { status: 400 });
     }
 
@@ -103,7 +92,7 @@ export async function POST(request) {
         await handleInvoiceCreated(event.data.object);
         break;
       default:
-        // quietly ignore unhandled events
+        console.log(`Unhandled event type ${event.type}`);
     }
 
     return NextResponse.json({ received: true });
@@ -118,12 +107,15 @@ export async function POST(request) {
 
 async function handlePaymentIntentSucceeded(paymentIntent) {
   try {
+    console.log('Payment succeeded:', paymentIntent.id);
+
     const donorId = parseInt(paymentIntent.metadata.donor_id);
     const organizationId = parseInt(paymentIntent.metadata.organization_id);
     const fullAmount = paymentIntent.amount_received / 100; // Convert from cents
     const organizationAmount = fullAmount * 0.9; // 90% goes to organization (10% platform commission)
 
-    const updateTrRecord = prisma.saveTrRecord.updateMany({
+    // Update transaction record
+    await prisma.saveTrRecord.updateMany({
       where: {
         trx_details: {
           contains: paymentIntent.id
@@ -147,7 +139,8 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
       }
     });
 
-    const updateOrgBalance = prisma.organization.update({
+    // Update organization balance with 90% of the amount
+    await prisma.organization.update({
       where: { id: organizationId },
       data: {
         balance: {
@@ -156,121 +149,14 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
       }
     });
 
-    await Promise.all([updateTrRecord, updateOrgBalance]);
-
-    // Handle one-time donation specific logic (create transaction record if missing and send email)
-    if (paymentIntent.metadata?.transaction_type === 'one_time') {
-      try {
-        // Check if transaction already exists
-        const existingTrx = await prisma.donorTransaction.findUnique({
-          where: { trnx_id: paymentIntent.id }
-        });
-
-        let transactionCreated = false;
-
-        if (!existingTrx) {
-          console.log(`Creating missing DonorTransaction for one-time payment ${paymentIntent.id}`);
-          
-          const paymentMethod = typeof paymentIntent.payment_method === 'string' 
-            ? paymentIntent.payment_method 
-            : (paymentIntent.payment_method?.id || 'card');
-
-          await prisma.donorTransaction.create({
-            data: {
-              donor_id: donorId,
-              organization_id: organizationId,
-              amount: organizationAmount,
-              currency: 'usd',
-              transaction_type: 'one_time',
-              status: 'completed',
-              trnx_id: paymentIntent.id,
-              payment_method: paymentMethod,
-              receipt_url: paymentIntent.receipt_url,
-            }
-          });
-          transactionCreated = true;
-        }
-          
-        // Send Thank You Email ONLY if we created the transaction (to avoid duplicates with confirm API)
-        // OR if we want to ensure it sends even if confirm API failed to send but created transaction? 
-        // For now, we assume if transaction exists, email was handled.
-        if (transactionCreated) {
-            // Fetch donor and organization details
-            const [donor, organization] = await Promise.all([
-          prisma.donor.findUnique({ 
-            where: { id: donorId }, 
-            select: { 
-              name: true, 
-              email: true 
-            } 
-          }),
-          prisma.organization.findUnique({ 
-            where: { id: organizationId }, 
-            select: { 
-              name: true, 
-              email: true,
-              firstName: true,
-              lastName: true,
-              title: true,
-              imageUrl: true,
-              ein: true,
-              address: true,
-              city: true,
-              state: true,
-              postalCode: true,
-              phone: true
-            } 
-          })
-        ]);
-
-        if (donor && organization) {
-          let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
-          if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
-          const dashboardLink = `${appBase}/donor/login`;
-          
-          let paymentMethodText = 'Credit Card';
-          // Try to extract card details from payment intent if available
-          if (paymentIntent.payment_method_details?.card?.last4) {
-            paymentMethodText = `Card ending in ${paymentIntent.payment_method_details.card.last4}`;
-          } else if (typeof paymentIntent.payment_method === 'string') {
-              // If we only have ID, we can't easily get last4 without another API call, so default to generic
-              paymentMethodText = 'Credit Card';
-          }
-
-          console.log(`📧 [Webhook] Sending one-time donation email to ${donor.email}`);
-          try {
-            const emailResult = await emailService.sendOneTimeDonationEmail({
-              donor,
-              organization,
-              dashboardLink,
-              amount: fullAmount.toFixed(2),
-              donationDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-              transactionId: paymentIntent.id,
-              paymentMethod: paymentMethodText,
-              campaignName: paymentIntent.metadata.campaign_name || 'General Donation'
-            });
-            console.log(`📧 [Webhook] Email result: ${JSON.stringify(emailResult)}`);
-          } catch (emailErr) {
-            console.error(`❌ [Webhook] Failed to send email: ${emailErr.message}`);
-          }
-        } else {
-            console.warn(`⚠️ [Webhook] Missing donor/org data for email. Donor: ${!!donor}, Org: ${!!organization}`);
-        }
-      }
-      } catch (err) {
-        console.error('Error handling one-time donation in webhook:', err);
-      }
-    }
+    console.log(`Updated organization ${organizationId} balance by $${organizationAmount.toFixed(2)} (90% of $${fullAmount.toFixed(2)})`);
 
     // Send monthly impact email to donor
-    // We await this to ensure it sends before function exit, but failures are caught
-    // Only send if NOT one_time transaction (one-time handled in confirm-and-record or above block)
-    if (paymentIntent.metadata?.transaction_type !== 'one_time') {
-      try {
-        await sendMonthlyImpactEmail(donorId, organizationId, fullAmount);
-      } catch (emailError) {
-        console.error('Failed to send monthly impact email:', emailError);
-      }
+    try {
+      await sendMonthlyImpactEmail(donorId, organizationId, fullAmount);
+    } catch (emailError) {
+      console.error('Failed to send monthly impact email:', emailError);
+      // Don't fail the webhook if email fails
     }
 
   } catch (error) {
@@ -280,6 +166,8 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
 
 async function handlePaymentIntentFailed(paymentIntent) {
   try {
+    console.log('Payment failed:', paymentIntent.id);
+
     // Update transaction record
     await prisma.saveTrRecord.updateMany({
       where: {
@@ -309,6 +197,7 @@ async function handlePaymentIntentFailed(paymentIntent) {
       }
     } catch (emailError) {
       console.error('Failed to send card failure alert email:', emailError);
+      // Don't fail the webhook if email fails
     }
 
   } catch (error) {
@@ -318,6 +207,8 @@ async function handlePaymentIntentFailed(paymentIntent) {
 
 async function handlePaymentIntentCanceled(paymentIntent) {
   try {
+    console.log('Payment canceled:', paymentIntent.id);
+
     // Update transaction record
     await prisma.saveTrRecord.updateMany({
       where: {
@@ -343,6 +234,8 @@ async function handlePaymentIntentCanceled(paymentIntent) {
 
 async function handlePaymentIntentProcessing(paymentIntent) {
   try {
+    console.log('Payment processing:', paymentIntent.id);
+
     // Update transaction record
     await prisma.saveTrRecord.updateMany({
       where: {
@@ -369,6 +262,9 @@ async function handlePaymentIntentProcessing(paymentIntent) {
 // Subscription event handlers
 async function handleSubscriptionCreated(subscription) {
   try {
+    console.log('🔍 Subscription created webhook:', subscription.id);
+    console.log('🔍 Subscription metadata:', subscription.metadata);
+
     const donorId = parseInt(subscription.metadata.donor_id);
     const organizationId = parseInt(subscription.metadata.organization_id);
     const packageId = parseInt(subscription.metadata.package_id);
@@ -379,8 +275,7 @@ async function handleSubscriptionCreated(subscription) {
     let packageData;
     if (packageId) {
       packageData = await prisma.package.findUnique({
-        where: { id: packageId },
-        select: { price: true, currency: true }
+        where: { id: packageId }
       });
     }
 
@@ -440,7 +335,7 @@ async function handleSubscriptionCreated(subscription) {
     };
 
     // Use upsert to create or update
-    await prisma.subscription.upsert({
+    const dbSubscription = await prisma.subscription.upsert({
       where: {
         stripe_subscription_id: subscription.id
       },
@@ -457,6 +352,8 @@ async function handleSubscriptionCreated(subscription) {
       create: subscriptionData
     });
 
+    console.log(`✅ Subscription ${subscription.id} created/updated in database with ID: ${dbSubscription.id}`);
+
   } catch (error) {
     console.error('Error handling customer.subscription.created:', error);
   }
@@ -464,6 +361,8 @@ async function handleSubscriptionCreated(subscription) {
 
 async function handleSubscriptionUpdated(subscription) {
   try {
+    console.log('Subscription updated:', subscription.id);
+
     // Determine the correct status based on Stripe data
     let status = subscription.status.toUpperCase();
 
@@ -494,6 +393,8 @@ async function handleSubscriptionUpdated(subscription) {
       }
     });
 
+    console.log(`Updated subscription ${subscription.id} status to ${subscription.status}`);
+
   } catch (error) {
     console.error('Error handling customer.subscription.updated:', error);
   }
@@ -501,6 +402,8 @@ async function handleSubscriptionUpdated(subscription) {
 
 async function handleSubscriptionDeleted(subscription) {
   try {
+    console.log('Subscription deleted:', subscription.id);
+
     // Update subscription record
     await prisma.subscription.updateMany({
       where: {
@@ -513,6 +416,8 @@ async function handleSubscriptionDeleted(subscription) {
       }
     });
 
+    console.log(`Marked subscription ${subscription.id} as canceled`);
+
   } catch (error) {
     console.error('Error handling customer.subscription.deleted:', error);
   }
@@ -520,7 +425,10 @@ async function handleSubscriptionDeleted(subscription) {
 
 async function handleInvoicePaymentSucceeded(invoice) {
   try {
+    console.log('Invoice payment succeeded:', invoice.id);
+
     if (!invoice.subscription) {
+      console.log('Invoice is not for a subscription, skipping');
       return;
     }
 
@@ -528,10 +436,6 @@ async function handleInvoicePaymentSucceeded(invoice) {
     const subscription = await prisma.subscription.findFirst({
       where: {
         stripe_subscription_id: invoice.subscription
-      },
-      include: {
-        donor: true,
-        organization: true
       }
     });
 
@@ -544,7 +448,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
     const organizationAmount = fullAmount * 0.9; // 90% goes to organization (10% platform fee)
 
     // Create or update subscription transaction record with 90% amount
-    const upsertSubTrx = prisma.subscriptionTransaction.upsert({
+    await prisma.subscriptionTransaction.upsert({
       where: {
         stripe_invoice_id: invoice.id
       },
@@ -571,7 +475,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
     });
 
     // Update organization balance with 90% of the amount
-    const updateOrgBalance = prisma.organization.update({
+    await prisma.organization.update({
       where: { id: subscription.organization_id },
       data: {
         balance: {
@@ -580,91 +484,76 @@ async function handleInvoicePaymentSucceeded(invoice) {
       }
     });
 
-    // Create transaction record and donor transaction record
-    const createTrRecords = (async () => {
-      // Create transaction record in SaveTrRecord table for recurring payment with 90% amount
-      const transactionRecord = await prisma.saveTrRecord.create({
-        data: {
-          trx_id: `sub_${invoice.subscription}_${invoice.id}_${Date.now()}`,
-          trx_date: new Date(),
-          trx_amount: organizationAmount, // Store 90% of the amount
-          trx_method: 'stripe_subscription_recurring',
-          trx_donor_id: subscription.donor_id,
-          trx_organization_id: subscription.organization_id,
-          pay_status: 'completed',
-          trx_recipt_url: invoice.hosted_invoice_url || null,
-          trx_details: JSON.stringify({
-            subscription_id: invoice.subscription,
-            invoice_id: invoice.id,
-            payment_intent_id: invoice.payment_intent,
-            stripe_customer_id: invoice.customer,
-            subscription_status: 'active',
-            full_amount: fullAmount,
-            organization_amount: organizationAmount,
-            platform_fee: fullAmount * 0.1,
-            period_start: new Date(invoice.period_start * 1000),
-            period_end: new Date(invoice.period_end * 1000),
-            created_via: 'webhook_recurring_payment',
-            created_at: new Date()
-          })
-        }
-      });
+    // Create transaction record in SaveTrRecord table for recurring payment with 90% amount
+    const transactionRecord = await prisma.saveTrRecord.create({
+      data: {
+        trx_id: `sub_${invoice.subscription}_${invoice.id}_${Date.now()}`,
+        trx_date: new Date(),
+        trx_amount: organizationAmount, // Store 90% of the amount
+        trx_method: 'stripe_subscription_recurring',
+        trx_donor_id: subscription.donor_id,
+        trx_organization_id: subscription.organization_id,
+        pay_status: 'completed',
+        trx_recipt_url: invoice.hosted_invoice_url || null,
+        trx_details: JSON.stringify({
+          subscription_id: invoice.subscription,
+          invoice_id: invoice.id,
+          payment_intent_id: invoice.payment_intent,
+          stripe_customer_id: invoice.customer,
+          subscription_status: 'active',
+          full_amount: fullAmount,
+          organization_amount: organizationAmount,
+          platform_fee: fullAmount * 0.1,
+          period_start: new Date(invoice.period_start * 1000),
+          period_end: new Date(invoice.period_end * 1000),
+          created_via: 'webhook_recurring_payment',
+          created_at: new Date()
+        })
+      }
+    });
 
-      // Create donor transaction record for recurring payment with 90% amount
-      await prisma.donorTransaction.create({
-        data: {
-          donor_id: subscription.donor_id,
-          organization_id: subscription.organization_id,
-          amount: organizationAmount, // Store 90% of the amount
-          currency: invoice.currency,
-          transaction_type: 'subscription_recurring',
-          status: 'completed',
-          stripe_subscription_id: invoice.subscription,
-          stripe_invoice_id: invoice.id,
-          stripe_payment_intent_id: invoice.payment_intent,
-          description: `Monthly subscription payment: ${invoice.subscription}`,
-          metadata: JSON.stringify({
-            subscription_id: subscription.id,
-            save_tr_record_id: transactionRecord.id,
-            invoice_id: invoice.id,
-            full_amount: fullAmount,
-            organization_amount: organizationAmount,
-            platform_fee: fullAmount * 0.1,
-            period_start: new Date(invoice.period_start * 1000),
-            period_end: new Date(invoice.period_end * 1000),
-            created_via: 'webhook_recurring_payment'
-          })
-        }
-      });
-    })();
+    // Create donor transaction record for recurring payment with 90% amount
+    const donorTransaction = await prisma.donorTransaction.create({
+      data: {
+        donor_id: subscription.donor_id,
+        organization_id: subscription.organization_id,
+        amount: organizationAmount, // Store 90% of the amount
+        currency: invoice.currency,
+        transaction_type: 'subscription_recurring',
+        status: 'completed',
+        stripe_subscription_id: invoice.subscription,
+        stripe_invoice_id: invoice.id,
+        stripe_payment_intent_id: invoice.payment_intent,
+        description: `Recurring subscription payment: ${invoice.subscription}`,
+        metadata: JSON.stringify({
+          subscription_id: subscription.id,
+          save_tr_record_id: transactionRecord.id,
+          invoice_id: invoice.id,
+          full_amount: fullAmount,
+          organization_amount: organizationAmount,
+          platform_fee: fullAmount * 0.1,
+          period_start: new Date(invoice.period_start * 1000),
+          period_end: new Date(invoice.period_end * 1000),
+          created_via: 'webhook_recurring_payment'
+        })
+      }
+    });
 
-    await Promise.all([upsertSubTrx, updateOrgBalance, createTrRecords]);
+    console.log(`✅ Recurring subscription payment processed:`);
+    console.log(`   - Subscription ID: ${subscription.id}`);
+    console.log(`   - Transaction ID: ${transactionRecord.id}`);
+    console.log(`   - Donor Transaction ID: ${donorTransaction.id}`);
+    console.log(`   - Full Amount: $${fullAmount.toFixed(2)}`);
+    console.log(`   - Organization Amount (90%): $${organizationAmount.toFixed(2)}`);
+    console.log(`   - Platform Fee (10%): $${(fullAmount * 0.1).toFixed(2)}`);
+    console.log(`Updated organization ${subscription.organization_id} balance by $${organizationAmount.toFixed(2)} from subscription payment`);
 
     // Send monthly impact email to donor with full amount
     try {
       await sendMonthlyImpactEmail(subscription.donor_id, subscription.organization_id, fullAmount);
-
-      // Send recurring payment confirmation email
-      let appBase2 = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
-      if (!/^https?:\/\//i.test(appBase2)) appBase2 = `https://${appBase2}`;
-      const dashboardLink = `${appBase2}/donor/login`;
-      
-      // Calculate next payment date (approximated from current period end)
-      let nextPaymentDate = 'Next month';
-      if (invoice.lines?.data?.[0]?.period?.end) {
-        nextPaymentDate = new Date(invoice.lines.data[0].period.end * 1000).toLocaleDateString();
-      }
-
-      await emailService.sendRecurringPaymentEmail({
-        donor: subscription.donor,
-        organization: subscription.organization,
-        dashboardLink: dashboardLink,
-        amount: fullAmount.toFixed(2),
-        paymentDate: new Date().toLocaleDateString(),
-        nextPaymentDate: nextPaymentDate
-      });
     } catch (emailError) {
-      console.error('Failed to send recurring payment emails:', emailError);
+      console.error('Failed to send monthly impact email:', emailError);
+      // Don't fail the webhook if email fails
     }
 
   } catch (error) {
@@ -674,7 +563,10 @@ async function handleInvoicePaymentSucceeded(invoice) {
 
 async function handleInvoicePaymentFailed(invoice) {
   try {
+    console.log('Invoice payment failed:', invoice.id);
+
     if (!invoice.subscription) {
+      console.log('Invoice is not for a subscription, skipping');
       return;
     }
 
@@ -710,11 +602,14 @@ async function handleInvoicePaymentFailed(invoice) {
       }
     });
 
+    console.log(`Recorded failed payment for subscription ${subscription.id}`);
+
     // Send card failure alert email for subscription payment failure
     try {
       await sendCardFailureAlertEmail(subscription.donor_id, subscription.organization_id);
     } catch (emailError) {
       console.error('Failed to send card failure alert email:', emailError);
+      // Don't fail the webhook if email fails
     }
 
   } catch (error) {
@@ -724,7 +619,10 @@ async function handleInvoicePaymentFailed(invoice) {
 
 async function handleInvoiceCreated(invoice) {
   try {
+    console.log('Invoice created:', invoice.id);
+
     if (!invoice.subscription) {
+      console.log('Invoice is not for a subscription, skipping');
       return;
     }
 
@@ -766,6 +664,8 @@ async function handleInvoiceCreated(invoice) {
       }
     });
 
+    console.log(`Created transaction record for invoice ${invoice.id}`);
+
   } catch (error) {
     console.error('Error handling invoice.created:', error);
   }
@@ -788,18 +688,17 @@ async function sendMonthlyImpactEmail(donorId, organizationId, amount) {
       }),
       prisma.organization.findUnique({
         where: { id: organizationId },
-        select: { id: true, name: true, email: true, imageUrl: true }
+        select: { id: true, name: true, email: true }
       })
     ]);
 
     if (!donor || !organization) {
+      console.log('Donor or organization not found for monthly impact email');
       return;
     }
 
     // Generate dashboard link
-    let appBase3 = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
-    if (!/^https?:\/\//i.test(appBase3)) appBase3 = `https://${appBase3}`;
-    const dashboardLink = `${appBase3}/donor/login`;
+    const dashboardLink = 'https://app.changeworksfund.org/donor/login';
 
     // Send monthly impact email
     const emailResult = await emailService.sendMonthlyImpactEmail({
@@ -813,7 +712,9 @@ async function sendMonthlyImpactEmail(donorId, organizationId, amount) {
       totalAmount: amount.toFixed(2)
     });
 
-    if (!emailResult.success) {
+    if (emailResult.success) {
+      console.log(`✅ Monthly impact email sent to ${donor.email} for $${amount} in ${currentMonth}`);
+    } else {
       console.error(`❌ Failed to send monthly impact email to ${donor.email}:`, emailResult.error);
     }
 
@@ -833,16 +734,17 @@ async function sendCardFailureAlertEmail(donorId, organizationId) {
       }),
       prisma.organization.findUnique({
         where: { id: organizationId },
-        select: { id: true, name: true, email: true, imageUrl: true }
+        select: { id: true, name: true, email: true }
       })
     ]);
 
     if (!donor || !organization) {
+      console.log('Donor or organization not found for card failure alert email');
       return;
     }
 
     // Generate dashboard link
-    const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
+    const dashboardLink = 'https://app.changeworksfund.org/donor/login';
 
     // Send card failure alert email
     const emailResult = await emailService.sendCardFailureAlertEmail({
@@ -854,7 +756,9 @@ async function sendCardFailureAlertEmail(donorId, organizationId) {
       dashboardLink: dashboardLink
     });
 
-    if (!emailResult.success) {
+    if (emailResult.success) {
+      console.log(`✅ Card failure alert email sent to ${donor.email} for ${organization.name}`);
+    } else {
       console.error(`❌ Failed to send card failure alert email to ${donor.email}:`, emailResult.error);
     }
 
