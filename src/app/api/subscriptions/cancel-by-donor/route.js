@@ -102,9 +102,83 @@ export async function POST(request) {
         } catch (stripeError) {
           // Check if subscription is missing in Stripe
           if (stripeError.code === 'resource_missing') {
-            console.warn(`Subscription ${subscription.stripe_subscription_id} missing in Stripe. Marking as canceled locally.`);
-            stripeResponse = { message: 'Subscription missing in Stripe, marked as canceled locally' };
-            effectiveImmediateCancel = true; // Force immediate cancel status since it's gone
+            console.warn(`Subscription ${subscription.stripe_subscription_id} missing in Stripe. Attempting to find correct active subscription...`);
+            
+            let recoverySuccess = false;
+
+            // Try to find the correct subscription by donor email and package price
+            try {
+              const donorEmail = subscription.donor?.email;
+              if (donorEmail) {
+                 const customers = await stripe.customers.list({ email: donorEmail, limit: 1 });
+                 
+                 if (customers.data.length > 0) {
+                   const customer = customers.data[0];
+                   console.log(`Found Stripe customer ${customer.id} for email ${donorEmail}`);
+                   
+                   const activeSubs = await stripe.subscriptions.list({ 
+                     customer: customer.id, 
+                     status: 'active' 
+                   });
+                   
+                   console.log(`Found ${activeSubs.data.length} active subscriptions for customer`);
+
+                   // Find matching subscription (same amount and currency)
+                   const targetAmount = Math.round(subscription.package.price * 100);
+                   const targetCurrency = subscription.package.currency.toLowerCase();
+                   
+                   console.log(`Looking for subscription with amount ${targetAmount} and currency ${targetCurrency}`);
+
+                   const matchingSub = activeSubs.data.find(sub => {
+                     const item = sub.items.data[0];
+                     return item && 
+                            item.price.unit_amount === targetAmount && 
+                            item.price.currency.toLowerCase() === targetCurrency;
+                   });
+                   
+                   if (matchingSub) {
+                      console.log(`Found matching active subscription: ${matchingSub.id}. Updating local record and cancelling.`);
+                      
+                      // Update local record with correct Stripe ID
+                      await prisma.$executeRaw`
+                        UPDATE subscriptions 
+                        SET stripe_subscription_id = ${matchingSub.id}
+                        WHERE id = ${subscription.id}
+                      `;
+                      
+                      // Now cancel the correct one
+                      if (cancel_immediately) {
+                        const canceledSub = await stripe.subscriptions.cancel(matchingSub.id);
+                        console.log(`Recovered cancellation successful. Stripe status: ${canceledSub.status}`);
+                        stripeResponse = { message: 'Found correct subscription and canceled immediately' };
+                      } else {
+                        const updatedSub = await stripe.subscriptions.update(matchingSub.id, { cancel_at_period_end: true });
+                        console.log(`Recovered update successful. Stripe status: ${updatedSub.status}`);
+                        stripeResponse = { message: 'Found correct subscription and scheduled cancellation' };
+                      }
+                      
+                      // Update the variable so the final log shows the correct ID
+                      subscription.stripe_subscription_id = matchingSub.id;
+                      recoverySuccess = true;
+                      
+                   } else {
+                      console.warn('No matching active subscription found in Stripe with same price/currency.');
+                   }
+                 } else {
+                   console.warn('Donor customer not found in Stripe.');
+                 }
+              } else {
+                 console.warn('Donor email missing.');
+              }
+            } catch (recoveryError) {
+              console.error('Error during recovery attempt:', recoveryError);
+            }
+
+            if (!recoverySuccess) {
+               console.warn('Recovery failed. Marking as canceled locally.');
+               stripeResponse = { message: 'Subscription missing in Stripe, marked as canceled locally' };
+               effectiveImmediateCancel = true;
+            }
           } else {
             throw stripeError; // Re-throw other errors
           }
