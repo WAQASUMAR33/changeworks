@@ -78,6 +78,9 @@ export async function POST(request) {
 
     // Cancel each subscription
     for (const subscription of subscriptions) {
+      console.log(`Processing cancellation for subscription ${subscription.id} (Stripe ID: ${subscription.stripe_subscription_id})`);
+      console.log(`Cancel immediately requested: ${cancel_immediately} (${typeof cancel_immediately})`);
+
       try {
         let stripeResponse;
         let effectiveImmediateCancel = cancel_immediately;
@@ -85,13 +88,15 @@ export async function POST(request) {
         try {
           if (cancel_immediately) {
             // Cancel immediately
-            await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
+            const canceledSub = await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
+            console.log(`Stripe cancellation successful. Stripe status: ${canceledSub.status}`);
             stripeResponse = { message: 'Subscription canceled immediately' };
           } else {
             // Cancel at period end
-            await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+            const updatedSub = await stripe.subscriptions.update(subscription.stripe_subscription_id, {
               cancel_at_period_end: true,
             });
+            console.log(`Stripe update successful. Stripe status: ${updatedSub.status}, cancel_at_period_end: ${updatedSub.cancel_at_period_end}`);
             stripeResponse = { message: 'Subscription will be canceled at the end of the current period' };
           }
         } catch (stripeError) {
