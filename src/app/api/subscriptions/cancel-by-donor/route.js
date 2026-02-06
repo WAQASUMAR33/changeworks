@@ -46,7 +46,8 @@ export async function POST(request) {
           select: {
             id: true,
             name: true,
-            email: true
+            email: true,
+            stripeAccountId: true
           }
         },
         package: {
@@ -81,6 +82,15 @@ export async function POST(request) {
       console.log(`Processing cancellation for subscription ${subscription.id} (Stripe ID: ${subscription.stripe_subscription_id})`);
       console.log(`Cancel immediately requested: ${cancel_immediately} (${typeof cancel_immediately})`);
 
+      // Determine Stripe context (Platform or Connected Account)
+      const stripeOptions = {};
+      if (subscription.organization?.stripeAccountId) {
+        stripeOptions.stripeAccount = subscription.organization.stripeAccountId;
+        console.log(`Using Connected Account: ${subscription.organization.stripeAccountId}`);
+      } else {
+        console.log('Using Platform Account');
+      }
+
       try {
         let stripeResponse;
         let effectiveImmediateCancel = cancel_immediately;
@@ -88,21 +98,21 @@ export async function POST(request) {
         try {
           if (cancel_immediately) {
             // Cancel immediately
-            const canceledSub = await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
+            const canceledSub = await stripe.subscriptions.cancel(subscription.stripe_subscription_id, stripeOptions);
             console.log(`Stripe cancellation successful. Stripe status: ${canceledSub.status}`);
             stripeResponse = { message: 'Subscription canceled immediately' };
           } else {
             // Cancel at period end
             const updatedSub = await stripe.subscriptions.update(subscription.stripe_subscription_id, {
               cancel_at_period_end: true,
-            });
+            }, stripeOptions);
             console.log(`Stripe update successful. Stripe status: ${updatedSub.status}, cancel_at_period_end: ${updatedSub.cancel_at_period_end}`);
             stripeResponse = { message: 'Subscription will be canceled at the end of the current period' };
           }
         } catch (stripeError) {
           // Check if subscription is missing in Stripe
           if (stripeError.code === 'resource_missing') {
-            console.warn(`Subscription ${subscription.stripe_subscription_id} missing in Stripe. Attempting to find correct active subscription...`);
+            console.warn(`Subscription ${subscription.stripe_subscription_id} missing in Stripe (Account: ${stripeOptions.stripeAccount || 'Platform'}). Attempting to find correct active subscription...`);
             
             let recoverySuccess = false;
 
@@ -110,7 +120,7 @@ export async function POST(request) {
             try {
               const donorEmail = subscription.donor?.email;
               if (donorEmail) {
-                 const customers = await stripe.customers.list({ email: donorEmail, limit: 1 });
+                 const customers = await stripe.customers.list({ email: donorEmail, limit: 1 }, stripeOptions);
                  
                  if (customers.data.length > 0) {
                    const customer = customers.data[0];
@@ -119,12 +129,16 @@ export async function POST(request) {
                    const activeSubs = await stripe.subscriptions.list({ 
                      customer: customer.id, 
                      status: 'active' 
-                   });
+                   }, stripeOptions);
                    
                    console.log(`Found ${activeSubs.data.length} active subscriptions for customer`);
 
-                   // Find matching subscription (same amount and currency)
-                   const targetAmount = Math.round(subscription.package.price * 100);
+                   // Find matching subscription (prefer amount from subscription record, fallback to package)
+                   // subscription.amount should be accurate as it is saved during creation
+                   const targetAmount = subscription.amount 
+                     ? Math.round(subscription.amount * 100) 
+                     : Math.round(subscription.package.price * 100);
+                   
                    const targetCurrency = subscription.package.currency.toLowerCase();
                    
                    console.log(`Looking for subscription with amount ${targetAmount} and currency ${targetCurrency}`);
@@ -148,11 +162,11 @@ export async function POST(request) {
                       
                       // Now cancel the correct one
                       if (cancel_immediately) {
-                        const canceledSub = await stripe.subscriptions.cancel(matchingSub.id);
+                        const canceledSub = await stripe.subscriptions.cancel(matchingSub.id, stripeOptions);
                         console.log(`Recovered cancellation successful. Stripe status: ${canceledSub.status}`);
                         stripeResponse = { message: 'Found correct subscription and canceled immediately' };
                       } else {
-                        const updatedSub = await stripe.subscriptions.update(matchingSub.id, { cancel_at_period_end: true });
+                        const updatedSub = await stripe.subscriptions.update(matchingSub.id, { cancel_at_period_end: true }, stripeOptions);
                         console.log(`Recovered update successful. Stripe status: ${updatedSub.status}`);
                         stripeResponse = { message: 'Found correct subscription and scheduled cancellation' };
                       }
