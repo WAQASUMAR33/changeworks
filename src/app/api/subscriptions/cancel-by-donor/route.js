@@ -8,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { donor_id, cancel_immediately = false } = body;
+    const { donor_id, subscription_id, cancel_immediately = false } = body;
 
     // Validate required fields
     if (!donor_id) {
@@ -18,14 +18,22 @@ export async function POST(request) {
       );
     }
 
+    // Build query
+    const whereClause = {
+      donor_id: parseInt(donor_id),
+      status: {
+        in: ['ACTIVE', 'TRIALING', 'PAST_DUE']
+      }
+    };
+
+    // If subscription_id is provided, only cancel that specific subscription
+    if (subscription_id) {
+      whereClause.id = parseInt(subscription_id);
+    }
+
     // Find donor's active subscriptions
     const subscriptions = await prisma.subscription.findMany({
-      where: {
-        donor_id: parseInt(donor_id),
-        status: {
-          in: ['ACTIVE', 'TRIALING', 'PAST_DUE']
-        }
-      },
+      where: whereClause,
       include: {
         donor: {
           select: {

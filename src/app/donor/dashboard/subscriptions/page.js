@@ -149,6 +149,7 @@ export default function DonorSubscriptionsPage() {
           },
           body: JSON.stringify({
             donor_id: donorId,
+            subscription_id: subscriptionToCancel.id,
             cancel_immediately: cancelImmediately
           }),
         });

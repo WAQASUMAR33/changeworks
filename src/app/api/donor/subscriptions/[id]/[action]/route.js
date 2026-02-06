@@ -138,22 +138,25 @@ export async function POST(request, { params }) {
         break;
 
       case 'pause':
-        // Pause the subscription (cancel immediately)
+        // Pause the subscription (pause collection)
         if (subscription.status === 'CANCELED') {
           return NextResponse.json({ 
             error: "Subscription is already canceled" 
           }, { status: 400 });
         }
 
-        // Cancel immediately in Stripe
-        await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
+        // Pause collection in Stripe
+        await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+          pause_collection: {
+            behavior: 'void',
+          },
+        });
 
         // Update database
         updatedSubscription = await prisma.subscription.update({
           where: { id: subscriptionId },
           data: {
-            status: 'CANCELED',
-            canceled_at: new Date(),
+            status: 'PAUSED',
             updated_at: new Date()
           },
           include: {
@@ -186,24 +189,70 @@ export async function POST(request, { params }) {
 
         result = {
           success: true,
-          message: 'Subscription paused (canceled immediately)',
+          message: 'Subscription paused successfully',
           subscription: updatedSubscription
         };
         break;
 
       case 'resume':
-        // Resume the subscription (create a new subscription)
+        // Resume the subscription
         if (subscription.status === 'ACTIVE') {
           return NextResponse.json({ 
             error: "Subscription is already active" 
           }, { status: 400 });
         }
 
-        // For resume, we would need to create a new subscription
-        // This is complex as it requires customer, price, and payment method
-        return NextResponse.json({ 
-          error: "Resume functionality requires creating a new subscription. Please create a new subscription instead." 
-        }, { status: 400 });
+        if (subscription.status === 'CANCELED') {
+          return NextResponse.json({ 
+            error: "Cannot resume a canceled subscription. Please create a new one." 
+          }, { status: 400 });
+        }
+
+        // Resume collection in Stripe
+        await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+          pause_collection: '',
+        });
+
+        // Update database
+        updatedSubscription = await prisma.subscription.update({
+          where: { id: subscriptionId },
+          data: {
+            status: 'ACTIVE',
+            updated_at: new Date()
+          },
+          include: {
+            donor: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            },
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            },
+            package: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                price: true,
+                currency: true,
+                features: true
+              }
+            }
+          }
+        });
+
+        result = {
+          success: true,
+          message: 'Subscription resumed successfully',
+          subscription: updatedSubscription
+        };
         break;
 
       default:
