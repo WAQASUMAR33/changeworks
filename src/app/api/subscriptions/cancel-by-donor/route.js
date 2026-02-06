@@ -80,27 +80,39 @@ export async function POST(request) {
     for (const subscription of subscriptions) {
       try {
         let stripeResponse;
+        let effectiveImmediateCancel = cancel_immediately;
 
-        if (cancel_immediately) {
-          // Cancel immediately
-          await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
-          stripeResponse = { message: 'Subscription canceled immediately' };
-        } else {
-          // Cancel at period end
-          await stripe.subscriptions.update(subscription.stripe_subscription_id, {
-            cancel_at_period_end: true,
-          });
-          stripeResponse = { message: 'Subscription will be canceled at the end of the current period' };
+        try {
+          if (cancel_immediately) {
+            // Cancel immediately
+            await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
+            stripeResponse = { message: 'Subscription canceled immediately' };
+          } else {
+            // Cancel at period end
+            await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+              cancel_at_period_end: true,
+            });
+            stripeResponse = { message: 'Subscription will be canceled at the end of the current period' };
+          }
+        } catch (stripeError) {
+          // Check if subscription is missing in Stripe
+          if (stripeError.code === 'resource_missing') {
+            console.warn(`Subscription ${subscription.stripe_subscription_id} missing in Stripe. Marking as canceled locally.`);
+            stripeResponse = { message: 'Subscription missing in Stripe, marked as canceled locally' };
+            effectiveImmediateCancel = true; // Force immediate cancel status since it's gone
+          } else {
+            throw stripeError; // Re-throw other errors
+          }
         }
 
         // Update database using raw SQL to avoid Prisma enum issues
         console.log(`Updating subscription ${subscription.id} in database...`);
         console.log(`Stripe subscription ID: ${subscription.stripe_subscription_id}`);
-        console.log(`Cancel immediately: ${cancel_immediately}`);
+        console.log(`Cancel immediately: ${effectiveImmediateCancel}`);
         
-        const newStatus = cancel_immediately ? 'CANCELED' : 'CANCELED_AT_PERIOD_END';
-        const cancelAtPeriodEnd = !cancel_immediately ? 1 : 0;
-        const canceledAt = cancel_immediately ? new Date().toISOString().slice(0, 19).replace('T', ' ') : null;
+        const newStatus = effectiveImmediateCancel ? 'CANCELED' : 'CANCELED_AT_PERIOD_END';
+        const cancelAtPeriodEnd = !effectiveImmediateCancel ? 1 : 0;
+        const canceledAt = effectiveImmediateCancel ? new Date().toISOString().slice(0, 19).replace('T', ' ') : null;
         
         // Use raw SQL to update the subscription
         await prisma.$executeRaw`

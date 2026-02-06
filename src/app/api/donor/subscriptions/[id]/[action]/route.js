@@ -89,52 +89,107 @@ export async function POST(request, { params }) {
           }, { status: 400 });
         }
 
-        // Cancel at period end in Stripe
-        await stripe.subscriptions.update(subscription.stripe_subscription_id, {
-          cancel_at_period_end: true,
-        });
+        let effectiveCancelImmediate = false;
 
-        // Update database
-        updatedSubscription = await prisma.subscription.update({
-          where: { id: subscriptionId },
-          data: {
+        // Cancel at period end in Stripe
+        try {
+          await stripe.subscriptions.update(subscription.stripe_subscription_id, {
             cancel_at_period_end: true,
-            status: 'ACTIVE', // Keep as ACTIVE when cancel_at_period_end is true
-            updated_at: new Date()
-          },
-          include: {
-            donor: {
-              select: {
-                id: true,
-                name: true,
-                email: true
-              }
+          });
+        } catch (stripeError) {
+          if (stripeError.code === 'resource_missing') {
+            console.warn(`Subscription ${subscription.stripe_subscription_id} missing in Stripe. Marking as canceled locally.`);
+            effectiveCancelImmediate = true;
+          } else {
+            throw stripeError;
+          }
+        }
+
+        if (effectiveCancelImmediate) {
+           // Update database - force cancel because it's missing in Stripe
+           updatedSubscription = await prisma.subscription.update({
+            where: { id: subscriptionId },
+            data: {
+              status: 'CANCELED',
+              canceled_at: new Date(),
+              updated_at: new Date()
             },
-            organization: {
-              select: {
-                id: true,
-                name: true,
-                email: true
-              }
-            },
-            package: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                price: true,
-                currency: true,
-                features: true
+            include: {
+              donor: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true
+                }
+              },
+              organization: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true
+                }
+              },
+              package: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  price: true,
+                  currency: true,
+                  features: true
+                }
               }
             }
-          }
-        });
+          });
 
-        result = {
-          success: true,
-          message: 'Subscription scheduled for cancellation at period end',
-          subscription: updatedSubscription
-        };
+          result = {
+            success: true,
+            message: 'Subscription missing in Stripe, marked as canceled locally',
+            subscription: updatedSubscription
+          };
+        } else {
+          // Update database - standard cancel at period end
+          updatedSubscription = await prisma.subscription.update({
+            where: { id: subscriptionId },
+            data: {
+              cancel_at_period_end: true,
+              status: 'ACTIVE', // Keep as ACTIVE when cancel_at_period_end is true
+              updated_at: new Date()
+            },
+            include: {
+              donor: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true
+                }
+              },
+              organization: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true
+                }
+              },
+              package: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  price: true,
+                  currency: true,
+                  features: true
+                }
+              }
+            }
+          });
+
+          result = {
+            success: true,
+            message: 'Subscription scheduled for cancellation at period end',
+            subscription: updatedSubscription
+          };
+        }
         break;
 
       case 'pause':
