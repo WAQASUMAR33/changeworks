@@ -99,6 +99,36 @@ class EmailService {
     return `${cleanBase}${cleanPath}`;
   }
 
+  // Helper to resolve ChangeWorks logo URL
+  getChangeWorksLogoUrl() {
+    let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+    if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+    const cleanBase = appBase.endsWith('/') ? appBase.slice(0, -1) : appBase;
+    return `${cleanBase}/imgs/changeworks.png`;
+  }
+
+  // Helper to generate consistent footer
+  getFooterHtml() {
+    const changeWorksLogoUrl = this.getChangeWorksLogoUrl();
+    return `
+      <!-- Footer -->
+      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
+        <div style="margin-bottom: 15px;">
+           <img src="${changeWorksLogoUrl}" alt="ChangeWorks" style="max-height: 40px; height: auto; display: inline-block;">
+        </div>
+        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
+        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
+        
+        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
+        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
+        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
+        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
+        
+        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
+      </div>
+    `;
+  }
+
   // Centralized HTML generator
   generateEmailHtml(content, organization, title = '', showOrgName = true, showFooter = true) {
     const logoUrl = this.getOrganizationLogoUrl(organization);
@@ -180,20 +210,7 @@ class EmailService {
                 </tr>
               </table>
               
-              ${showFooter ? `
-              <!-- Footer -->
-              <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
-                <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
-                <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
-                
-                <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
-                <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
-                <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
-                <p style="margin-bottom: 20px;">Casper, WY 82609</p>
-                
-                <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
-              </div>
-              ` : ''}
+              ${showFooter ? this.getFooterHtml() : ''}
             </td>
           </tr>
         </table>
@@ -233,17 +250,7 @@ class EmailService {
       
       <p style="margin-top: 20px; font-size: 14px; color: #6c757d;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
 
-      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
-        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
-        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
-        
-        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
-        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
-        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
-        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
-        
-        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
-      </div>
+      ${this.getFooterHtml()}
     `;
 
     const html = this.generateEmailHtml(content, organization, subject, false, false);
@@ -376,21 +383,7 @@ ChangeWorks Team
       
       <p style="margin-top: 20px; font-size: 14px; color: #6c757d;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
 
-      <div style="text-align: center; margin: 30px 0;">
-        <img src="https://changeworkscollective.org/imgs/changeworks.png" alt="ChangeWorks Logo" style="max-width: 200px; height: auto;">
-      </div>
-
-      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
-        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks Fund</p>
-        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
-        
-        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
-        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
-        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
-        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
-        
-        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
-      </div>
+      ${this.getFooterHtml()}
     `;
 
     // Note: We're passing false for showOrgName in generateEmailHtml because we handle the header manually in the content
@@ -573,17 +566,7 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
         <strong>${directorName}</strong>
       </p>
 
-      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
-        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
-        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
-        
-        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
-        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
-        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
-        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
-        
-        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
-      </div>
+      ${this.getFooterHtml()}
     `;
 
     // Note: We're passing false for showOrgName in generateEmailHtml because we handle the header manually in the content
@@ -696,17 +679,7 @@ Unsubscribe
         <strong>${directorName}</strong>
       </p>
 
-      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
-        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
-        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
-        
-        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
-        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
-        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
-        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
-        
-        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
-      </div>
+      ${this.getFooterHtml()}
     `;
 
     // Pass false for showOrgName and showFooter because we handle them manually
@@ -1253,10 +1226,6 @@ Unsubscribe
       : `${organization.name} Admin`;
 
     const content = `
-      <div style="text-align: center; margin-bottom: 30px;">
-        <img src="https://changeworkscollective.org/imgs/changeworks.png" alt="ChangeWorks Logo" style="max-width: 200px; height: auto;">
-      </div>
-
       <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Dear ${adminName},</p>
       
       <p>We received a request to reset the password for your ChangeWorks organization admin account.</p>
@@ -1290,25 +1259,9 @@ Unsubscribe
       </div>
 
       <p style="font-size: 12px; color: #999; margin-top: 20px;">This message was sent to help protect your account. Please do not reply directly to this email.</p>
-
-      <div style="text-align: center; margin: 30px 0;">
-        <img src="https://changeworkscollective.org/imgs/changeworks.png" alt="ChangeWorks Logo" style="max-width: 200px; height: auto;">
-      </div>
-
-      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
-        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
-        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
-        
-        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
-        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
-        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
-        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
-        
-        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
-      </div>
     `;
 
-    const html = this.generateEmailHtml(content, brandingOrg, subject, false, false);
+    const html = this.generateEmailHtml(content, brandingOrg, subject);
 
     const text = `
 Reset your ChangeWorks account password
@@ -1404,25 +1357,9 @@ Unsubscribe
         <p>With appreciation,<br>
         <strong>The ChangeWorks Team</strong></p>
       </div>
-
-      <div style="text-align: center; margin: 30px 0;">
-        <img src="https://changeworkscollective.org/imgs/changeworks.png" alt="ChangeWorks Logo" style="max-width: 200px; height: auto;">
-      </div>
-
-      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
-        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
-        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
-        
-        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
-        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
-        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
-        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
-        
-        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
-      </div>
     `;
 
-    const html = this.generateEmailHtml(content, brandingOrg, subject, false);
+    const html = this.generateEmailHtml(content, brandingOrg, subject);
 
     const text = `
 Welcome to your ChangeWorks partnership!
@@ -1511,7 +1448,7 @@ Unsubscribe
       </div>
     `;
 
-    const html = this.generateEmailHtml(content, brandingOrg, subject, false);
+    const html = this.generateEmailHtml(content, brandingOrg, subject);
 
     const text = `
 Complete Your Stripe Account Setup - ${organization.name}
