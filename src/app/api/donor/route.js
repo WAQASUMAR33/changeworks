@@ -201,7 +201,8 @@ export async function POST(request) {
             email: donor.email
           },
           verificationToken: token,
-          verificationLink: verificationUrl
+          verificationLink: verificationUrl,
+          organization: donor.organization
         });
 
         if (verificationResult.success) {

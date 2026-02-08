@@ -235,6 +235,71 @@ export async function POST(request) {
 
           if (ghlContactResult.success) {
             console.log(`✅ GHL contact created successfully: ${ghlContactResult.contactId}`);
+
+            // Create GHL User for the donor (using Agency API Key)
+            try {
+              const ghlAgencyKey = process.env.GHL_AGENCY_API_KEY || process.env.GHL_API_KEY;
+              
+              if (ghlAgencyKey) {
+                console.log(`🔗 Creating GHL User for donor ${donor.email} in location ${organization.ghlId}`);
+                const agencyGhlClient = new GHLClient(ghlAgencyKey);
+                const companyId = process.env.GHL_COMPANY_ID || 'BWID4bp77xwMfmzh1iud'; // Default company ID if not set
+
+                const userData = {
+                  companyId: companyId,
+                  firstName: donor.name.split(' ')[0] || donor.name,
+                  lastName: donor.name.split(' ').slice(1).join(' ') || 'Donor',
+                  email: donor.email,
+                  password: password, // Use the donor's password
+                  phone: donor.phone,
+                  type: 'account',
+                  role: 'user',
+                  locationId: organization.ghlId,
+                  permissions: {
+                    // Basic permissions for a donor user
+                    conversationsEnabled: true,
+                    conversationsReadOnly: false,
+                    settingsEnabled: false,
+                    settingsReadOnly: true,
+                    // Disable most admin features
+                    campaignsEnabled: false,
+                    contactsEnabled: false,
+                    funnelsEnabled: false,
+                    triggersEnabled: false,
+                    opportunitiesEnabled: false,
+                    onlineListingsEnabled: false,
+                    marketingEnabled: false,
+                    agentReportingEnabled: false,
+                    botServiceEnabled: false,
+                    socialPlannerEnabled: false,
+                    bloggingEnabled: false,
+                    invoiceEnabled: false,
+                    affiliateManagerEnabled: false,
+                    contentAiEnabled: false,
+                    refundsEnabled: false,
+                    recordPaymentEnabled: false,
+                    cancelSubscriptionEnabled: false
+                  }
+                };
+
+                const userResult = await agencyGhlClient.createUser(userData);
+                
+                if (userResult.success) {
+                  console.log(`✅ GHL user created successfully: ${userResult.userId}`);
+                } else {
+                  console.error(`❌ GHL user creation failed: ${userResult.error}`);
+                  // Log details if available
+                  if (userResult.details) {
+                    console.error('User creation details:', JSON.stringify(userResult.details));
+                  }
+                }
+              } else {
+                console.log('ℹ️ No GHL Agency Key found, skipping GHL User creation');
+              }
+            } catch (userErr) {
+              console.error(`❌ GHL user creation exception: ${userErr.message}`);
+            }
+
           } else {
             ghlContactError = ghlContactResult.error || 'Failed to create GHL contact';
             console.error(`❌ GHL contact creation failed: ${ghlContactError}`);

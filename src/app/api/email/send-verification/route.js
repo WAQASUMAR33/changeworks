@@ -52,7 +52,8 @@ export async function POST(request) {
       select: {
         id: true,
         name: true,
-        email: true
+        email: true,
+        organization: true
       }
     });
 
@@ -70,7 +71,8 @@ export async function POST(request) {
         email: donor.email
       },
       verificationToken: verification_token,
-      verificationLink: verification_link
+      verificationLink: verification_link,
+      organization: donor.organization
     });
 
     if (emailResult.success) {

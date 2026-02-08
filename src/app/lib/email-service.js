@@ -100,7 +100,7 @@ class EmailService {
   }
 
   // Centralized HTML generator
-  generateEmailHtml(content, organization, title = '', showOrgName = true) {
+  generateEmailHtml(content, organization, title = '', showOrgName = true, showFooter = true) {
     const logoUrl = this.getOrganizationLogoUrl(organization);
     const orgName = organization?.name || 'ChangeWorks Fund';
     
@@ -168,7 +168,7 @@ class EmailService {
               <table class="main-table" role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden; margin: 0 auto;">
                 <tr>
                   <td class="content-cell" style="padding: 40px; text-align: left; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 16px; color: #333; line-height: 1.6;">
-                    ${organization ? `
+                    ${organization && showOrgName ? `
                       <div style="text-align: center; margin-bottom: 30px;">
                         ${logoUrl ? `<img src="${logoUrl}" alt="${orgName}" style="max-height: 80px; max-width: 200px; height: auto; border: 0; display: inline-block; margin-bottom: 15px;">` : ''}
                         ${showOrgName ? `<h2 style="color: #302E56; margin: 0; font-size: 24px; font-weight: 700;">${orgName}</h2>` : ''}
@@ -180,13 +180,20 @@ class EmailService {
                 </tr>
               </table>
               
+              ${showFooter ? `
               <!-- Footer -->
-              <div style="margin-top: 20px; text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; color: #666;">
-                 <p style="margin: 5px 0;">ChangeWorks Fund</p>
-                 <p style="margin: 5px 0;">Your trusted platform partner for charitable giving</p>
-                 <p style="margin: 5px 0;">5830 E 2nd St. STE 7000 #29896, Casper, WY 82609</p>
-                 <p style="margin: 5px 0;"><a href="#" style="color: #666; text-decoration: underline;">Unsubscribe</a></p>
+              <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
+                <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
+                <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
+                
+                <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
+                <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
+                <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
+                <p style="margin-bottom: 20px;">Casper, WY 82609</p>
+                
+                <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
               </div>
+              ` : ''}
             </td>
           </tr>
         </table>
@@ -201,67 +208,74 @@ class EmailService {
     const subject = `Welcome to ${orgName}'s Round-Up Community`;
 
     const content = `
-      <h1 style="color: #302E56; font-size: 24px; margin-bottom: 20px;">Welcome to ${orgName}'s Round-Up Community</h1>
+      <div style="text-align: center; margin-bottom: 30px;">
+        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 80px; max-width: 200px; height: auto;">` : `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>`}
+      </div>
       
-      <p>Hello ${donor.name},</p>
+      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello ${donor.name},</p>
       
-      <p>Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
+      <p>Thank you for joining ${orgName}‘s round-up program! Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
       
       <p>You can view your donation activity anytime through your personalized <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">Donor Portal</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
       
-      <div class="highlight-box">
-        <h3 style="color: #302E56; margin-top: 0;">Your Donor Portal Features:</h3>
-        <ul>
-          <li>Track your monthly round-up totals</li>
-          <li>Adjust or pause your contributions at any time</li>
-          <li>Download donation records for your own files</li>
-        </ul>
-      </div>
+      <ul style="color: #495057;">
+        <li>Track your monthly round-up totals</li>
+        <li>Adjust or pause your contributions at any time</li>
+        <li>Download donation records for your own files</li>
+      </ul>
       
-      <div class="center-text">
-        <a href="${dashboardLink}" class="button">Access Your Donor Portal</a>
-      </div>
+      <p>We're so glad to have you as part of our round-up community, where even pennies can add up to create lasting change.</p>
       
-      <p>We're so glad to have you as part of our round-up community, where even pennies can create lasting change.</p>
+      <p style="margin-top: 30px;">
+        With gratitude,<br>
+        <strong>${orgName}</strong>
+      </p>
       
-      <p><strong>With gratitude,<br>${orgName} Team</strong></p>
-      
-      <div class="highlight-box" style="background: #e8f4fd; border-left-color: #302E56;">
-        <p style="margin: 0; color: #302E56;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
+      <p style="margin-top: 20px; font-size: 14px; color: #6c757d;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
+
+      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
+        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
+        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
+        
+        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
+        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
+        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
+        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
+        
+        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
       </div>
     `;
 
-    const html = this.generateEmailHtml(content, organization, subject);
+    const html = this.generateEmailHtml(content, organization, subject, false, false);
 
     const text = `
 Welcome to ${orgName}'s Round-Up Community
 
 Hello ${donor.name},
 
-Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
+Thank you for joining ${orgName}‘s round-up program! Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
 
 You can view your donation activity anytime through your personalized Donor Portal on ChangeWorks, our platform partner. That's where you'll be able to:
-
 - Track your monthly round-up totals
 - Adjust or pause your contributions at any time
 - Download donation records for your own files
 
-Access Your Donor Portal: ${dashboardLink}
+Donor Portal: ${dashboardLink}
 
-We're so glad to have you as part of our round-up community, where even pennies can create lasting change.
+We're so glad to have you as part of our round-up community, where even pennies can add up to create lasting change.
 
 With gratitude,
-${orgName} Team
+${orgName}
 
 P.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.
 
----
-ChangeWorks Fund
+ChangeWorks
 Your trusted platform partner for charitable giving
 
-Contact Information:
+Contact Information
 Email: support@changeworksfund.org
-Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
+5830 E 2nd St. STE 7000 #29896
+Casper, WY 82609
 Unsubscribe
     `;
 
@@ -320,18 +334,28 @@ ChangeWorks Team
   }
 
   // Send verification email to donor
-  async sendVerificationEmail({ donor, verificationToken, verificationLink }) {
-    const orgName = 'ChangeWorks';
+  async sendVerificationEmail({ donor, verificationToken, verificationLink, organization }) {
+    const orgName = organization?.name || 'ChangeWorks';
     const subject = `Welcome to ${orgName}'s Donation Community`;
     
+    // ChangeWorks branding
+    const brandingOrg = {
+      name: 'ChangeWorks',
+      imageUrl: '/imgs/changeworks.png'
+    };
+
     const content = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 80px; max-width: 200px; height: auto;">` : `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>`}
+      </div>
+
       <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello!</p>
       
       <p>Thank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.</p>
       
       <p>That’s why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:</p>
       
-      <ul>
+      <ul style="color: #495057;">
         <li>See your monthly donation totals whenever you’d like</li>
         <li>Adjust or pause your contributions if your needs change</li>
         <li>Download your donation records for easy reference or tax time</li>
@@ -346,19 +370,33 @@ ChangeWorks Team
       <p>If you ever have a question or just want to reach out, we’d love to hear from you. We’re grateful to have you with us.</p>
       
       <div style="margin-top: 30px; font-style: italic; color: #495057;">
-        <p>Warm regards,<br>The ${orgName} Team</p>
+        <p>Warm regards,<br>
+        The ${orgName} Team</p>
       </div>
       
-      <p style="margin-top: 20px; font-size: 14px;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
+      <p style="margin-top: 20px; font-size: 14px; color: #6c757d;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <img src="https://changeworkscollective.org/imgs/changeworks.png" alt="ChangeWorks Logo" style="max-width: 200px; height: auto;">
+      </div>
+
+      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
+        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks Fund</p>
+        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
+        
+        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
+        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
+        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
+        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
+        
+        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
+      </div>
     `;
 
-    // Use ChangeWorks branding as requested (ChangeWorks instead of organization name)
-    const changeWorksOrg = {
-      name: 'ChangeWorks',
-      imageUrl: '/imgs/changeworks.png'
-    };
-
-    const html = this.generateEmailHtml(content, changeWorksOrg, subject, false);
+    // Note: We're passing false for showOrgName in generateEmailHtml because we handle the header manually in the content
+    // to match the specific layout requested (Org Logo -> Hello!)
+    // We also pass false for showFooter because we handle the footer manually in the content
+    const html = this.generateEmailHtml(content, brandingOrg, subject, false, false);
 
     const text = `
 Welcome to ${orgName}'s Donation Community
@@ -368,9 +406,9 @@ Hello!
 Thank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.
 
 That’s why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:
-● See your monthly donation totals whenever you’d like
-● Adjust or pause your contributions if your needs change
-● Download your donation records for easy reference or tax time
+- See your monthly donation totals whenever you’d like
+- Adjust or pause your contributions if your needs change
+- Download your donation records for easy reference or tax time
 
 You can visit your dashboard anytime once your verify your email using the link below:
 
@@ -385,7 +423,7 @@ P.S. At the end of each month, we'll send you an update with your 30-day total, 
 
 ChangeWorks Fund
 Your trusted platform partner for charitable giving
-________________________________________
+
 Contact Information
 Email: support@changeworksfund.org
 5830 E 2nd St. STE 7000 #29896
@@ -495,6 +533,10 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
     const safeReceiptNumber = receiptNumber || transactionId;
 
     const content = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${organization.name}" style="max-height: 80px; max-width: 200px; height: auto;">` : `<h2 style="color: #302E56; margin: 0;">${organization.name}</h2>`}
+      </div>
+
       <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello!</p>
 
       <p>Thank you for your generous recurring monthly donation to ${organization.name}. Your support helps ensure we can continue showing up for people when help is needed.</p>
@@ -503,21 +545,21 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
 
       <h3 style="border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 30px;">Your donation details</h3>
       <ul style="list-style: none; padding: 0;">
-        <li style="margin-bottom: 8px;"><strong>● Organization:</strong> ${organization.name}</li>
-        <li style="margin-bottom: 8px;"><strong>● Campaign:</strong> ${safeCampaign}</li>
-        <li style="margin-bottom: 8px;"><strong>● Donor:</strong> ${donor.name}</li>
-        <li style="margin-bottom: 8px;"><strong>● Amount:</strong> $${amount} (monthly)</li>
-        <li style="margin-bottom: 8px;"><strong>● Impact:</strong> Your donation supports our core mission.</li>
-        <li style="margin-bottom: 8px;"><strong>● Period:</strong> ${formattedDate}</li>
-        <li style="margin-bottom: 8px;"><strong>● Receipt #:</strong> ${safeReceiptNumber}</li>
-        <li style="margin-bottom: 8px;"><strong>● Date:</strong> ${formattedDate} at ${formattedTime}</li>
-        <li style="margin-bottom: 8px;"><strong>● Payment method:</strong> ${safePaymentMethod}</li>
+        <li style="margin-bottom: 8px;"><strong>Organization:</strong> ${organization.name}</li>
+        <li style="margin-bottom: 8px;"><strong>Campaign:</strong> ${safeCampaign}</li>
+        <li style="margin-bottom: 8px;"><strong>Donor:</strong> ${donor.name}</li>
+        <li style="margin-bottom: 8px;"><strong>Amount:</strong> $${amount} (monthly)</li>
+        <li style="margin-bottom: 8px;"><strong>Impact:</strong> Your donation supports our core mission.</li>
+        <li style="margin-bottom: 8px;"><strong>Period:</strong> ${formattedDate}</li>
+        <li style="margin-bottom: 8px;"><strong>Receipt #:</strong> ${safeReceiptNumber}</li>
+        <li style="margin-bottom: 8px;"><strong>Date:</strong> ${formattedDate} at ${formattedTime}</li>
+        <li style="margin-bottom: 8px;"><strong>Payment method:</strong> ${safePaymentMethod}</li>
       </ul>
 
       <p style="margin-top: 30px;">You can access your donor account at any time to update your contribution amount, change your payment method, or pause or resume recurring donations. Step-by-step instructions are available through our trusted donation partner, ChangeWorks.</p>
       
       <div style="text-align: center; margin: 30px 0;">
-        <a href="${dashboardLink}" style="background-color: #302E56; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">CLICK HERE TO ACCESS YOUR DONOR DASHBOARD</a>
+        <a href="${dashboardLink}" class="button">CLICK HERE TO ACCESS YOUR DONOR DASHBOARD</a>
       </div>
 
       <p>At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We’re grateful for your trust and would be glad to keep you informed about the impact of your giving.</p>
@@ -530,9 +572,24 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
         With sincere gratitude,<br>
         <strong>${directorName}</strong>
       </p>
+
+      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
+        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
+        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
+        
+        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
+        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
+        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
+        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
+        
+        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
+      </div>
     `;
 
-    const html = this.generateEmailHtml(content, organization, subject);
+    // Note: We're passing false for showOrgName in generateEmailHtml because we handle the header manually in the content
+    // to match the specific layout requested (Org Logo -> Hello!)
+    // We also pass false for showFooter because we handle the footer manually in the content
+    const html = this.generateEmailHtml(content, organization, subject, false, false);
 
     const text = `
 Subject: ${subject}
@@ -544,15 +601,15 @@ Thank you for your generous recurring monthly donation to ${organization.name}. 
 Your contribution strengthens our ability to provide timely assistance, respond to changing needs, and operate with care and consistency. Support like yours allows us to focus on what matters most: putting resources to work where they can do the most good.
 
 Your donation details
-● Organization: ${organization.name}
-● Campaign: ${safeCampaign}
-● Donor: ${donor.name}
-● Amount: $${amount} (monthly)
-● Impact: Your donation supports our core mission.
-● Period: ${formattedDate}
-● Receipt #: ${safeReceiptNumber}
-● Date: ${formattedDate} at ${formattedTime}
-● Payment method: ${safePaymentMethod}
+Organization: ${organization.name}
+Campaign: ${safeCampaign}
+Donor: ${donor.name}
+Amount: $${amount} (monthly)
+Impact: Your donation supports our core mission.
+Period: ${formattedDate}
+Receipt #: ${safeReceiptNumber}
+Date: ${formattedDate} at ${formattedTime}
+Payment method: ${safePaymentMethod}
 
 You can access your donor account at any time to update your contribution amount, change your payment method, or pause or resume recurring donations. Step-by-step instructions are available through our trusted donation partner, ChangeWorks.
 
@@ -567,7 +624,7 @@ ${directorName}
 
 ChangeWorks
 Your trusted platform partner for charitable giving
-________________________________________
+
 Contact Information
 Email: support@changeworksfund.org
 5830 E 2nd St. STE 7000 #29896
@@ -587,51 +644,76 @@ Unsubscribe
   async sendOneTimeDonationEmail({ donor, organization, dashboardLink, amount, donationDate, transactionId, paymentMethod, campaignName }) {
     const subject = `Thanks for Your One-Time Donation to ${organization.name}`;
     
+    // Logic for Director Name
+    const directorName = (organization?.firstName && organization?.lastName) 
+      ? `${organization.firstName} ${organization.lastName}` 
+      : 'Organization Director';
+
+    const ein = organization?.ein || '99-XXXXXXX';
+    const safeCampaign = campaignName || 'General Campaign';
+    const safePaymentMethod = paymentMethod || 'Card ending in XXXX';
+    const safeReceiptNumber = transactionId || 'N/A';
+    
     const content = `
-      <p>Dear ${donor.name},</p>
+      <div style="text-align: center; margin-bottom: 30px;">
+        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${organization.name}" style="max-height: 80px; max-width: 200px; height: auto;">` : `<h2 style="color: #302E56; margin: 0;">${organization.name}</h2>`}
+      </div>
+
+      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Dear ${donor.name},</p>
       
       <p>Thank you for your generous donation to ${organization.name}. Your support helps ensure we can continue showing up for people when help is needed.</p>
       
       <p>Your contribution strengthens our ability to provide timely assistance, respond to changing needs, and operate with care and consistency. Support like yours allows us to focus on what matters most: putting resources to work where they can do the most good.</p>
       
-      <h3 style="border-bottom: 1px solid #eee; padding-bottom: 10px;">Your donation details</h3>
+      <h3 style="border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 30px;">Your donation details</h3>
       
       <ul style="list-style: none; padding: 0;">
         <li style="margin-bottom: 8px;"><strong>Organization:</strong> ${organization.name}</li>
-        <li style="margin-bottom: 8px;"><strong>Campaign:</strong> ${campaignName || 'General Donation'}</li>
+        <li style="margin-bottom: 8px;"><strong>Campaign:</strong> ${safeCampaign}</li>
         <li style="margin-bottom: 8px;"><strong>Donor:</strong> ${donor.name}</li>
         <li style="margin-bottom: 8px;"><strong>Amount:</strong> $${amount}</li>
         <li style="margin-bottom: 8px;"><strong>Impact:</strong> Your donation supports our core mission.</li>
         <li style="margin-bottom: 8px;"><strong>Period:</strong> ${donationDate}</li>
-        <li style="margin-bottom: 8px;"><strong>Receipt #:</strong> ${transactionId || 'N/A'}</li>
+        <li style="margin-bottom: 8px;"><strong>Receipt #:</strong> ${safeReceiptNumber}</li>
         <li style="margin-bottom: 8px;"><strong>Date:</strong> ${donationDate}</li>
-        <li style="margin-bottom: 8px;"><strong>Payment method:</strong> ${paymentMethod || 'Credit Card'}</li>
+        <li style="margin-bottom: 8px;"><strong>Payment method:</strong> ${safePaymentMethod}</li>
       </ul>
       
-      <p>You can access your donor account at any time to update your contribution amount, change your payment method, or resume donations. Step-by-step instructions are available through our trusted donation partner, ChangeWorks.</p>
+      <p style="margin-top: 30px;">You can access your donor account at any time to update your contribution amount, change your payment method, or resume donations. Step-by-step instructions are available through our trusted donation partner, ChangeWorks.</p>
       
-      <div style="text-align: center;">
+      <div style="text-align: center; margin: 30px 0;">
         <a href="${dashboardLink}" class="button">CLICK HERE TO ACCESS YOUR DONOR DASHBOARD</a>
       </div>
       
       <p>At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We’re grateful for your trust and would be glad to keep you informed about the impact of your giving.</p>
       
-      <p>${organization.name} is a registered 501(c)(3) nonprofit organization in the United States (EIN: ${organization.ein || 'XX-XXXXXXX'}). Your donation may be tax-deductible; please consult a tax professional regarding your specific situation.</p>
-      
-      <p>With sincere gratitude,</p>
-      
-      <p>
-        <strong>${organization.firstName ? `${organization.firstName} ${organization.lastName}` : 'Organization Director'}</strong><br>
-        ${organization.title || 'Director'}<br>
-        ${organization.name}
+      <p style="font-size: 14px; color: #6c757d; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+        ${organization.name} is a registered 501(c)(3) nonprofit organization in the United States (EIN: ${ein}). Your donation may be tax-deductible; please consult a tax professional regarding your specific situation.
       </p>
+      
+      <p style="margin-top: 20px;">
+        With sincere gratitude,<br>
+        <strong>${directorName}</strong>
+      </p>
+
+      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
+        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
+        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
+        
+        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
+        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
+        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
+        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
+        
+        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
+      </div>
     `;
 
-    // Pass organization to generateEmailHtml to show Org Logo and Name in the branding header/footer
-    const html = this.generateEmailHtml(content, organization, subject);
+    // Pass false for showOrgName and showFooter because we handle them manually
+    const html = this.generateEmailHtml(content, organization, subject, false, false);
 
     const text = `
-Thanks for Your One-Time Donation
+Thanks for Your One-Time Donation to ${organization.name}
 
 Dear ${donor.name},
 
@@ -641,14 +723,14 @@ Your contribution strengthens our ability to provide timely assistance, respond 
 
 Your donation details
 Organization: ${organization.name}
-Campaign: ${campaignName || 'General Donation'}
+Campaign: ${safeCampaign}
 Donor: ${donor.name}
 Amount: $${amount}
 Impact: Your donation supports our core mission.
 Period: ${donationDate}
-Receipt #: ${transactionId || 'N/A'}
+Receipt #: ${safeReceiptNumber}
 Date: ${donationDate}
-Payment method: ${paymentMethod || 'Credit Card'}
+Payment method: ${safePaymentMethod}
 
 You can access your donor account at any time to update your contribution amount, change your payment method, or resume donations. Step-by-step instructions are available through our trusted donation partner, ChangeWorks.
 
@@ -656,15 +738,11 @@ CLICK HERE TO ACCESS YOUR DONOR DASHBOARD: ${dashboardLink}
 
 At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We’re grateful for your trust and would be glad to keep you informed about the impact of your giving.
 
-${organization.name} is a registered 501(c)(3) nonprofit organization in the United States (EIN: ${organization.ein || 'XX-XXXXXXX'}). Your donation may be tax-deductible; please consult a tax professional regarding your specific situation.
+${organization.name} is a registered 501(c)(3) nonprofit organization in the United States (EIN: ${ein}). Your donation may be tax-deductible; please consult a tax professional regarding your specific situation.
 
 With sincere gratitude,
+${directorName}
 
-${organization.firstName ? `${organization.firstName} ${organization.lastName}` : 'Organization Director'}
-${organization.title || 'Director'}
-${organization.name}
-
-----------------------------------------
 ChangeWorks
 Your trusted platform partner for charitable giving
 
@@ -1054,31 +1132,25 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
     
     const directorName = (organization?.firstName && organization?.lastName) 
       ? `${organization.firstName} ${organization.lastName}` 
-      : 'Director';
+      : 'Organization Director';
 
-    // Prepare branding object
-    // If organization is provided, use it for branding (logo, name)
-    const brandingOrg = organization ? {
-      name: orgName,
-      imageUrl: organization.imageUrl,
-      ...organization
-    } : null;
-    
     const content = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 80px; max-width: 200px; height: auto;">` : `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>`}
+      </div>
+
       <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Dear ${donor.name},</p>
       
       <p>We received a request to reset the password for your ${orgName} donor account.</p>
       
       <p>To keep your information secure, you’ll need to create a new password before you can access your ChangeWorks donor dashboard. The process is quick and should take less than a minute.</p>
       
-      <div class="highlight-box">
-        <h3 style="color: #302E56; margin-top: 0;">What you can do once you’re logged in:</h3>
-        <ul>
-          <li>View and manage your donation activity</li>
-          <li>Update payment details or giving preferences</li>
-          <li>Download donation records for your files</li>
-        </ul>
-      </div>
+      <p style="margin-bottom: 10px;">What you can do once you’re logged in:</p>
+      <ul style="color: #495057;">
+        <li>View and manage your donation activity</li>
+        <li>Update payment details or giving preferences</li>
+        <li>Download donation records for your files</li>
+      </ul>
       
       <p>To reset your password, click the button below and follow the on-screen steps. This link will expire for security reasons.</p>
       
@@ -1099,12 +1171,27 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
       </div>
 
       <p style="font-size: 12px; color: #999; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">This message was sent to help protect your account. Please do not reply directly to this email.</p>
+
+      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
+        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
+        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
+        
+        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
+        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
+        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
+        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
+        
+        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
+      </div>
     `;
 
-    const html = this.generateEmailHtml(content, brandingOrg, subject);
+    // Note: We're passing false for showOrgName in generateEmailHtml because we handle the header manually in the content
+    // to match the specific layout requested (Org Logo -> Hello!)
+    // We also pass false for showFooter because we handle the footer manually in the content
+    const html = this.generateEmailHtml(content, organization, subject, false, false);
 
     const text = `
-Reset your password for your ${orgName} donor account
+Subject: ${subject}
 
 Dear ${donor.name},
 
@@ -1135,6 +1222,12 @@ This message was sent to help protect your account. Please do not reply directly
 
 ChangeWorks
 Your trusted platform partner for charitable giving
+
+Contact Information
+Email: support@changeworksfund.org
+5830 E 2nd St. STE 7000 #29896
+Casper, WY 82609
+Unsubscribe
     `;
 
     return await this.sendEmail({
@@ -1147,7 +1240,7 @@ Your trusted platform partner for charitable giving
 
   // Send organization password reset email
   async sendOrganizationPasswordResetEmail({ organization, resetToken, resetLink }) {
-    const subject = `Reset Your Organization Password - ${organization.name}`;
+    const subject = `Reset your ChangeWorks account password`;
     
     // ChangeWorks branding for this email
     const brandingOrg = {
@@ -1155,48 +1248,106 @@ Your trusted platform partner for charitable giving
       imageUrl: '/imgs/changeworks.png'
     };
 
+    const adminName = (organization.firstName && organization.lastName) 
+      ? `${organization.firstName} ${organization.lastName}` 
+      : `${organization.name} Admin`;
+
     const content = `
-      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello ${organization.name} Team,</p>
-      
-      <p>You requested a password reset for your organization account.</p>
-      
-      <p>Click the button below to reset your password:</p>
-      
-      <div style="text-align: center; margin: 25px 0;">
-        <a href="${resetLink}" class="button">Reset Organization Password</a>
+      <div style="text-align: center; margin-bottom: 30px;">
+        <img src="https://changeworkscollective.org/imgs/changeworks.png" alt="ChangeWorks Logo" style="max-width: 200px; height: auto;">
       </div>
+
+      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Dear ${adminName},</p>
+      
+      <p>We received a request to reset the password for your ChangeWorks organization admin account.</p>
+      
+      <p>To protect your account and donor data, you’ll need to create a new password before accessing your admin dashboard. The process is quick and should take less than a minute.</p>
       
       <div class="highlight-box">
-        <p style="margin: 0; font-weight: 500;">This link will expire in 1 hour.</p>
+        <h3 style="color: #302E56; margin-top: 0;">What you can do once you’re logged in</h3>
+        <ul>
+          <li>View and manage donation activity across campaigns</li>
+          <li>Access reports, payouts, and donor insights</li>
+          <li>Update organization settings and user permissions</li>
+        </ul>
       </div>
       
-      <p>If you didn't request this password reset, please ignore this email. Your account remains secure.</p>
+      <p>To reset your password, click the button below and follow the on-screen steps. For security reasons, this link will expire.</p>
+      
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="${resetLink}" class="button">CLICK HERE TO RESET YOUR PASSWORD</a>
+      </div>
+      
+      <p>If you did not request a password reset, you can safely ignore this email. No changes will be made to your account.</p>
+      
+      <p>If you need assistance at any point, the ChangeWorks support team is here to help: <a href="mailto:support@changeworksfund.org" style="color: #302E56;">support@changeworksfund.org</a></p>
+
+      <p>Thank you for partnering with ChangeWorks and for the work you do every day.</p>
       
       <div style="margin-top: 30px; font-style: italic; color: #495057;">
-        <p>Best regards,<br>
-        <strong>ChangeWorks Fund Team</strong></p>
+        <p>With appreciation,<br>
+        <strong>The ChangeWorks Team</strong></p>
+      </div>
+
+      <p style="font-size: 12px; color: #999; margin-top: 20px;">This message was sent to help protect your account. Please do not reply directly to this email.</p>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <img src="https://changeworkscollective.org/imgs/changeworks.png" alt="ChangeWorks Logo" style="max-width: 200px; height: auto;">
+      </div>
+
+      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
+        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
+        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
+        
+        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
+        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
+        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
+        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
+        
+        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
       </div>
     `;
 
-    const html = this.generateEmailHtml(content, brandingOrg, subject);
+    const html = this.generateEmailHtml(content, brandingOrg, subject, false, false);
 
     const text = `
-Organization Password Reset - ${organization.name}
+Reset your ChangeWorks account password
 
-Hello ${organization.name} Team,
+Dear ${adminName},
 
-You requested a password reset for your organization account.
+We received a request to reset the password for your ChangeWorks organization admin account.
 
-Click the link below to reset your password:
-${resetLink}
+To protect your account and donor data, you’ll need to create a new password before accessing your admin dashboard. The process is quick and should take less than a minute.
 
-This link will expire in 1 hour.
+What you can do once you’re logged in:
+- View and manage donation activity across campaigns
+- Access reports, payouts, and donor insights
+- Update organization settings and user permissions
 
-If you didn't request this password reset, please ignore this email. Your account remains secure.
+To reset your password, click the link below and follow the on-screen steps. For security reasons, this link will expire.
 
-Best regards,
-ChangeWorks Fund Team
+CLICK HERE TO RESET YOUR PASSWORD: ${resetLink}
+
+If you did not request a password reset, you can safely ignore this email. No changes will be made to your account.
+
+If you need assistance at any point, the ChangeWorks support team is here to help: support@changeworksfund.org
+
+Thank you for partnering with ChangeWorks and for the work you do every day.
+
+With appreciation,
+The ChangeWorks Team
+
+This message was sent to help protect your account. Please do not reply directly to this email.
+
+ChangeWorks
 Your trusted platform partner for charitable giving
+
+Contact Information
+Email: support@changeworksfund.org
+5830 E 2nd St. STE 7000 #29896
+Casper, WY 82609
+
+Unsubscribe
     `;
 
     return await this.sendEmail({
@@ -1252,6 +1403,22 @@ Your trusted platform partner for charitable giving
       <div style="margin-top: 30px; font-style: italic; color: #495057;">
         <p>With appreciation,<br>
         <strong>The ChangeWorks Team</strong></p>
+      </div>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <img src="https://changeworkscollective.org/imgs/changeworks.png" alt="ChangeWorks Logo" style="max-width: 200px; height: auto;">
+      </div>
+
+      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
+        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
+        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
+        
+        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
+        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
+        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
+        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
+        
+        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
       </div>
     `;
 
