@@ -1393,7 +1393,6 @@ Thank you for choosing ChangeWorks and for the work you do to support your commu
 With appreciation,
 The ChangeWorks Team
 
-ChangeWorks
 Your trusted platform partner for charitable giving
 
 ________________________________________Contact Information
