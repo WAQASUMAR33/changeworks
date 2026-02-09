@@ -173,7 +173,7 @@ const OrgSidebar = () => {
                       router.push(item.path);
                     }
                   }}
-                  className={`group flex items-center px-4 py-4 cursor-pointer rounded-2xl transition-all duration-300 ${
+                  className={`group flex items-center ${isExpanded ? 'px-4' : 'justify-center px-2'} py-4 cursor-pointer rounded-2xl transition-all duration-300 ${
                     isActive 
                       ? 'bg-[#0E0061] text-white shadow-lg' 
                       : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
