@@ -114,7 +114,7 @@ class EmailService {
       <!-- Footer -->
       <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
         <div style="margin-bottom: 15px;">
-           <img src="${changeWorksLogoUrl}" alt="ChangeWorks" style="max-height: 40px; height: auto; display: inline-block;">
+           <img src="${changeWorksLogoUrl}" alt="ChangeWorks" style="max-height: 80px; height: auto; display: inline-block;">
         </div>
         <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
         <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
@@ -200,7 +200,7 @@ class EmailService {
                   <td class="content-cell" style="padding: 40px; text-align: left; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 16px; color: #333; line-height: 1.6;">
                     ${organization && showOrgName ? `
                       <div style="text-align: center; margin-bottom: 30px;">
-                        ${logoUrl ? `<img src="${logoUrl}" alt="${orgName}" style="max-height: 80px; max-width: 200px; height: auto; border: 0; display: inline-block; margin-bottom: 15px;">` : ''}
+                        ${logoUrl ? `<img src="${logoUrl}" alt="${orgName}" style="max-height: 120px; max-width: 250px; height: auto; border: 0; display: inline-block; margin-bottom: 15px;">` : ''}
                         ${showOrgName ? `<h2 style="color: #302E56; margin: 0; font-size: 24px; font-weight: 700;">${orgName}</h2>` : ''}
                       </div>
                     ` : ''}
@@ -226,7 +226,7 @@ class EmailService {
 
     const content = `
       <div style="text-align: center; margin-bottom: 30px;">
-        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 80px; max-width: 200px; height: auto;">` : `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>`}
+        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 120px; max-width: 250px; height: auto;">` : `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>`}
       </div>
       
       <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello ${donor.name},</p>
@@ -353,7 +353,7 @@ ChangeWorks Team
 
     const content = `
       <div style="text-align: center; margin-bottom: 30px;">
-        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 80px; max-width: 200px; height: auto;">` : `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>`}
+        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 120px; max-width: 250px; height: auto;">` : `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>`}
       </div>
 
       <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello!</p>
@@ -1109,7 +1109,7 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
 
     const content = `
       <div style="text-align: center; margin-bottom: 30px;">
-        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 80px; max-width: 200px; height: auto;">` : `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>`}
+        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 120px; max-width: 250px; height: auto;">` : `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>`}
       </div>
 
       <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Dear ${donor.name},</p>
