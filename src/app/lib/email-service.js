@@ -1319,8 +1319,8 @@ Unsubscribe
       ? `${organization.firstName} ${organization.lastName}` 
       : organization.name;
     
-    // Use organization branding if available, otherwise fallback to ChangeWorks
-    const brandingOrg = (organization.imageUrl) ? organization : {
+    // Always use ChangeWorks branding for this email
+    const brandingOrg = {
       name: 'ChangeWorks',
       imageUrl: '/imgs/changeworks.png'
     };
@@ -1328,12 +1328,12 @@ Unsubscribe
     const content = `
       <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Dear ${adminName},</p>
       
-      <p>Welcome to ChangeWorks. We’re excited to have you on board and look forward to supporting your organization’s fundraising efforts.</p>
+      <p>Welcome to <strong>ChangeWorks.</strong> We’re excited to have you on board and look forward to supporting your organization’s fundraising efforts.</p>
       
       <p>Your ChangeWorks account is now active, giving you access to a secure admin dashboard where you can manage donations, track activity, and stay connected with your supporters. Everything is designed to be straightforward, flexible, and easy to manage.</p>
       
       <div class="highlight-box">
-        <h3 style="color: #302E56; margin-top: 0;">What you can do from your admin dashboard:</h3>
+        <h3 style="color: #302E56; margin-top: 0;"><strong>What you can do from your admin dashboard:</strong></h3>
         <ul>
           <li>View donation activity across campaigns in real time</li>
           <li>Access reports, payouts, and donor summaries</li>
