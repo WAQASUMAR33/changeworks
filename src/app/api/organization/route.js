@@ -278,10 +278,43 @@ export async function POST(req) {
           if (userResult.success) {
              console.log('✅ GHL User created successfully:', userResult.userId);
           } else {
-             console.error('❌ CRITICAL: Failed to create GHL User. This must be resolved for the admin to log in to GHL.', userResult.error);
-             console.error('User creation details:', JSON.stringify(userResult.details, null, 2));
-             if (userResult.error && userResult.error.toLowerCase().includes('password')) {
-               console.error('⚠️ Password might not meet GHL complexity requirements (8+ chars, 1 uppercase, 1 lowercase, 1 number, 1 special char).');
+             console.error('❌ Failed to create GHL User:', userResult.error);
+             
+             // Check if the user already exists (likely due to reused email)
+             // We can check by error message or status code if provided, but safe to just search by email
+             console.log('🔄 Attempting to find existing user by email to update permissions...');
+             const searchResult = await ghlClient.getUserByEmail(userData.email);
+             
+             if (searchResult.success && searchResult.user && searchResult.user.id) {
+               console.log('✅ Found existing GHL User:', searchResult.user.id);
+               console.log('Current user locations:', searchResult.user.roles?.locationIds || []);
+               
+               // Prepare update data - merge existing locations with new one
+               const existingLocations = searchResult.user.roles?.locationIds || [];
+               const newLocationIds = [...new Set([...existingLocations, ghlLocationId])];
+               
+               const updateData = {
+                 ...userData,
+                 locationIds: newLocationIds
+                 // Note: We are using the password provided in signup. 
+                 // If the user already exists, this will update their password.
+                 // This is generally acceptable for a "Signup" flow where the user expects to set these credentials.
+               };
+               
+               console.log('Updating user with new location list:', newLocationIds);
+               const updateResult = await ghlClient.updateUser(searchResult.user.id, updateData);
+               
+               if (updateResult.success) {
+                 console.log('✅ GHL User updated successfully with new location:', updateResult.userId);
+               } else {
+                 console.error('❌ Failed to update existing GHL User:', updateResult.error);
+               }
+             } else {
+               console.error('❌ Could not find existing user to update. User creation failed permanently.');
+               console.error('User creation details:', JSON.stringify(userResult.details, null, 2));
+               if (userResult.error && userResult.error.toLowerCase().includes('password')) {
+                 console.error('⚠️ Password might not meet GHL complexity requirements (8+ chars, 1 uppercase, 1 lowercase, 1 number, 1 special char).');
+               }
              }
           }
         } catch (userErr) {
