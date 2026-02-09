@@ -116,7 +116,6 @@ class EmailService {
         <div style="margin-bottom: 15px;">
            <img src="${changeWorksLogoUrl}" alt="ChangeWorks" style="max-height: 80px; height: auto; display: inline-block;">
         </div>
-        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
         <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
         
         <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
@@ -1226,6 +1225,10 @@ Unsubscribe
       : `${organization.name} Admin`;
 
     const content = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        <img src="${this.getChangeWorksLogoUrl()}" alt="ChangeWorks" style="max-height: 120px; max-width: 250px; height: auto; border: 0; display: inline-block;">
+      </div>
+
       <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Dear ${adminName},</p>
       
       <p>We received a request to reset the password for your ChangeWorks organization admin account.</p>
@@ -1261,7 +1264,7 @@ Unsubscribe
       <p style="font-size: 12px; color: #999; margin-top: 20px;">This message was sent to help protect your account. Please do not reply directly to this email.</p>
     `;
 
-    const html = this.generateEmailHtml(content, brandingOrg, subject);
+    const html = this.generateEmailHtml(content, brandingOrg, subject, false);
 
     const text = `
 Reset your ChangeWorks account password
