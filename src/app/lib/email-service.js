@@ -1326,6 +1326,10 @@ Unsubscribe
     };
 
     const content = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        <img src="${this.getChangeWorksLogoUrl()}" alt="ChangeWorks" style="max-height: 120px; max-width: 250px; height: auto; border: 0; display: inline-block;">
+      </div>
+
       <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Dear ${adminName},</p>
       
       <p>Welcome to <strong>ChangeWorks.</strong> We’re excited to have you on board and look forward to supporting your organization’s fundraising efforts.</p>
@@ -1359,7 +1363,8 @@ Unsubscribe
       </div>
     `;
 
-    const html = this.generateEmailHtml(content, brandingOrg, subject);
+    // Pass false for showOrgName to suppress the header title "ChangeWorks"
+    const html = this.generateEmailHtml(content, brandingOrg, subject, false);
 
     const text = `
 Welcome to your ChangeWorks partnership!

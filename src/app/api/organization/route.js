@@ -217,7 +217,7 @@ export async function POST(req) {
              lastName: ghlLastName,
              email: input.email,
              password: input.orgPassword, 
-             phone: input.phone || '',
+             // phone: input.phone || '', // Removed to prevent empty string issues
              locationId: ghlLocationId,
              type: 'account',
              role: 'admin',
@@ -267,11 +267,18 @@ export async function POST(req) {
              }
           };
           
+          // Only add phone if it has a value to avoid GHL validation errors with empty strings
+          if (input.phone) {
+            userData.phone = input.phone;
+          }
+
+          console.log('Creating GHL User with data (password hidden):', { ...userData, password: '***' });
+
           const userResult = await ghlClient.createUser(userData);
           if (userResult.success) {
              console.log('✅ GHL User created successfully:', userResult.userId);
           } else {
-             console.error('❌ Failed to create GHL User:', userResult.error);
+             console.error('❌ CRITICAL: Failed to create GHL User. This must be resolved for the admin to log in to GHL.', userResult.error);
              console.error('User creation details:', JSON.stringify(userResult.details, null, 2));
              if (userResult.error && userResult.error.toLowerCase().includes('password')) {
                console.error('⚠️ Password might not meet GHL complexity requirements (8+ chars, 1 uppercase, 1 lowercase, 1 number, 1 special char).');
