@@ -113,9 +113,9 @@ const OrgSidebar = () => {
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl">
       {/* Modern Logo Section */}
-      <div className="flex items-center justify-between h-20 px-6 border-b border-gray-700/50">
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 bg-[#0E0061] rounded-2xl flex items-center justify-center shadow-lg">
+      <div className={`flex items-center h-20 border-b border-gray-700/50 transition-all duration-300 ${isExpanded ? 'justify-between px-6' : 'justify-center px-2'}`}>
+        <div className={`flex items-center ${isExpanded ? 'space-x-4' : 'justify-center'}`}>
+          <div className="w-12 h-12 bg-[#0E0061] rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
             <span className="text-white font-bold text-lg">CW</span>
           </div>
           <AnimatePresence>
@@ -153,7 +153,10 @@ const OrgSidebar = () => {
       <nav className="flex-1 px-4 py-6 overflow-y-auto">
         <ul className="space-y-2">
           {menuItems.map((item, index) => {
-            const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
+            const isActive = item.path === '/organization/dashboard' 
+              ? pathname === item.path 
+              : pathname === item.path || pathname.startsWith(item.path + '/');
+              
             const hasSub = item.subItems && item.subItems.length > 0;
             const isSubmenuOpen = openSubmenus[item.name];
 
