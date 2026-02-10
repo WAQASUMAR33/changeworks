@@ -24,6 +24,7 @@ import {
   PinOff,
   CreditCard,
   RefreshCw,
+  FileText,
 } from 'lucide-react';
 
 const OrgSidebar = () => {
@@ -248,6 +249,54 @@ const OrgSidebar = () => {
 
       {/* Modern Bottom Section */}
       <div className="p-4 border-t border-gray-700/50">
+        <div className="space-y-1 mb-2">
+          <Link
+            href="https://changeworksfund.org/privacy-policy"
+            target="_blank"
+            className="w-full flex items-center px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-700/30 rounded-2xl transition-all duration-300 group"
+          >
+            <div className="p-2 rounded-xl bg-gray-700/30 group-hover:bg-gray-600/50 transition-all duration-200">
+              <Shield className="w-5 h-5" />
+            </div>
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.span
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="ml-4 font-semibold text-sm"
+                >
+                  Privacy Policy
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
+          
+          <Link
+            href="https://changeworksfund.org/terms-conditions"
+            target="_blank"
+            className="w-full flex items-center px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-700/30 rounded-2xl transition-all duration-300 group"
+          >
+            <div className="p-2 rounded-xl bg-gray-700/30 group-hover:bg-gray-600/50 transition-all duration-200">
+              <FileText className="w-5 h-5" />
+            </div>
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.span
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="ml-4 font-semibold text-sm"
+                >
+                  Terms & Conditions
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
+        </div>
+
         {/* Modern Logout Button */}
         <motion.button
           whileHover={{ scale: 1.02 }}
