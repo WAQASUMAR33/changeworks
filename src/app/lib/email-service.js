@@ -112,11 +112,13 @@ class EmailService {
     const changeWorksLogoUrl = this.getChangeWorksLogoUrl();
     return `
       <!-- Footer -->
-      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
+      <div style="margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
         <div style="margin-bottom: 15px;">
            <img src="${changeWorksLogoUrl}" alt="ChangeWorks" style="max-height: 80px; height: auto; display: inline-block;">
         </div>
         <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
+        
+        <div style="border-top: 1px solid #eee; margin: 20px 0;"></div>
         
         <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
         <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
