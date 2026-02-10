@@ -367,7 +367,7 @@ const TransactionsPage = () => {
                   Amount
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Method
+                  Description
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
@@ -410,16 +410,8 @@ const TransactionsPage = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full w-fit ${getTransactionTypeColor(transaction.method)}`}>
-                        {getTransactionTypeLabel(transaction.method)}
-                      </span>
-                      {transaction.card_brand && transaction.card_last4 && (
-                        <span className="text-xs text-gray-500 mt-1 capitalize flex items-center gap-1">
-                          <CreditCard className="w-3 h-3" />
-                          {transaction.card_brand} •••• {transaction.card_last4}
-                        </span>
-                      )}
+                    <div className="text-sm text-gray-900 max-w-xs truncate" title={transaction.description}>
+                      {transaction.description || 'Stripe Payment'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
