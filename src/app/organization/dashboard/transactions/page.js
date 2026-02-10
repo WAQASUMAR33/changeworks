@@ -410,9 +410,17 @@ const TransactionsPage = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getTransactionTypeColor(transaction.method)}`}>
-                      {getTransactionTypeLabel(transaction.method)}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full w-fit ${getTransactionTypeColor(transaction.method)}`}>
+                        {getTransactionTypeLabel(transaction.method)}
+                      </span>
+                      {transaction.card_brand && transaction.card_last4 && (
+                        <span className="text-xs text-gray-500 mt-1 capitalize flex items-center gap-1">
+                          <CreditCard className="w-3 h-3" />
+                          {transaction.card_brand} •••• {transaction.card_last4}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}>

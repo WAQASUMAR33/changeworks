@@ -56,8 +56,8 @@ export async function GET(request, { params }) {
           email: charge.billing_details?.email || charge.receipt_email || charge.metadata?.donor_email || 'Unknown'
       },
       method: 'stripe',
-      card_brand: charge.payment_method_details?.card?.brand,
-      card_last4: charge.payment_method_details?.card?.last4,
+      card_brand: charge.payment_method_details?.card?.brand || charge.source?.brand,
+      card_last4: charge.payment_method_details?.card?.last4 || charge.source?.last4,
       receipt_url: charge.receipt_url,
       ghl_id: charge.metadata?.ghl_id
     }));
