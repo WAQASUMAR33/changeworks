@@ -219,12 +219,7 @@ export async function POST(request) {
               <p>This is a test email from the ChangeWorks platform to verify that email functionality is configured correctly.</p>
             </div>
             
-            <div class="footer">
-              <p style="color: #6c757d; font-size: 14px;">
-                ChangeWorks Fund - Email System Test<br>
-                This is an automated test message.
-              </p>
-            </div>
+            ${emailService.getFooterHtml()}
           </div>
         </body>
         </html>

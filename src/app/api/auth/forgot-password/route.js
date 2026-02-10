@@ -93,10 +93,7 @@ export async function POST(request) {
               <p style="word-break: break-all; color: #302E56;">${resetUrl}</p>
               <p>This link will expire in 1 hour for security reasons.</p>
               <p>If you didn't request this password reset, please ignore this email.</p>
-              <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-              <p style="color: #6b7280; font-size: 14px;">
-                This is an automated message from ChangeWorks. Please do not reply to this email.
-              </p>
+              ${emailService.getFooterHtml()}
             </div>
           `,
         });

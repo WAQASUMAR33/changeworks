@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import nodemailer from "nodemailer";
 import { emailService } from "../../../lib/email-service";
 import GHLClient from "../../../lib/ghl-client";
 
