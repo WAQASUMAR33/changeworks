@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   LayoutDashboard,
   User,
@@ -17,6 +18,8 @@ import {
   PinOff,
   Menu,
   X,
+  Shield,
+  FileText,
 } from 'lucide-react';
 
 const DonorSidebar = () => {
@@ -191,6 +194,30 @@ const DonorSidebar = () => {
 
       {/* Logout Button - Sticky to bottom */}
       <div className="p-4 border-t border-gray-200 flex-shrink-0 mt-auto">
+        <div className="space-y-1 mb-2">
+          <Link
+            href="https://changeworksfund.org/privacy-policy"
+            target="_blank"
+            className="w-full flex items-center space-x-3 px-3 py-3 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 group"
+          >
+            <Shield className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+            {isExpanded && (
+              <span className="font-medium">Privacy Policy</span>
+            )}
+          </Link>
+          
+          <Link
+            href="https://changeworksfund.org/terms-conditions"
+            target="_blank"
+            className="w-full flex items-center space-x-3 px-3 py-3 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 group"
+          >
+            <FileText className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+            {isExpanded && (
+              <span className="font-medium">Terms & Conditions</span>
+            )}
+          </Link>
+        </div>
+
         <button
           onClick={handleLogout}
           className="w-full flex items-center space-x-3 px-3 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200 group"
