@@ -440,7 +440,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
         >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
                 <Target className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -561,7 +561,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                                       }}
                                     />
                                   ) : null}
-                                  <div className={`w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center ${org.imageUrl ? 'hidden' : 'flex'}`}>
+                                  <div className={`w-full h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center ${org.imageUrl ? 'hidden' : 'flex'}`}>
                                     <Heart className="w-5 h-5 text-white" />
                                   </div>
                                 </div>
@@ -596,8 +596,8 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                     className="space-y-6"
                   >
                     <div className="text-center">
-                      <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Target className="w-8 h-8 text-purple-600" />
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Target className="w-8 h-8 text-blue-600" />
                       </div>
                       <h4 className="text-lg font-semibold text-black mb-2">Connect Your Bank Account</h4>
                       <p className="text-black text-sm">
@@ -620,7 +620,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                     <div className="bg-gray-50 rounded-lg p-4">
                       <h5 className="font-semibold text-black mb-2">Selected Organization:</h5>
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                           <Heart className="w-4 h-4 text-white" />
                         </div>
                         <div>
@@ -643,7 +643,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                     <button
                       onClick={handleConnect}
                       disabled={loading}
-                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                     >
                       {loading ? (
                         <div className="flex items-center justify-center space-x-2">
