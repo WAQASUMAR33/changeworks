@@ -112,21 +112,32 @@ class EmailService {
     const changeWorksLogoUrl = this.getChangeWorksLogoUrl();
     return `
       <!-- Footer -->
-      <div style="margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
-        <p style="font-size: 12px; color: #999; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">This message was sent to help protect your account. Please do not reply directly to this email.</p>
-        <div style="margin-bottom: 15px;">
-           <img src="${changeWorksLogoUrl}" alt="ChangeWorks" style="max-height: 80px; height: auto; display: inline-block;">
+      <div style="margin-top: 40px; color: #6c757d; font-family: sans-serif;">
+        <!-- Top Section: Left Aligned -->
+        <div style="text-align: left; margin-bottom: 30px;">
+            <p style="font-size: 12px; font-style: italic; color: #333; margin-bottom: 20px; border-top: 0; padding-top: 0;">
+                This message was sent to help protect your account. Please do not reply directly to this email.
+            </p>
+            
+            <div style="margin-bottom: 10px;">
+                 <img src="${changeWorksLogoUrl}" alt="ChangeWorks" style="max-height: 50px; height: auto; display: block;">
+            </div>
+            
+            <h3 style="margin: 0 0 5px 0; color: #000; font-size: 16px; font-weight: bold;">ChangeWorks</h3>
+            <p style="margin: 0; font-size: 14px; color: #333;">Your trusted platform partner for charitable giving</p>
         </div>
-        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
-        
-        <div style="border-top: 1px solid #eee; margin: 20px 0;"></div>
-        
-        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
-        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
-        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
-        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
-        
-        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
+
+        <!-- Divider -->
+        <div style="border-top: 1px solid #ccc; margin: 30px 0;"></div>
+
+        <!-- Bottom Section: Centered -->
+        <div style="text-align: center; font-size: 12px; color: #333;">
+            <p style="font-weight: bold; margin-bottom: 10px; color: #302E56;">Contact Information</p>
+            <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #0056b3; text-decoration: none;">support@changeworksfund.org</a></p>
+            <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
+            <p style="margin-bottom: 20px;">Casper, WY 82609</p>
+            <p><a href="#" style="color: #0056b3; text-decoration: none;">Unsubscribe</a></p>
+        </div>
       </div>
     `;
   }
@@ -376,16 +387,7 @@ ChangeWorks Team
       
       <p style="margin-top: 20px; font-size: 14px; color: #6c757d;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
 
-      <div style="margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
-        <div style="border-top: 1px solid #eee; margin: 20px 0;"></div>
-        
-        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
-        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
-        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
-        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
-        
-        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
-      </div>
+      ${this.getFooterHtml()}
     `;
 
     // Note: We're passing false for showOrgName in generateEmailHtml because we handle the header manually in the content
