@@ -1060,9 +1060,11 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
       <div class="highlight-box" style="background: #e8f4fd; border-left-color: #302E56;">
         <p style="margin: 0; color: #302E56;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
       </div>
+      
+      ${this.getFooterHtml()}
     `;
 
-    const html = this.generateEmailHtml(content, organization, subject);
+    const html = this.generateEmailHtml(content, organization, subject, true, false);
 
     const text = `
 Welcome to ${orgName}'s Round-Up Community
