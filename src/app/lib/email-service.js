@@ -1273,10 +1273,28 @@ Unsubscribe
         <strong>The ChangeWorks Team</strong></p>
       </div>
 
-      <p style="font-size: 12px; color: #999; margin-top: 20px;">This message was sent to help protect your account. Please do not reply directly to this email.</p>
+      <p style="font-size: 12px; color: #999; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">This message was sent to help protect your account. Please do not reply directly to this email.</p>
+
+      <div style="margin-top: 20px; margin-bottom: 20px;">
+        <img src="${this.getChangeWorksLogoUrl()}" alt="ChangeWorks" style="max-height: 40px; height: auto; display: block; margin-bottom: 10px;">
+        <h3 style="color: #302E56; margin: 0; font-size: 18px;">ChangeWorks</h3>
+        <p style="color: #6c757d; margin: 5px 0 0; font-size: 14px;">Your trusted platform partner for charitable giving</p>
+      </div>
+
+      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
+        
+        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
+        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
+        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
+        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
+        
+        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
+      </div>
     `;
 
-    const html = this.generateEmailHtml(content, brandingOrg, subject, false);
+    // We pass false for showOrgName in generateEmailHtml because we handle the header manually in the content
+    // We also pass false for showFooter because we handle the footer manually in the content
+    const html = this.generateEmailHtml(content, brandingOrg, subject, false, false);
 
     const text = `
 Reset your ChangeWorks account password

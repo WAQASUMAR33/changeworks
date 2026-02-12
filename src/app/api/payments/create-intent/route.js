@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { NextResponse } from "next/server";
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { NextResponse } from "next/server";
 import { z } from "zod";
 import Stripe from 'stripe';
 import { prisma } from "../../../lib/prisma";
@@ -154,6 +154,8 @@ export async function POST(request) {
       let errorMessage = stripeError.message;
       if (stripeError.code === 'account_invalid') {
         errorMessage = `The organization's Stripe account (${destinationAccountId}) is invalid or not connected in ${process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'Live' : 'Test'} mode.`;
+      } else if (errorMessage.includes('Only Stripe Connect platforms can work with other accounts')) {
+        errorMessage = `The Stripe ${process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'Live' : 'Test'} Secret Key configured in .env belongs to a Standard Stripe account, but a Connect Platform account is required to process donations for organizations. Please enable "Connect" in your Stripe Dashboard.`;
       }
 
       return NextResponse.json({
