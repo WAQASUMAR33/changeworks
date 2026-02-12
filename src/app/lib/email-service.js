@@ -251,7 +251,16 @@ class EmailService {
       
       <p style="margin-top: 20px; font-size: 14px; color: #6c757d;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
 
-      ${this.getFooterHtml()}
+      <div style="margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
+        <div style="border-top: 1px solid #eee; margin: 20px 0;"></div>
+        
+        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
+        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
+        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
+        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
+        
+        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
+      </div>
     `;
 
     const html = this.generateEmailHtml(content, organization, subject, false, false);
@@ -276,9 +285,6 @@ With gratitude,
 ${orgName}
 
 P.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.
-
-ChangeWorks
-Your trusted platform partner for charitable giving
 
 Contact Information
 Email: support@changeworksfund.org
@@ -345,19 +351,13 @@ ChangeWorks Team
   async sendVerificationEmail({ donor, verificationToken, verificationLink, organization }) {
     const orgName = organization?.name || 'ChangeWorks';
     const subject = `Welcome to ${orgName}'s Donation Community`;
-    
-    // ChangeWorks branding
-    const brandingOrg = {
-      name: 'ChangeWorks',
-      imageUrl: '/imgs/changeworks.png'
-    };
 
     const content = `
       <div style="text-align: center; margin-bottom: 30px;">
-        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 120px; max-width: 250px; height: auto;">` : `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>`}
+        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 120px; max-width: 250px; height: auto;">` : (orgName !== 'ChangeWorks' ? `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>` : '')}
       </div>
 
-      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello!</p>
+      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello! ${donor.name}</p>
       
       <p>Thank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.</p>
       
@@ -377,25 +377,34 @@ ChangeWorks Team
       
       <p>If you ever have a question or just want to reach out, we’d love to hear from you. We’re grateful to have you with us.</p>
       
-      <div style="margin-top: 30px; font-style: italic; color: #495057;">
+      ${orgName !== 'ChangeWorks' ? `<div style="margin-top: 30px; font-style: italic; color: #495057;">
         <p>Warm regards,<br>
         The ${orgName} Team</p>
-      </div>
+      </div>` : ''}
       
       <p style="margin-top: 20px; font-size: 14px; color: #6c757d;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
 
-      ${this.getFooterHtml()}
+      <div style="margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
+        <div style="border-top: 1px solid #eee; margin: 20px 0;"></div>
+        
+        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
+        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
+        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
+        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
+        
+        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
+      </div>
     `;
 
     // Note: We're passing false for showOrgName in generateEmailHtml because we handle the header manually in the content
     // to match the specific layout requested (Org Logo -> Hello!)
     // We also pass false for showFooter because we handle the footer manually in the content
-    const html = this.generateEmailHtml(content, brandingOrg, subject, false, false);
+    const html = this.generateEmailHtml(content, null, subject, false, false);
 
     const text = `
 Welcome to ${orgName}'s Donation Community
 
-Hello!
+Hello! ${donor.name}
 
 Thank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.
 
@@ -410,13 +419,10 @@ VERIFY YOUR EMAIL HERE: ${verificationLink}
 
 If you ever have a question or just want to reach out, we’d love to hear from you. We’re grateful to have you with us.
 
-Warm regards,
-The ${orgName} Team
+${orgName !== 'ChangeWorks' ? `Warm regards,
+The ${orgName} Team` : ''}
 
 P.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.
-
-ChangeWorks Fund
-Your trusted platform partner for charitable giving
 
 Contact Information
 Email: support@changeworksfund.org
@@ -643,7 +649,7 @@ Unsubscribe
         ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${organization.name}" style="max-height: 80px; max-width: 200px; height: auto;">` : `<h2 style="color: #302E56; margin: 0;">${organization.name}</h2>`}
       </div>
 
-      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Dear ${donor.name},</p>
+      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello! ${donor.name}</p>
       
       <p>Thank you for your generous donation to ${organization.name}. Your support helps ensure we can continue showing up for people when help is needed.</p>
       
@@ -1110,10 +1116,10 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
 
     const content = `
       <div style="text-align: center; margin-bottom: 30px;">
-        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 120px; max-width: 250px; height: auto;">` : `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>`}
+        ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 120px; max-width: 250px; height: auto;">` : ((orgName !== 'ChangeWorks' && orgName !== 'ChangeWorks Fund') ? `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>` : '')}
       </div>
 
-      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Dear ${donor.name},</p>
+      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello! ${donor.name}</p>
       
       <p>We received a request to reset the password for your ${orgName} donor account.</p>
       
@@ -1141,14 +1147,12 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
       <div style="margin-top: 30px; font-style: italic; color: #495057;">
         <p>With appreciation,</p>
         <p><strong>${directorName}</strong><br>
-        ${orgName}</p>
+        ${(orgName !== 'ChangeWorks' && orgName !== 'ChangeWorks Fund') ? orgName : ''}</p>
       </div>
 
       <p style="font-size: 12px; color: #999; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">This message was sent to help protect your account. Please do not reply directly to this email.</p>
 
       <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
-        <p style="margin-bottom: 5px; font-weight: 600; color: #302E56;">ChangeWorks</p>
-        <p style="margin-bottom: 20px;">Your trusted platform partner for charitable giving</p>
         
         <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
         <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
@@ -1167,7 +1171,7 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
     const text = `
 Subject: ${subject}
 
-Dear ${donor.name},
+Hello! ${donor.name}
 
 We received a request to reset the password for your ${orgName} donor account.
 
@@ -1190,12 +1194,9 @@ Thank you for being part of ${orgName} and for the support you provide to our wo
 
 With appreciation,
 ${directorName}
-${orgName}
+${(orgName !== 'ChangeWorks' && orgName !== 'ChangeWorks Fund') ? orgName : ''}
 
 This message was sent to help protect your account. Please do not reply directly to this email.
-
-ChangeWorks
-Your trusted platform partner for charitable giving
 
 Contact Information
 Email: support@changeworksfund.org
