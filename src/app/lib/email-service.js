@@ -1152,6 +1152,12 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
 
       <p style="font-size: 12px; color: #999; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">This message was sent to help protect your account. Please do not reply directly to this email.</p>
 
+      <div style="margin-top: 20px; margin-bottom: 20px;">
+        <img src="${this.getChangeWorksLogoUrl()}" alt="ChangeWorks" style="max-height: 40px; height: auto; display: block; margin-bottom: 10px;">
+        <h3 style="color: #302E56; margin: 0; font-size: 18px;">ChangeWorks</h3>
+        <p style="color: #6c757d; margin: 5px 0 0; font-size: 14px;">Your trusted platform partner for charitable giving</p>
+      </div>
+
       <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
         
         <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
@@ -1197,6 +1203,9 @@ ${directorName}
 ${(orgName !== 'ChangeWorks' && orgName !== 'ChangeWorks Fund') ? orgName : ''}
 
 This message was sent to help protect your account. Please do not reply directly to this email.
+
+ChangeWorks
+Your trusted platform partner for charitable giving
 
 Contact Information
 Email: support@changeworksfund.org
