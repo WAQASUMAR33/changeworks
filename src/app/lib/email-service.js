@@ -360,7 +360,7 @@ ChangeWorks Team
         ${organization?.imageUrl ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 120px; max-width: 250px; height: auto;">` : (orgName !== 'ChangeWorks' ? `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>` : '')}
       </div>
 
-      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello! ${donor.name}</p>
+      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello ${donor.name}</p>
       
       <p>Thank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.</p>
       
@@ -398,7 +398,7 @@ ChangeWorks Team
     const text = `
 Welcome to ${orgName}'s Donation Community
 
-Hello! ${donor.name}
+Hello ${donor.name}
 
 Thank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.
 

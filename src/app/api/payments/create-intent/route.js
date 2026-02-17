@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { NextResponse } from "next/server";
+﻿﻿﻿﻿import { NextResponse } from "next/server";
 import { z } from "zod";
 import Stripe from 'stripe';
 import { prisma } from "../../../lib/prisma";
@@ -49,7 +49,7 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    console.log('ðŸ” Payment Intent Request Body:', body);
+    console.log('🔍 Payment Intent Request Body:', body);
 
     const { amount, currency, donor_id, organization_id, description, metadata } = paymentIntentSchema.parse(body);
 
@@ -58,7 +58,7 @@ export async function POST(request) {
       where: { id: donor_id },
       select: { id: true, name: true, email: true }
     });
-
+    
     if (!donor) {
       return NextResponse.json({
         success: false,
@@ -71,7 +71,7 @@ export async function POST(request) {
       where: { id: organization_id },
       select: { id: true, name: true, email: true, stripeAccountId: true }
     });
-
+    
     if (!organization) {
       return NextResponse.json({
         success: false,
@@ -114,13 +114,31 @@ export async function POST(request) {
     const amountInCents = Math.round(amount);
     const amountDollars = amountInCents / 100;
 
-    // Calculate 6.8% platform fee
-    // Note: Stripe fees (approx 2.9% + 30c) are deducted from the Connected Account's balance automatically by Stripe
-    // We only need to specify our Application Fee
-    const applicationFeeAmount = Math.round(amountInCents * 0.068);
+    // Determine fee strategy
+    const SPECIAL_ORG_EMAIL = 'frankie@vallartacares.com';
+    const isSpecialOrg = organization.email?.toLowerCase() === SPECIAL_ORG_EMAIL.toLowerCase();
+    const feeStrategy = isSpecialOrg ? 'special' : 'standard';
+
+    // Calculate Platform Fee
+    // Standard Formula: Donation = 90% Org + Stripe + Platform
+    // Therefore: Platform = Donation - 90% Org - Stripe
+    //            Platform = (Donation * 10%) - Stripe
+    // Special (Frankie): 0% Platform Fee (Only Stripe fees deducted from connected account)
+    
+    let applicationFeeAmount = 0;
+    
+    if (isSpecialOrg) {
+      applicationFeeAmount = 0;
+    } else {
+      const platformBudget = Math.round(amountInCents * 0.10); // 10% of total
+      const estimatedStripeFee = Math.round(amountInCents * 0.029) + 30; // 2.9% + 30c
+      
+      // Platform fee is the remainder of the 10% slice after paying Stripe
+      applicationFeeAmount = Math.max(0, platformBudget - estimatedStripeFee);
+    }
 
     console.log(`💰 Total: $${amountDollars} (${amountInCents} cents)`);
-    console.log(`💸 Platform Commission (6.8%): ${applicationFeeAmount} cents`);
+    console.log(`💸 Platform Commission: ${applicationFeeAmount} cents (Strategy: ${feeStrategy})`);
     console.log(`🏦 Direct Charge to Org: ${destinationAccountId}`);
 
     console.log(`🏦 Initiating Direct Charge: Total=${amountInCents}, AppFee=${applicationFeeAmount} on account ${destinationAccountId}`);
@@ -141,6 +159,8 @@ export async function POST(request) {
           organization_id: organization_id.toString(),
           donor_name: donor.name,
           organization_name: organization.name,
+          organization_email: organization.email,
+          fee_strategy: feeStrategy,
           transaction_type: 'one_time',
           ...(metadata || {}),
         },
@@ -186,7 +206,8 @@ export async function POST(request) {
           platform_fee_cents: applicationFeeAmount,
           destination_account: organization.stripeAccountId,
           stripe_metadata: paymentIntent.metadata,
-          charge_type: 'direct_charge'
+          charge_type: 'direct_charge',
+          fee_strategy: feeStrategy
         }),
         pay_status: 'pending'
       }
@@ -205,6 +226,18 @@ export async function POST(request) {
       console.log(`📊 Current Stripe status: ${currentStripePayment.status}`);
 
       if (currentStripePayment.status === 'succeeded') {
+        
+        // Calculate Org Amount for Balance Update
+        let organizationAmountDollars;
+        if (feeStrategy === 'special') {
+           // Special: Total - Stripe
+           const stripeFeeCents = Math.round(amountInCents * 0.029) + 30;
+           organizationAmountDollars = (amountInCents - stripeFeeCents) / 100;
+        } else {
+           // Standard: 90% of Total
+           organizationAmountDollars = amountDollars * 0.9;
+        }
+
         // Payment already succeeded, update to completed immediately
         await prisma.saveTrRecord.update({
           where: { id: transaction.id },
@@ -219,23 +252,25 @@ export async function POST(request) {
               stripe_amount_received: currentStripePayment.amount_received,
               stripe_payment_method: currentStripePayment.payment_method,
               stripe_created: new Date(currentStripePayment.created * 1000),
-              immediately_updated_at: new Date()
+              immediately_updated_at: new Date(),
+              fee_strategy: feeStrategy,
+              organization_amount: organizationAmountDollars
             }),
             updated_at: new Date()
           }
         });
 
-        // Update organization balance with 90% of the amount in dollars
+        // Update organization balance
         await prisma.organization.update({
-          where: { id: organization_id },
+          where: { id: organizationId },
           data: {
             balance: {
-              increment: amountDollars * 0.9
+              increment: organizationAmountDollars
             }
           }
         });
 
-        console.log(`âœ… Immediately updated payment ${paymentIntent.id} to completed status`);
+        console.log(`✅ Immediately updated payment ${paymentIntent.id} to completed status`);
       } else if (currentStripePayment.status === 'payment_failed') {
         // Payment failed, update to failed immediately
         await prisma.saveTrRecord.update({
@@ -254,9 +289,9 @@ export async function POST(request) {
           }
         });
 
-        console.log(`âŒ Immediately updated payment ${paymentIntent.id} to failed status`);
+        console.log(`❌ Immediately updated payment ${paymentIntent.id} to failed status`);
       } else {
-        console.log(`â³ Payment ${paymentIntent.id} still pending: ${currentStripePayment.status}`);
+        console.log(`⏳ Payment ${paymentIntent.id} still pending: ${currentStripePayment.status}`);
 
         // Set up additional checking for payments that are still pending
         setTimeout(async () => {
@@ -269,78 +304,42 @@ export async function POST(request) {
             );
 
             if (delayedStripePayment.status === 'succeeded') {
-              await prisma.saveTrRecord.update({
-                where: { id: transaction.id },
-                data: {
-                  pay_status: 'completed',
-                  trx_recipt_url: delayedStripePayment.receipt_url || `https://pay.stripe.com/receipts/${paymentIntent.id}`,
-                  trx_details: JSON.stringify({
-                    payment_intent_id: paymentIntent.id,
-                    description: description || `Donation to ${organization.name}`,
-                    stripe_metadata: paymentIntent.metadata,
-                    stripe_status: delayedStripePayment.status,
-                    stripe_amount_received: delayedStripePayment.amount_received,
-                    stripe_payment_method: delayedStripePayment.payment_method,
-                    stripe_created: new Date(delayedStripePayment.created * 1000),
-                    delayed_updated_at: new Date()
-                  }),
-                  updated_at: new Date()
-                }
-              });
-
-              // Update organization balance with 90% of the amount in dollars
-              await prisma.organization.update({
-                where: { id: organization_id },
-                data: {
-                  balance: {
-                    increment: (delayedStripePayment.amount_received / 100) * 0.9
-                  }
-                }
-              });
-
-              console.log(`âœ… Delayed update: Payment ${paymentIntent.id} completed`);
+                // We leave this for the webhook to handle to avoid double counting
+                console.log(`✅ Payment succeeded on delayed check!`);
             }
-          } catch (error) {
-            console.error(`âŒ Error in delayed check for payment ${paymentIntent.id}:`, error);
+          } catch (e) {
+            console.error('Error in delayed check:', e);
           }
-        }, 15000); // 15 seconds delay for additional check
+        }, 5000);
       }
-    } catch (error) {
-      console.error(`âŒ Error immediately checking payment ${paymentIntent.id}:`, error);
+
+    } catch (immediateCheckError) {
+      console.error('⚠️ Error checking immediate status:', immediateCheckError);
+      // Do not fail the request, just log it
     }
 
     return NextResponse.json({
       success: true,
-      client_secret: paymentIntent.client_secret,
-      transaction_id: transaction.id,
-      livemode: paymentIntent.livemode // Return mode for client-side validation
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      transactionId: transaction.id,
+      accountId: destinationAccountId 
     });
 
   } catch (error) {
-    console.error('âŒ Error creating payment intent:', error);
-
+    console.error("❌ API Error:", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json({
         success: false,
-        error: "Validation error",
+        error: "Validation Error",
         details: error.errors
-      }, { status: 400 });
-    }
-
-    if (error.type === 'StripeError' || error.type === 'StripeInvalidRequestError') {
-      return NextResponse.json({
-        success: false,
-        error: "Stripe Error",
-        details: error.message,
-        stripeCode: error.code || error.type
       }, { status: 400 });
     }
 
     return NextResponse.json({
       success: false,
-      error: "Failed to create payment intent",
-      details: error.message,
-      stripeCode: error.code || error.type
+      error: "Internal Server Error",
+      details: error.message
     }, { status: 500 });
   }
 }

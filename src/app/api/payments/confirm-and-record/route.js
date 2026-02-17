@@ -45,14 +45,19 @@ export async function POST(request) {
     }
 
     // Fetch current PI from the platform account
+    // For Direct Charges, we might need to fetch as connected account? 
+    // Usually platform can fetch if it created it.
     let pi = await stripe.paymentIntents.retrieve(payment_intent_id, {
       expand: ['latest_charge'],
+      stripeAccount: organization.stripeAccountId // Important for Direct Charges
     });
 
     // If confirmation is needed and a payment method id is provided, confirm server-side
     if ((pi.status === 'requires_confirmation' || pi.status === 'requires_payment_method') && payment_method_id) {
       pi = await stripe.paymentIntents.confirm(payment_intent_id, {
         payment_method: payment_method_id,
+      }, {
+        stripeAccount: organization.stripeAccountId // Important for Direct Charges
       });
     }
 
@@ -94,7 +99,20 @@ export async function POST(request) {
     });
 
     const amountDollars = (pi.amount_received ?? pi.amount ?? 0) / 100;
-    const organizationAmount = amountDollars * 0.9; // 90% goes to organization (10% platform commission)
+    
+    // Determine fee strategy
+    const feeStrategy = pi.metadata.fee_strategy || 'standard';
+    const orgEmail = pi.metadata.organization_email;
+    let organizationAmountDollars;
+
+    if (feeStrategy === 'special' || (orgEmail && orgEmail.toLowerCase() === 'frankie@vallartacares.com')) {
+      const amountCents = (pi.amount_received ?? pi.amount ?? 0);
+      const stripeFeeCents = Math.round(amountCents * 0.029) + 30;
+      const organizationAmountCents = amountCents - stripeFeeCents;
+      organizationAmountDollars = organizationAmountCents / 100;
+    } else {
+      organizationAmountDollars = amountDollars * 0.9;
+    }
 
     let record;
     if (existing) {
@@ -106,10 +124,16 @@ export async function POST(request) {
         data: {
           // Only upgrade status forward unless force_update is true
           pay_status: force_update ? dbStatus : (existing.pay_status === 'completed' ? 'completed' : dbStatus),
-          trx_amount: organizationAmount || undefined, // Store 90% of the amount
+          trx_amount: organizationAmountDollars || undefined, 
           trx_recipt_url: receiptUrl,
           updated_at: new Date(),
-          trx_details: JSON.stringify({ ...prevDetails, ...trxDetails, full_amount: amountDollars, organization_amount: organizationAmount }),
+          trx_details: JSON.stringify({ 
+            ...prevDetails, 
+            ...trxDetails,
+            fee_strategy: feeStrategy,
+            organization_amount: organizationAmountDollars,
+            platform_commission: amountDollars - organizationAmountDollars
+          }),
         }
       });
     } else {
@@ -117,24 +141,30 @@ export async function POST(request) {
         data: {
           trx_id: `pi_${pi.id}_${Date.now()}`,
           trx_date: new Date(),
-          trx_amount: organizationAmount, // Store 90% of the amount
+          trx_amount: organizationAmountDollars, 
           trx_method: 'stripe',
           trx_donor_id: donor_id,
           trx_organization_id: organization_id,
           trx_recipt_url: receiptUrl,
-          trx_details: JSON.stringify({ ...trxDetails, full_amount: amountDollars, organization_amount: organizationAmount }),
+          trx_details: JSON.stringify({
+            ...trxDetails,
+            fee_strategy: feeStrategy,
+            organization_amount: organizationAmountDollars,
+            platform_commission: amountDollars - organizationAmountDollars
+          }),
           pay_status: dbStatus,
         }
       });
     }
 
-    // If completed, update saveTrRecord and return success
-    // Note: We rely on the Stripe Webhook to handle:
-    // 1. Organization balance increment
-    // 2. Creating the official DonorTransaction record
-    // 3. Sending the confirmation email
-    // This ensures these critical actions happen exactly once and are triggered by the backend API.
-    
+    // If completed, increment organization balance
+    if (dbStatus === 'completed' && organizationAmountDollars > 0) {
+      await prisma.organization.update({
+        where: { id: organization_id },
+        data: { balance: { increment: organizationAmountDollars } }
+      });
+    }
+
     return NextResponse.json({
       success: true,
       status: pi.status,
@@ -152,5 +182,3 @@ export async function POST(request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
-
-
