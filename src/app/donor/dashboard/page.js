@@ -539,9 +539,9 @@ export default function DonorDashboard() {
                     </div>
                     <button
                       onClick={() => setShowPlaidDisconnectModal(true)}
-                      className="w-full bg-red-500/80 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-red-600/80 transition-colors duration-200 text-sm font-semibold mt-auto"
+                      className="w-full bg-green-800/80 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-green-900/80 transition-colors duration-200 text-sm font-semibold mt-auto"
                     >
-                      Cancel
+                      Manage
                     </button>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none"></div>
