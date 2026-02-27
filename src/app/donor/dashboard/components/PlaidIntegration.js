@@ -11,6 +11,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [connectionResult, setConnectionResult] = useState(null);
   const [currentStep, setCurrentStep] = useState(1); // 1: Disclaimer, 2: Select Organization, 3: Connect Bank
   
   // Organization selection state
@@ -173,24 +174,13 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       if (!response.ok) {
         const errorData = await response.clone().json().catch(() => ({ error: 'Unknown error' }));
         console.error('Token exchange failed:', errorData);
-        const errorMessage = `Token exchange failed: ${errorData.error || 'Unknown error'}`;
-        alert(errorMessage);
         throw new Error('Failed to exchange token');
       }
 
       const result = await response.json();
       console.log('Token exchange successful:', result);
-      
-      // Show Plaid response in alert dialog
-      const alertMessage = `Plaid Connection Successful!\n\n` +
-        `Organization: ${selectedOrganization?.name}\n` +
-        `Institution: ${result.connection?.institution_name || 'Unknown'}\n` +
-        `Accounts: ${result.connection?.accounts_count || 0}\n` +
-        `Status: ${result.connection?.status || 'Unknown'}\n` +
-        `Connection ID: ${result.connection?.id || 'N/A'}`;
-      
-      alert(alertMessage);
-      
+
+      setConnectionResult(result.connection || null);
       setSuccess(true);
       
       // Call success callback after a short delay
@@ -201,8 +191,6 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
 
     } catch (err) {
       console.error('Plaid integration error:', err);
-      const errorMessage = `Plaid Connection Failed!\n\nError: ${err.message || 'Unknown error occurred'}\n\nPlease try again.`;
-      alert(errorMessage);
       setError('Failed to connect bank account. Please try again.');
     } finally {
       setLoading(false);
@@ -212,8 +200,6 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
   const onPlaidExit = useCallback((err, metadata) => {
     if (err) {
       console.error('Plaid Link Exit Error:', err);
-      const exitMessage = `Plaid Connection Cancelled!\n\nReason: ${err.error_message || err.error_code || 'User cancelled'}\n\nYou can try again anytime.`;
-      alert(exitMessage);
       setError('Connection was cancelled or failed. Please try again.');
     }
   }, []);
@@ -311,8 +297,6 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       if (!response.ok) {
         const errorData = await response.clone().json().catch(() => ({ error: 'Unknown error' }));
         console.error('Link token creation failed:', errorData);
-        const errorMessage = `Failed to create link token: ${errorData.error || 'Unknown error'}`;
-        alert(errorMessage);
         throw new Error(errorData.error || 'Failed to create link token');
       }
 
@@ -324,8 +308,6 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       
     } catch (err) {
       console.error('Error creating link token:', err);
-      const errorMessage = `Failed to initialize bank connection: ${err.message}`;
-      alert(errorMessage);
       setError('Failed to initialize bank connection. Please try again.');
     } finally {
       setLoading(false);
@@ -341,7 +323,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
         console.log('Plaid Link opened successfully');
       } catch (error) {
         console.error('Error opening Plaid Link:', error);
-        alert(`Error opening Plaid Link: ${error.message}`);
+        setError('Failed to open bank connection. Please try again.');
       }
     }
   }, [linkToken, ready, open]);
@@ -695,6 +677,22 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
               <p className="text-black mb-4">
                 Your bank account has been successfully connected through Plaid.
               </p>
+
+              {connectionResult?.institution_name && (
+                <div className="flex items-center justify-center space-x-3 bg-green-50 border border-green-200 rounded-xl px-5 py-3 mx-auto mb-5 max-w-xs">
+                  <Building2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <div className="text-left">
+                    <p className="text-xs text-green-700 font-medium">Connected Institution</p>
+                    <p className="text-sm font-bold text-green-900">{connectionResult.institution_name}</p>
+                    {connectionResult.accounts_count > 0 && (
+                      <p className="text-xs text-green-600">
+                        {connectionResult.accounts_count} account{connectionResult.accounts_count !== 1 ? 's' : ''} linked
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-center space-x-2 text-sm text-black">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span>Returning to dashboard...</span>

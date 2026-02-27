@@ -25,6 +25,7 @@ import {
   CreditCard,
   RefreshCw,
   FileText,
+  Banknote,
 } from 'lucide-react';
 
 const OrgSidebar = () => {
@@ -100,6 +101,11 @@ const OrgSidebar = () => {
       name: 'Monthly Donors',
       icon: RefreshCw,
       path: '/organization/dashboard/subscriptions',
+    },
+    {
+      name: 'Round-Up Donors',
+      icon: Banknote,
+      path: '/organization/dashboard/round-up-donors',
     },
     {
       name: 'Settings',
