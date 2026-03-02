@@ -4,9 +4,17 @@ import jwt from 'jsonwebtoken';
 
 const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
 const PLAID_SECRET_KEY = process.env.PLAID_SECRET_KEY;
-const PLAID_ENV = process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox';
+const PLAID_ENV = (process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox').toLowerCase();
 
-const PLAID_BASE_URL = `https://${PLAID_ENV}.plaid.com`;
+function getPlaidBaseUrl(env) {
+  switch (env) {
+    case 'production': return 'https://production.plaid.com';
+    case 'development': return 'https://development.plaid.com';
+    default: return 'https://sandbox.plaid.com';
+  }
+}
+
+const PLAID_BASE_URL = getPlaidBaseUrl(PLAID_ENV);
 
 export const dynamic = 'force-dynamic';
 
@@ -30,9 +38,16 @@ async function fetchPlaidAccounts(accessToken) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('[Plaid] accounts/get error:', JSON.stringify(data));
-      const status = data?.error_code === 'ITEM_LOGIN_REQUIRED' ? 'LOGIN_REQUIRED' : 'ERROR';
-      return { accounts: [], status, error: data?.error_message || 'Failed to fetch accounts' };
+      const errorCode = data?.error_code;
+      // INVALID_ACCESS_TOKEN means the token is fake/mock — safe to delete
+      if (errorCode === 'INVALID_ACCESS_TOKEN') {
+        return { accounts: [], status: 'INVALID', errorCode };
+      }
+      // ITEM_LOGIN_REQUIRED means real token but needs re-auth
+      if (errorCode === 'ITEM_LOGIN_REQUIRED') {
+        return { accounts: [], status: 'LOGIN_REQUIRED', errorCode };
+      }
+      return { accounts: [], status: 'ERROR', errorCode, error: data?.error_message };
     }
 
     return { accounts: data.accounts || [], status: 'ACTIVE' };
@@ -62,11 +77,7 @@ async function fetchPlaidInstitution(institutionId) {
       signal: AbortSignal.timeout(15000),
     });
 
-    if (!response.ok) {
-      const errData = await response.json();
-      console.error('[Plaid] institutions/get_by_id error:', JSON.stringify(errData));
-      return null;
-    }
+    if (!response.ok) return null;
 
     const data = await response.json();
     return data.institution || null;
@@ -98,7 +109,6 @@ async function fetchPlaidTransactions(accessToken, startDate, endDate) {
 
     if (!response.ok) {
       const errData = await response.json();
-      console.error('Plaid transactions error:', errData);
       return { transactions: [], total_transactions: 0, error: errData?.error_message || 'Plaid API error' };
     }
 
@@ -112,7 +122,6 @@ async function fetchPlaidTransactions(accessToken, startDate, endDate) {
 
 export async function GET(req) {
   try {
-    // Authenticate org via JWT
     const authHeader = req.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'No token provided' }, { status: 401 });
@@ -128,7 +137,6 @@ export async function GET(req) {
 
     const organizationId = decoded.id;
 
-    // Build date range from query params (default: last 30 days)
     const { searchParams } = new URL(req.url);
     const today = new Date();
     const defaultStart = new Date(today);
@@ -137,7 +145,7 @@ export async function GET(req) {
     const startDate = searchParams.get('start_date') || defaultStart.toISOString().split('T')[0];
     const endDate = searchParams.get('end_date') || today.toISOString().split('T')[0];
 
-    // Fetch all Plaid connections for this org from DB (only need access_token, institution_id, donor)
+    // Fetch all connections from DB — only access_token, institution_id, and donor are used
     const connections = await prisma.plaidConnection.findMany({
       where: { organization_id: organizationId },
       include: {
@@ -148,26 +156,37 @@ export async function GET(req) {
       orderBy: { created_at: 'desc' },
     });
 
-    // For each connection, fetch all data live from Plaid in parallel
-    const enrichedConnections = await Promise.all(
+    const validConnections = [];
+    const invalidIds = [];
+
+    // Verify each connection against Plaid live
+    await Promise.all(
       connections.map(async (conn) => {
-        const [accountsData, institutionData, plaidTransactions] = await Promise.all([
-          fetchPlaidAccounts(conn.access_token),
+        const accountsData = await fetchPlaidAccounts(conn.access_token);
+
+        // INVALID = fake/mock token — auto-delete from DB
+        if (accountsData.status === 'INVALID') {
+          invalidIds.push(conn.id);
+          return;
+        }
+
+        // Fetch institution and transactions in parallel for valid connections
+        const [institutionData, plaidTransactions] = await Promise.all([
           fetchPlaidInstitution(conn.institution_id),
           fetchPlaidTransactions(conn.access_token, startDate, endDate),
         ]);
 
-        return {
+        validConnections.push({
           id: conn.id,
-          status: accountsData.status,
-          institution_name: institutionData?.name || conn.institution_name,
+          status: accountsData.status,                        // from Plaid live
+          institution_name: institutionData?.name || null,    // from Plaid live
           institution_id: conn.institution_id,
-          institution_logo: institutionData?.logo || null,
+          institution_logo: institutionData?.logo || null,    // from Plaid live
           institution_primary_color: institutionData?.primary_color || null,
           connected_at: conn.created_at,
           updated_at: conn.updated_at,
           donor: conn.donor,
-          accounts: accountsData.accounts.map((a) => ({
+          accounts: accountsData.accounts.map((a) => ({      // from Plaid live
             account_id: a.account_id,
             name: a.name,
             official_name: a.official_name,
@@ -176,21 +195,32 @@ export async function GET(req) {
             mask: a.mask,
             balances: a.balances,
           })),
-          accounts_error: accountsData.error || null,
-          transactions: plaidTransactions.transactions,
+          transactions: plaidTransactions.transactions,       // from Plaid live
           total_transactions: plaidTransactions.total_transactions,
           transactions_error: plaidTransactions.error || null,
-        };
+        });
       })
     );
 
-    const totalTransactions = enrichedConnections.reduce((sum, c) => sum + (c.total_transactions || 0), 0);
+    // Auto-delete all invalid (mock/fake) connections from DB
+    if (invalidIds.length > 0) {
+      await prisma.plaidConnection.deleteMany({
+        where: { id: { in: invalidIds } },
+      });
+      console.log(`Auto-deleted ${invalidIds.length} invalid Plaid connection(s):`, invalidIds);
+    }
+
+    // Sort by connected_at desc (Promise.all doesn't preserve order)
+    validConnections.sort((a, b) => new Date(b.connected_at) - new Date(a.connected_at));
+
+    const totalTransactions = validConnections.reduce((sum, c) => sum + (c.total_transactions || 0), 0);
 
     return NextResponse.json({
       success: true,
-      connections: enrichedConnections,
+      connections: validConnections,
+      removed_invalid: invalidIds.length,
       summary: {
-        total_donors: enrichedConnections.length,
+        total_donors: validConnections.length,
         total_transactions: totalTransactions,
         start_date: startDate,
         end_date: endDate,
