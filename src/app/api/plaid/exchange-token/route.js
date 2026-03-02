@@ -6,7 +6,17 @@ import { emailService } from "@/app/lib/email-service";
 // Plaid configuration
 const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
 const PLAID_SECRET_KEY = process.env.PLAID_SECRET_KEY;
-const PLAID_ENV = process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox';
+const PLAID_ENV = (process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox').toLowerCase();
+
+function getPlaidBaseUrl(env) {
+  switch (env) {
+    case 'production': return 'https://production.plaid.com';
+    case 'development': return 'https://development.plaid.com';
+    default: return 'https://sandbox.plaid.com';
+  }
+}
+
+const PLAID_BASE_URL = getPlaidBaseUrl(PLAID_ENV);
 
 export async function POST(request) {
   try {
@@ -29,7 +39,7 @@ export async function POST(request) {
     }
 
     // Exchange public token for access token
-    const exchangeResponse = await fetch('https://sandbox.plaid.com/item/public_token/exchange', {
+    const exchangeResponse = await fetch(`${PLAID_BASE_URL}/item/public_token/exchange`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -58,7 +68,7 @@ export async function POST(request) {
     const { access_token, item_id } = exchangeData;
 
     // Get account information
-    const accountsResponse = await fetch('https://sandbox.plaid.com/accounts/get', {
+    const accountsResponse = await fetch(`${PLAID_BASE_URL}/accounts/get`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

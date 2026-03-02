@@ -52,6 +52,7 @@ export default function RoundUpDonorsPage() {
   const [search, setSearch] = useState('');
   const [startDate, setStartDate] = useState(daysAgo(30));
   const [endDate, setEndDate] = useState(today());
+  const [cleaning, setCleaning] = useState(false);
 
   const fetchConnections = async () => {
     try {
@@ -101,6 +102,30 @@ export default function RoundUpDonorsPage() {
 
   const toggleDonor = (id) => setExpandedDonor((prev) => (prev === id ? null : id));
 
+  const hasMockConnections = connections.some(
+    (c) => c.status === 'ERROR' || c.institution_name === 'Mock Bank'
+  );
+
+  const cleanupMockConnections = async () => {
+    if (!confirm('This will permanently delete all mock/invalid bank connections. Affected donors will need to reconnect. Continue?')) return;
+    try {
+      setCleaning(true);
+      const token = sessionStorage.getItem('orgToken');
+      const res = await fetch('/api/plaid/cleanup-mock', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      alert(data.message);
+      fetchConnections();
+    } catch (err) {
+      alert('Cleanup failed: ' + err.message);
+    } finally {
+      setCleaning(false);
+    }
+  };
+
   const statCards = [
     {
       label: 'Round-Up Donors',
@@ -147,14 +172,26 @@ export default function RoundUpDonorsPage() {
             Donors who connected their bank accounts via Plaid for round-up donations
           </p>
         </div>
-        <button
-          onClick={fetchConnections}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-[#0E0061] text-white rounded-xl hover:bg-[#1a0099] transition-colors disabled:opacity-50 text-sm font-medium"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          {hasMockConnections && (
+            <button
+              onClick={cleanupMockConnections}
+              disabled={cleaning}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 text-sm font-medium"
+            >
+              {cleaning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <AlertCircle className="w-4 h-4" />}
+              Remove Mock Connections
+            </button>
+          )}
+          <button
+            onClick={fetchConnections}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-[#0E0061] text-white rounded-xl hover:bg-[#1a0099] transition-colors disabled:opacity-50 text-sm font-medium"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Date Range Filter */}
@@ -264,6 +301,15 @@ export default function RoundUpDonorsPage() {
                     {conn.donor?.name?.charAt(0)?.toUpperCase() || '?'}
                   </div>
 
+                  {/* Institution Logo */}
+                  {conn.institution_logo && (
+                    <img
+                      src={`data:image/png;base64,${conn.institution_logo}`}
+                      alt={conn.institution_name || 'Bank'}
+                      className="w-8 h-8 rounded-lg object-contain border border-gray-100 bg-white p-0.5 flex-shrink-0"
+                    />
+                  )}
+
                   <div>
                     <div className="font-semibold text-gray-900 text-sm">{conn.donor?.name || 'Unknown Donor'}</div>
                     <div className="text-xs text-gray-500">{conn.donor?.email}</div>
@@ -291,6 +337,11 @@ export default function RoundUpDonorsPage() {
                       <>
                         <CheckCircle className="w-4 h-4 text-green-500" />
                         <span className="text-xs font-semibold text-green-600">Active</span>
+                      </>
+                    ) : conn.status === 'LOGIN_REQUIRED' ? (
+                      <>
+                        <AlertCircle className="w-4 h-4 text-amber-400" />
+                        <span className="text-xs font-semibold text-amber-600">Re-login Required</span>
                       </>
                     ) : (
                       <>

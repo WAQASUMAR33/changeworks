@@ -10,6 +10,72 @@ const PLAID_BASE_URL = `https://${PLAID_ENV}.plaid.com`;
 
 export const dynamic = 'force-dynamic';
 
+async function fetchPlaidAccounts(accessToken) {
+  try {
+    const response = await fetch(`${PLAID_BASE_URL}/accounts/get`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
+        'PLAID-SECRET': PLAID_SECRET_KEY,
+      },
+      body: JSON.stringify({
+        client_id: PLAID_CLIENT_ID,
+        secret: PLAID_SECRET_KEY,
+        access_token: accessToken,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('[Plaid] accounts/get error:', JSON.stringify(data));
+      const status = data?.error_code === 'ITEM_LOGIN_REQUIRED' ? 'LOGIN_REQUIRED' : 'ERROR';
+      return { accounts: [], status, error: data?.error_message || 'Failed to fetch accounts' };
+    }
+
+    return { accounts: data.accounts || [], status: 'ACTIVE' };
+  } catch (err) {
+    console.error('fetchPlaidAccounts error:', err.message);
+    return { accounts: [], status: 'ERROR', error: err.message };
+  }
+}
+
+async function fetchPlaidInstitution(institutionId) {
+  if (!institutionId) return null;
+  try {
+    const response = await fetch(`${PLAID_BASE_URL}/institutions/get_by_id`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
+        'PLAID-SECRET': PLAID_SECRET_KEY,
+      },
+      body: JSON.stringify({
+        client_id: PLAID_CLIENT_ID,
+        secret: PLAID_SECRET_KEY,
+        institution_id: institutionId,
+        country_codes: ['US'],
+        options: { include_optional_metadata: true },
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      console.error('[Plaid] institutions/get_by_id error:', JSON.stringify(errData));
+      return null;
+    }
+
+    const data = await response.json();
+    return data.institution || null;
+  } catch (err) {
+    console.error('fetchPlaidInstitution error:', err.message);
+    return null;
+  }
+}
+
 async function fetchPlaidTransactions(accessToken, startDate, endDate) {
   try {
     const response = await fetch(`${PLAID_BASE_URL}/transactions/get`, {
@@ -71,12 +137,9 @@ export async function GET(req) {
     const startDate = searchParams.get('start_date') || defaultStart.toISOString().split('T')[0];
     const endDate = searchParams.get('end_date') || today.toISOString().split('T')[0];
 
-    // Fetch all active Plaid connections for this organization
+    // Fetch all Plaid connections for this org from DB (only need access_token, institution_id, donor)
     const connections = await prisma.plaidConnection.findMany({
-      where: {
-        organization_id: organizationId,
-        status: 'ACTIVE',
-      },
+      where: { organization_id: organizationId },
       include: {
         donor: {
           select: { id: true, name: true, email: true, phone: true, imageUrl: true },
@@ -85,27 +148,26 @@ export async function GET(req) {
       orderBy: { created_at: 'desc' },
     });
 
-    // For each connection, fetch Plaid transactions
+    // For each connection, fetch all data live from Plaid in parallel
     const enrichedConnections = await Promise.all(
       connections.map(async (conn) => {
-        let accounts = [];
-        try {
-          accounts = conn.accounts ? JSON.parse(conn.accounts) : [];
-        } catch {
-          accounts = [];
-        }
-
-        const plaidData = await fetchPlaidTransactions(conn.access_token, startDate, endDate);
+        const [accountsData, institutionData, plaidTransactions] = await Promise.all([
+          fetchPlaidAccounts(conn.access_token),
+          fetchPlaidInstitution(conn.institution_id),
+          fetchPlaidTransactions(conn.access_token, startDate, endDate),
+        ]);
 
         return {
           id: conn.id,
-          status: conn.status,
-          institution_name: conn.institution_name,
+          status: accountsData.status,
+          institution_name: institutionData?.name || conn.institution_name,
           institution_id: conn.institution_id,
+          institution_logo: institutionData?.logo || null,
+          institution_primary_color: institutionData?.primary_color || null,
           connected_at: conn.created_at,
           updated_at: conn.updated_at,
           donor: conn.donor,
-          accounts: accounts.map((a) => ({
+          accounts: accountsData.accounts.map((a) => ({
             account_id: a.account_id,
             name: a.name,
             official_name: a.official_name,
@@ -114,9 +176,10 @@ export async function GET(req) {
             mask: a.mask,
             balances: a.balances,
           })),
-          transactions: plaidData.transactions,
-          total_transactions: plaidData.total_transactions,
-          transactions_error: plaidData.error || null,
+          accounts_error: accountsData.error || null,
+          transactions: plaidTransactions.transactions,
+          total_transactions: plaidTransactions.total_transactions,
+          transactions_error: plaidTransactions.error || null,
         };
       })
     );
