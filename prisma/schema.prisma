@@ -291,6 +291,7 @@ model PlaidConnection {
   accounts          String?  @db.Text
   status            String   @default("ACTIVE") @db.VarChar(50)
   error_message     String?  @db.VarChar(500)
+  stripe_customer_id String? @db.VarChar(255)
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
   

@@ -20,6 +20,7 @@ import {
   X,
   Shield,
   FileText,
+  Banknote,
 } from 'lucide-react';
 
 const DonorSidebar = () => {
@@ -111,6 +112,11 @@ const DonorSidebar = () => {
       path: '/donor/dashboard/subscriptions',
     },
     {
+      name: "Round-Up's",
+      icon: Banknote,
+      path: '/donor/dashboard/round-up-transactions',
+    },
+    {
       name: 'Profile',
       icon: User,
       path: '/donor/dashboard/profile',
@@ -183,9 +189,9 @@ const DonorSidebar = () => {
                 : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                 }`}
             >
-              <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'}`} />
+              <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'}`} />
               {isExpanded && (
-                <span className="font-medium">{item.name}</span>
+                <span className="font-medium truncate">{item.name}</span>
               )}
             </button>
           );
@@ -200,20 +206,20 @@ const DonorSidebar = () => {
             target="_blank"
             className="w-full flex items-center space-x-3 px-3 py-3 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 group"
           >
-            <Shield className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+            <Shield className="w-5 h-5 flex-shrink-0 text-gray-400 group-hover:text-gray-600" />
             {isExpanded && (
-              <span className="font-medium">Privacy Policy</span>
+              <span className="font-medium truncate">Privacy Policy</span>
             )}
           </Link>
-          
+
           <Link
             href="https://changeworksfund.org/terms-conditions"
             target="_blank"
             className="w-full flex items-center space-x-3 px-3 py-3 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 group"
           >
-            <FileText className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+            <FileText className="w-5 h-5 flex-shrink-0 text-gray-400 group-hover:text-gray-600" />
             {isExpanded && (
-              <span className="font-medium">Terms & Conditions</span>
+              <span className="font-medium truncate">Terms & Conditions</span>
             )}
           </Link>
         </div>
@@ -222,9 +228,9 @@ const DonorSidebar = () => {
           onClick={handleLogout}
           className="w-full flex items-center space-x-3 px-3 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200 group"
         >
-          <LogOut className="w-5 h-5 text-red-500" />
+          <LogOut className="w-5 h-5 flex-shrink-0 text-red-500" />
           {isExpanded && (
-            <span className="font-medium">Logout</span>
+            <span className="font-medium truncate">Logout</span>
           )}
         </button>
       </div>
