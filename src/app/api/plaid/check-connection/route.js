@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
 
 export const dynamic = 'force-dynamic';
 
@@ -69,7 +72,7 @@ export async function GET(request) {
       );
     }
 
-    // Fetch all connections from DB for this donor
+    // Fetch all connections from DB for this donor (include org Stripe account)
     const dbConnections = await prisma.plaidConnection.findMany({
       where: { donor_id: donorId },
       select: {
@@ -79,7 +82,7 @@ export async function GET(request) {
         institution_id: true,
         accounts: true,
         created_at: true,
-        organization: { select: { id: true, name: true } },
+        organization: { select: { id: true, name: true, stripeAccountId: true } },
       },
       orderBy: { created_at: 'desc' },
     });
@@ -98,14 +101,53 @@ export async function GET(request) {
           return;
         }
 
+        // Check if the org's Stripe sub-account is connected and charges enabled
+        let stripeStatus = { linked: false, charges_enabled: false, account_id: null };
+        const stripeAccountId = conn.organization?.stripeAccountId?.trim();
+        if (stripeAccountId) {
+          try {
+            const stripeAccount = await stripe.accounts.retrieve(stripeAccountId);
+            stripeStatus = {
+              linked:          true,
+              account_id:      stripeAccount.id,
+              charges_enabled: stripeAccount.charges_enabled,
+              payouts_enabled: stripeAccount.payouts_enabled,
+              ready:           stripeAccount.charges_enabled && stripeAccount.payouts_enabled,
+            };
+          } catch (stripeErr) {
+            stripeStatus = { linked: false, charges_enabled: false, error: stripeErr.message };
+          }
+        }
+
+        const readyToCharge = result.status === 'ACTIVE' && stripeStatus.ready === true;
+
+        // Human-readable connection message
+        let connectionMessage;
+        if (result.status !== 'ACTIVE') {
+          connectionMessage = '⚠️ Bank connection requires re-authentication';
+        } else if (!stripeAccountId) {
+          connectionMessage = '❌ Organization has no Stripe account connected';
+        } else if (stripeStatus.error) {
+          connectionMessage = `❌ Failed to connect with Stripe: ${stripeStatus.error}`;
+        } else if (!stripeStatus.charges_enabled) {
+          connectionMessage = '⚠️ Stripe account connected but charges not yet enabled — organization must complete Stripe onboarding';
+        } else if (!stripeStatus.payouts_enabled) {
+          connectionMessage = '⚠️ Stripe account connected but payouts not yet enabled';
+        } else {
+          connectionMessage = '✅ Plaid bank connected and linked with Stripe — ready to charge';
+        }
+
         validConnections.push({
           id: conn.id,
           institution_name: conn.institution_name,
-          institution_id: conn.institution_id,
-          status: result.status,        // ACTIVE or LOGIN_REQUIRED — from Plaid live
-          accounts: conn.accounts,
-          created_at: conn.created_at,
-          organization: conn.organization,
+          institution_id:   conn.institution_id,
+          status:           result.status,
+          accounts:         conn.accounts,
+          created_at:       conn.created_at,
+          organization:     conn.organization,
+          stripe:           stripeStatus,
+          ready_to_charge:  readyToCharge,
+          message:          connectionMessage,
         });
       })
     );
@@ -117,14 +159,27 @@ export async function GET(request) {
       });
     }
 
-    const isConnected = validConnections.some((c) => c.status === 'ACTIVE');
+    const isConnected    = validConnections.some((c) => c.status === 'ACTIVE');
+    const readyToCharge  = validConnections.some((c) => c.ready_to_charge === true);
+
+    // Top-level summary message
+    let summaryMessage;
+    if (!isConnected) {
+      summaryMessage = '❌ No active bank connection found';
+    } else if (!readyToCharge) {
+      summaryMessage = '⚠️ Bank connected via Plaid but Stripe link is not ready';
+    } else {
+      summaryMessage = '✅ Plaid connected and linked with Stripe — round-up charges can be collected';
+    }
 
     return NextResponse.json({
-      success: true,
-      is_connected: isConnected,
-      connections: validConnections,
+      success:          true,
+      is_connected:     isConnected,
+      ready_to_charge:  readyToCharge,
+      message:          summaryMessage,
+      connections:      validConnections,
       connection_count: validConnections.length,
-      donor_id: donorId,
+      donor_id:         donorId,
     });
   } catch (error) {
     console.error('Error checking Plaid connection:', error);
