@@ -304,6 +304,29 @@ model PlaidConnection {
   @@map("plaid_connections")
 }
 
+// Stores OAuth tokens for each GHL location that installs the marketplace app
+model GHLAppInstallation {
+  id            Int      @id @default(autoincrement())
+  location_id   String   @unique @db.VarChar(100)
+  company_id    String?  @db.VarChar(100)
+  user_id       String?  @db.VarChar(100)
+  access_token  String   @db.Text
+  refresh_token String?  @db.Text
+  expires_in    Int?
+  scope         String?  @db.VarChar(500)
+  ghl_id        String?  @db.VarChar(100)
+  amount        String?  @db.VarChar(50)
+  product_id    String?  @db.VarChar(100)
+  type          String?  @db.VarChar(50)
+  status        String   @default("active") @db.VarChar(50)
+  installed_at  DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@index([company_id])
+  @@index([status])
+  @@map("ghl_app_installations")
+}
+
 enum Role {
   SUPERADMIN
   ADMIN
