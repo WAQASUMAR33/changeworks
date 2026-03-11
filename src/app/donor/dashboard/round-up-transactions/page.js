@@ -10,6 +10,9 @@ import {
   Building2,
   TrendingUp,
   Calendar,
+  CreditCard,
+  Heart,
+  Link2,
 } from 'lucide-react';
 
 const formatCurrency = (amount) =>
@@ -25,43 +28,153 @@ const formatDate = (dateStr) => {
 };
 
 export default function DonorRoundUpTransactionsPage() {
+  const [connections, setConnections] = useState([]);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchRecords = async () => {
+    const load = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) { window.location.href = '/donor/login'; return; }
 
-        const res = await fetch('/api/donor/roundup-records', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
+        const [connRes, recRes] = await Promise.all([
+          fetch('/api/donor/bank-connections', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/donor/roundup-records',  { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
 
-        if (!res.ok) throw new Error(data.error || 'Failed to load round-up records');
-        setRecords(data.records || []);
+        const [connData, recData] = await Promise.all([connRes.json(), recRes.json()]);
+
+        if (connData.success) setConnections(connData.connections || []);
+        if (recData.success)  setRecords(recData.records || []);
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-    fetchRecords();
+    load();
   }, []);
 
   const total = records.reduce((sum, r) => sum + (r.trx_amount || 0), 0);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+        <Loader2 className="w-8 h-8 animate-spin mb-3" />
+        <span className="text-sm">Loading...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-2">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Round-Up Donations</h1>
-        <p className="text-gray-500 mt-1">Your ACH round-up charges sent to organisations</p>
+        <h1 className="text-2xl font-bold text-gray-900">Round-Up Program</h1>
+        <p className="text-gray-500 mt-1">Your connected bank accounts and round-up donation history</p>
       </div>
 
-      {/* Summary Cards */}
+      {error && (
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-2xl px-4 py-3 text-sm">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          {error}
+        </div>
+      )}
+
+      {/* ── Connected Banks ─────────────────────────────────── */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Link2 className="w-4 h-4 text-blue-600" />
+          Connected Bank Accounts
+        </h2>
+
+        {connections.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm text-gray-400">
+            <Building2 className="w-10 h-10 mb-3 text-gray-300" />
+            <p className="text-sm font-medium">No bank accounts connected</p>
+            <p className="text-xs mt-1">Connect your bank from the dashboard to start round-ups</p>
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {connections.map((conn, idx) => {
+              const accounts = (() => {
+                try { return JSON.parse(conn.accounts || '[]'); } catch { return []; }
+              })();
+
+              return (
+                <motion.div
+                  key={conn.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4"
+                >
+                  {/* Institution */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">
+                        {conn.institution_name || 'Bank Account'}
+                      </p>
+                      <p className="text-xs text-gray-400">Connected {formatDate(conn.created_at)}</p>
+                    </div>
+                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full flex-shrink-0 ${
+                      conn.status === 'ACTIVE'
+                        ? 'bg-green-50 text-green-700'
+                        : 'bg-amber-50 text-amber-700'
+                    }`}>
+                      {conn.status === 'ACTIVE'
+                        ? <><CheckCircle className="w-3 h-3" /> Active</>
+                        : <><AlertCircle className="w-3 h-3" /> {conn.status}</>
+                      }
+                    </span>
+                  </div>
+
+                  {/* Organisation */}
+                  {conn.organization && (
+                    <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
+                      <Heart className="w-4 h-4 text-pink-500 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500">Donating to</p>
+                        <p className="text-sm font-semibold text-gray-800 truncate">{conn.organization.name}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Linked Accounts */}
+                  {accounts.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Linked Accounts</p>
+                      {accounts.map((acc) => (
+                        <div key={acc.account_id || acc.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-800">
+                                {acc.name || acc.official_name || 'Account'}
+                              </p>
+                              <p className="text-xs text-gray-400 capitalize">{acc.subtype || acc.type || ''}</p>
+                            </div>
+                          </div>
+                          {acc.mask && (
+                            <span className="text-xs text-gray-400">••••{acc.mask}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── Summary Cards ──────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-2xl border border-emerald-200 shadow-sm p-5">
@@ -93,81 +206,71 @@ export default function DonorRoundUpTransactionsPage() {
         </motion.div>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-2xl px-4 py-3 text-sm">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          {error}
-        </div>
-      )}
+      {/* ── Donation History ───────────────────────────────── */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Banknote className="w-4 h-4 text-emerald-600" />
+          Round-Up Donation History
+        </h2>
 
-      {/* Records List */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-          <Loader2 className="w-8 h-8 animate-spin mb-3" />
-          <span className="text-sm">Loading...</span>
-        </div>
-      ) : records.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-white rounded-2xl border border-gray-100 shadow-sm">
-          <Banknote className="w-10 h-10 mb-3 text-gray-300" />
-          <p className="text-sm font-medium">No round-up donations yet</p>
-          <p className="text-xs mt-1">Your ACH round-up charges will appear here</p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 text-xs text-gray-500 font-semibold border-b border-gray-100">
-                  <th className="text-left px-5 py-3">Date</th>
-                  <th className="text-left px-5 py-3 hidden sm:table-cell">Organization</th>
-                  <th className="text-left px-5 py-3 hidden md:table-cell">Method</th>
-                  <th className="text-right px-5 py-3">Amount</th>
-                  <th className="text-left px-5 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {records.map((record) => (
-                  <tr key={record.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-4 text-gray-600 whitespace-nowrap">
-                      {formatDate(record.trx_date)}
-                    </td>
-                    <td className="px-5 py-4 hidden sm:table-cell">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span className="text-gray-800 font-medium truncate max-w-[180px]">
-                          {record.organization?.name || '—'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 text-gray-500 uppercase text-xs hidden md:table-cell">
-                      {record.trx_method || 'ach'}
-                    </td>
-                    <td className="px-5 py-4 text-right font-bold text-emerald-600 whitespace-nowrap">
-                      {formatCurrency(record.trx_amount)}
-                    </td>
-                    <td className="px-5 py-4">
-                      {record.pay_status === 'completed' ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 px-2 py-1 rounded-full">
-                          <CheckCircle className="w-3 h-3" /> Completed
-                        </span>
-                      ) : record.pay_status === 'pending' ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-1 rounded-full">
-                          <Loader2 className="w-3 h-3 animate-spin" /> Pending
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-50 px-2 py-1 rounded-full">
-                          <AlertCircle className="w-3 h-3" /> {record.pay_status}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {records.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm text-gray-400">
+            <Banknote className="w-10 h-10 mb-3 text-gray-300" />
+            <p className="text-sm font-medium">No round-up donations yet</p>
+            <p className="text-xs mt-1">Your ACH round-up charges will appear here</p>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 text-xs text-gray-500 font-semibold border-b border-gray-100">
+                    <th className="text-left px-5 py-3">Date</th>
+                    <th className="text-left px-5 py-3 hidden sm:table-cell">Organization</th>
+                    <th className="text-right px-5 py-3">Amount</th>
+                    <th className="text-left px-5 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {records.map((record) => (
+                    <tr key={record.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-5 py-4 text-gray-600 whitespace-nowrap">
+                        {formatDate(record.trx_date)}
+                      </td>
+                      <td className="px-5 py-4 hidden sm:table-cell">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <span className="text-gray-800 font-medium truncate max-w-[180px]">
+                            {record.organization?.name || '—'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-right font-bold text-emerald-600 whitespace-nowrap">
+                        {formatCurrency(record.trx_amount)}
+                      </td>
+                      <td className="px-5 py-4">
+                        {record.pay_status === 'completed' ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 px-2 py-1 rounded-full">
+                            <CheckCircle className="w-3 h-3" /> Completed
+                          </span>
+                        ) : record.pay_status === 'pending' ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-1 rounded-full">
+                            <Loader2 className="w-3 h-3 animate-spin" /> Pending
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-50 px-2 py-1 rounded-full">
+                            <AlertCircle className="w-3 h-3" /> {record.pay_status}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
