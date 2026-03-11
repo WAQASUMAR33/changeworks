@@ -45,6 +45,8 @@ export default function DonorDashboard() {
   const [plaidConnectionStatus, setPlaidConnectionStatus] = useState({
     isConnected: false,
     connections: [],
+    readyToCharge: false,
+    fundingSourceReady: false,
     loading: true
   });
 
@@ -98,9 +100,13 @@ export default function DonorDashboard() {
 
       if (response.ok) {
         const data = await response.json();
+        const connections = data.connections || [];
+        const fundingSourceReady = connections.some(c => c.funding_source?.funding_source_ready === true);
         setPlaidConnectionStatus({
           isConnected: data.is_connected,
-          connections: data.connections || [],
+          connections,
+          readyToCharge: data.ready_to_charge || false,
+          fundingSourceReady,
           loading: false
         });
       } else {
@@ -532,6 +538,18 @@ export default function DonorDashboard() {
                             : 'Bank account connected'
                           }
                         </p>
+                        {/* Funding source status badge */}
+                        <div className="mt-2">
+                          {plaidConnectionStatus.fundingSourceReady ? (
+                            <span className="inline-flex items-center gap-1 bg-white/20 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                              <CheckCircle className="w-3 h-3" /> Funding Source Active
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 bg-yellow-400/30 text-yellow-100 text-xs font-semibold px-2 py-1 rounded-full">
+                              <AlertCircle className="w-3 h-3" /> Funding Source Pending
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute top-0 right-0">
                         <div className="w-3 h-3 bg-white/30 rounded-full"></div>

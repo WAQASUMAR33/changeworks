@@ -52,6 +52,46 @@ async function verifyPlaidConnection(accessToken) {
   }
 }
 
+// Check if ACH routing numbers are available (confirms funding source is ready)
+async function checkFundingSource(accessToken) {
+  try {
+    const response = await fetch(`${PLAID_BASE_URL}/auth/get`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
+        'PLAID-SECRET': PLAID_SECRET_KEY,
+      },
+      body: JSON.stringify({
+        client_id: PLAID_CLIENT_ID,
+        secret: PLAID_SECRET_KEY,
+        access_token: accessToken,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { funding_source_ready: false, ach_accounts: 0, error: data?.error_message || data?.error_code };
+    }
+
+    const achNumbers = data?.numbers?.ach || [];
+    return {
+      funding_source_ready: achNumbers.length > 0,
+      ach_accounts: achNumbers.length,
+      // Only expose last 4 of account numbers for display
+      ach_details: achNumbers.map(n => ({
+        account_id: n.account_id,
+        account_last4: n.account?.slice(-4),
+        routing: n.routing,
+      })),
+    };
+  } catch {
+    return { funding_source_ready: false, ach_accounts: 0, error: 'Failed to check auth' };
+  }
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -93,7 +133,10 @@ export async function GET(request) {
     // Verify each connection live against Plaid
     await Promise.all(
       dbConnections.map(async (conn) => {
-        const result = await verifyPlaidConnection(conn.access_token);
+        const [result, fundingSource] = await Promise.all([
+          verifyPlaidConnection(conn.access_token),
+          checkFundingSource(conn.access_token),
+        ]);
 
         if (result.status === 'INVALID') {
           // Fake/mock token — mark for deletion
@@ -146,6 +189,7 @@ export async function GET(request) {
           created_at:       conn.created_at,
           organization:     conn.organization,
           stripe:           stripeStatus,
+          funding_source:   fundingSource,
           ready_to_charge:  readyToCharge,
           message:          connectionMessage,
         });

@@ -143,9 +143,36 @@ export async function POST(req) {
       purchases.reduce((sum, t) => sum + calcRoundUp(t.amount), 0).toFixed(2)
     );
 
+    // Load minimum threshold from DB (admin-configurable); fallback to $1.00
+    let MINIMUM_CHARGE_DOLLARS = 1.00;
+    try {
+      const thresholdSetting = await prisma.appSetting.findUnique({
+        where: { key: 'roundup_minimum_threshold' },
+      });
+      if (thresholdSetting) {
+        const parsed = parseFloat(thresholdSetting.value);
+        if (!isNaN(parsed) && parsed >= 1.00) MINIMUM_CHARGE_DOLLARS = parsed;
+      }
+    } catch {
+      // Non-fatal: use default if DB lookup fails
+    }
+
     if (totalRoundUpDollars <= 0) {
       return NextResponse.json(
         { success: false, error: 'No round-up amount to charge for this period' },
+        { status: 400 }
+      );
+    }
+
+    if (totalRoundUpDollars < MINIMUM_CHARGE_DOLLARS) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Round-up total $${totalRoundUpDollars} is below the $${MINIMUM_CHARGE_DOLLARS.toFixed(2)} minimum required for ACH. Amount will accumulate until next period.`,
+          accumulated_amount: totalRoundUpDollars,
+          minimum_required:   MINIMUM_CHARGE_DOLLARS,
+          below_minimum:      true,
+        },
         { status: 400 }
       );
     }

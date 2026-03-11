@@ -39,6 +39,21 @@ export async function GET(req) {
       isComplete,
     });
 
+    // Auto-enable ACH debit capability if not already active or pending
+    const achCapability = account.capabilities?.us_bank_account_ach_payments;
+    if (achCapability !== 'active' && achCapability !== 'pending') {
+      try {
+        await stripe.accounts.update(stripeAccountId, {
+          capabilities: {
+            us_bank_account_ach_payments: { requested: true },
+          },
+        });
+        console.log('ACH debit capability requested for account:', stripeAccountId);
+      } catch (achErr) {
+        console.warn('Could not request ACH capability (non-fatal):', achErr.message);
+      }
+    }
+
     if (isComplete) {
       // TODO: mark the connection as active in your DB
       // await db.stripeConnections.upsert({ locationId, stripeAccountId, status: 'active' });

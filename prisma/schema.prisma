@@ -327,6 +327,19 @@ model GHLAppInstallation {
   @@map("ghl_app_installations")
 }
 
+// Generic key-value store for admin-configurable settings
+model AppSetting {
+  id         Int      @id @default(autoincrement())
+  key        String   @unique @db.VarChar(100)
+  value      String   @db.VarChar(500)
+  label      String?  @db.VarChar(255)
+  description String? @db.VarChar(500)
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.VarChar(100)
+
+  @@map("app_settings")
+}
+
 enum Role {
   SUPERADMIN
   ADMIN

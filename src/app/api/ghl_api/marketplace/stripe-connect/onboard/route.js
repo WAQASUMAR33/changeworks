@@ -41,8 +41,9 @@ export async function POST(req) {
         },
         metadata: { ghlLocationId: locationId },
         capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
+          card_payments:                { requested: true },
+          transfers:                    { requested: true },
+          us_bank_account_ach_payments: { requested: true },
         },
       });
 

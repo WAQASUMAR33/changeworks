@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, Database, Trash2, Shield, CheckCircle, XCircle } from 'lucide-react';
+import { AlertTriangle, Database, Trash2, Shield, CheckCircle, XCircle, Settings, DollarSign, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TwoFactorSetup from '@/app/components/TwoFactorSetup';
 
@@ -13,6 +13,13 @@ export default function AdminSettingsPage() {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetStatus, setResetStatus] = useState(null);
   const [confirmationText, setConfirmationText] = useState('');
+
+  // Round-up threshold state
+  const [thresholdValue, setThresholdValue] = useState('');
+  const [thresholdLoading, setThresholdLoading] = useState(true);
+  const [thresholdSaving, setThresholdSaving] = useState(false);
+  const [thresholdStatus, setThresholdStatus] = useState(null); // { type: 'success'|'error', message }
+
   const router = useRouter();
 
   useEffect(() => {
@@ -86,6 +93,62 @@ export default function AdminSettingsPage() {
 
     checkAuth();
   }, [router]);
+
+  // Load threshold setting from API
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch('/api/admin/settings', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data.success) {
+          const th = data.settings.find((s) => s.key === 'roundup_minimum_threshold');
+          if (th) setThresholdValue(th.value);
+        }
+      } catch (err) {
+        console.error('Failed to load settings:', err);
+      } finally {
+        setThresholdLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSaveThreshold = async () => {
+    const num = parseFloat(thresholdValue);
+    if (isNaN(num) || num < 1) {
+      setThresholdStatus({ type: 'error', message: 'Minimum value is $1.00 (Stripe ACH requirement)' });
+      return;
+    }
+
+    setThresholdSaving(true);
+    setThresholdStatus(null);
+    try {
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ key: 'roundup_minimum_threshold', value: num.toFixed(2) }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setThresholdStatus({ type: 'success', message: `Threshold updated to $${num.toFixed(2)}` });
+        setThresholdValue(num.toFixed(2));
+      } else {
+        setThresholdStatus({ type: 'error', message: data.error || 'Failed to save' });
+      }
+    } catch (err) {
+      setThresholdStatus({ type: 'error', message: 'Network error. Please try again.' });
+    } finally {
+      setThresholdSaving(false);
+    }
+  };
 
   const handleResetDatabase = async () => {
     if (confirmationText !== 'RESET DATABASE') {
@@ -182,6 +245,90 @@ export default function AdminSettingsPage() {
         {/* Two-Factor Authentication Section */}
         <div className="mb-8">
           <TwoFactorSetup userType="user" />
+        </div>
+
+        {/* Round-Up Threshold Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex items-start space-x-4">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <DollarSign className="w-6 h-6 text-green-600" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold text-gray-900 mb-1">Round-Up Minimum Threshold</h2>
+              <p className="text-gray-600 mb-4">
+                Set the minimum accumulated round-up amount before an ACH charge is sent to Stripe.
+                Stripe rejects ACH charges below <strong>$1.00</strong>. A higher threshold (e.g. $5.00)
+                reduces per-transaction fees.
+              </p>
+
+              {thresholdLoading ? (
+                <div className="flex items-center space-x-2 text-gray-500">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">Loading current value...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-3 max-w-xs">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
+                    <input
+                      type="number"
+                      min="1"
+                      step="0.50"
+                      value={thresholdValue}
+                      onChange={(e) => setThresholdValue(e.target.value)}
+                      className="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"
+                      placeholder="1.00"
+                    />
+                  </div>
+                  <button
+                    onClick={handleSaveThreshold}
+                    disabled={thresholdSaving}
+                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {thresholdSaving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Settings className="w-4 h-4 mr-2" />
+                        Save
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              <AnimatePresence>
+                {thresholdStatus && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className={`mt-3 flex items-center space-x-2 text-sm font-medium ${
+                      thresholdStatus.type === 'success' ? 'text-green-700' : 'text-red-700'
+                    }`}
+                  >
+                    {thresholdStatus.type === 'success' ? (
+                      <CheckCircle className="w-4 h-4" />
+                    ) : (
+                      <XCircle className="w-4 h-4" />
+                    )}
+                    <span>{thresholdStatus.message}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-xs text-blue-700">
+                  <strong>Examples:</strong> $1.00 = charge whenever above Stripe minimum &nbsp;|&nbsp;
+                  $5.00 = accumulate up to $5 before charging &nbsp;|&nbsp;
+                  $10.00 = monthly minimum
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Database Reset Section */}

@@ -33,8 +33,9 @@ export async function createStripeConnectAccount(organization) {
       country: organization.country || 'US',
       email: organization.email,
       capabilities: {
-        card_payments: { requested: true },
-        transfers: { requested: true },
+        card_payments:                { requested: true },
+        transfers:                    { requested: true },
+        us_bank_account_ach_payments: { requested: true },
       },
       business_type: stripeBusinessType,
       metadata: {
