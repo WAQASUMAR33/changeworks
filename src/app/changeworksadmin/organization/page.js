@@ -23,7 +23,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, Edit, Trash2, Package, Plus } from 'lucide-react';
+import { Eye, Edit, Trash2, Package, Plus, CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 // Helper function to format dates consistently
 const formatDate = (dateString) => {
@@ -126,6 +126,8 @@ export default function OrganizationManagementPage() {
   const [filterEmail, setFilterEmail] = useState('');
   const [filterCity, setFilterCity] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  // Stripe status per org: { [orgId]: { loading, linked, charges_enabled, payouts_enabled, ready } }
+  const [stripeStatuses, setStripeStatuses] = useState({});
 
   // Fetch organizations on mount and when page/rowsPerPage change
   useEffect(() => {
@@ -156,6 +158,36 @@ export default function OrganizationManagementPage() {
         setOrganizations(data.organizations);
         setTotalCount(data.totalCount || 0);
         setLoading(false);
+
+        // Fetch Stripe status for each org that has a stripeAccountId
+        const orgsWithStripe = data.organizations.filter(o => o.stripeAccountId);
+        if (orgsWithStripe.length > 0) {
+          // Mark all as loading first
+          setStripeStatuses(prev => {
+            const next = { ...prev };
+            orgsWithStripe.forEach(o => { next[o.id] = { loading: true }; });
+            return next;
+          });
+
+          // Fetch in parallel
+          await Promise.all(orgsWithStripe.map(async (org) => {
+            try {
+              const res = await fetch(`/api/admin/org-stripe-status?org_id=${org.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+              });
+              const statusData = await res.json();
+              setStripeStatuses(prev => ({
+                ...prev,
+                [org.id]: { loading: false, ...(statusData.stripe || {}) },
+              }));
+            } catch {
+              setStripeStatuses(prev => ({
+                ...prev,
+                [org.id]: { loading: false, linked: false, error: true },
+              }));
+            }
+          }));
+        }
       } catch (err) {
         setError(`Failed to load organizations: ${err.message}`);
         setOrganizations([]);
@@ -472,6 +504,9 @@ export default function OrganizationManagementPage() {
                     Website
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Stripe
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -534,6 +569,49 @@ export default function OrganizationManagementPage() {
                             </a>
                           ) : (
                             'N/A'
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1.5">
+                          {/* Stripe account status */}
+                          {!org.stripeAccountId ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-500">
+                              <XCircle className="w-3 h-3" /> Not Connected
+                            </span>
+                          ) : stripeStatuses[org.id]?.loading ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-gray-50 text-gray-400">
+                              <Loader2 className="w-3 h-3 animate-spin" /> Checking...
+                            </span>
+                          ) : stripeStatuses[org.id]?.ready ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                              <CheckCircle className="w-3 h-3" /> Ready
+                            </span>
+                          ) : stripeStatuses[org.id]?.linked ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-700" title={!stripeStatuses[org.id]?.charges_enabled ? 'Charges not enabled' : 'Payouts not enabled'}>
+                              <AlertCircle className="w-3 h-3" /> Pending
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">
+                              <XCircle className="w-3 h-3" /> Error
+                            </span>
+                          )}
+
+                          {/* ACH capability badge — only shown once status is loaded */}
+                          {org.stripeAccountId && !stripeStatuses[org.id]?.loading && stripeStatuses[org.id]?.linked && (
+                            stripeStatuses[org.id]?.ach_ready ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                                <CheckCircle className="w-3 h-3" /> ACH Active
+                              </span>
+                            ) : stripeStatuses[org.id]?.ach_capability === 'pending' ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-600">
+                                <Loader2 className="w-3 h-3" /> ACH Pending
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-500">
+                                <XCircle className="w-3 h-3" /> ACH Inactive
+                              </span>
+                            )
                           )}
                         </div>
                       </td>

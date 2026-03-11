@@ -5,42 +5,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Banknote,
   Users,
-  ArrowUpDown,
   RefreshCw,
   ChevronDown,
   ChevronUp,
   Search,
-  Calendar,
   CheckCircle,
   AlertCircle,
   Building2,
   CreditCard,
-  ShoppingCart,
-  TrendingUp,
+  ShieldCheck,
+  ShieldAlert,
   Loader2,
+  Link2,
 } from 'lucide-react';
 
-const formatCurrency = (amount, iso_currency_code = 'USD') => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: iso_currency_code || 'USD',
-  }).format(amount || 0);
-};
+const formatCurrency = (amount, iso_currency_code = 'USD') =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: iso_currency_code || 'USD' }).format(amount || 0);
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-};
-
-const today = () => new Date().toISOString().split('T')[0];
-const daysAgo = (n) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().split('T')[0];
+  return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
 export default function RoundUpDonorsPage() {
@@ -50,8 +34,6 @@ export default function RoundUpDonorsPage() {
   const [error, setError] = useState('');
   const [expandedDonor, setExpandedDonor] = useState(null);
   const [search, setSearch] = useState('');
-  const [startDate, setStartDate] = useState(daysAgo(30));
-  const [endDate, setEndDate] = useState(today());
   const [cleaning, setCleaning] = useState(false);
 
   const fetchConnections = async () => {
@@ -60,36 +42,25 @@ export default function RoundUpDonorsPage() {
       setError('');
 
       const token = sessionStorage.getItem('orgToken');
-      if (!token) {
-        window.location.href = '/organization/login';
-        return;
-      }
+      if (!token) { window.location.href = '/organization/login'; return; }
 
-      const params = new URLSearchParams({ start_date: startDate, end_date: endDate });
-      const response = await fetch(`/api/organization/plaid-connections?${params}`, {
+      const response = await fetch('/api/organization/plaid-connections', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch Round-Up donors');
-      }
+      if (!response.ok) throw new Error(data.error || 'Failed to fetch Round-Up donors');
 
       setConnections(data.connections || []);
       setSummary(data.summary || null);
     } catch (err) {
-      console.error('Error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchConnections();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(() => { fetchConnections(); }, []); // eslint-disable-line
 
   const filteredConnections = connections.filter((c) => {
     const q = search.toLowerCase();
@@ -102,9 +73,7 @@ export default function RoundUpDonorsPage() {
 
   const toggleDonor = (id) => setExpandedDonor((prev) => (prev === id ? null : id));
 
-  const hasMockConnections = connections.some(
-    (c) => c.status === 'ERROR' || c.institution_name === 'Mock Bank'
-  );
+  const hasMockConnections = connections.some((c) => c.status === 'ERROR' || c.institution_name === 'Mock Bank');
 
   const cleanupMockConnections = async () => {
     if (!confirm('This will permanently delete all mock/invalid bank connections. Affected donors will need to reconnect. Continue?')) return;
@@ -127,50 +96,24 @@ export default function RoundUpDonorsPage() {
   };
 
   const statCards = [
-    {
-      label: 'Round-Up Donors',
-      value: summary?.total_donors ?? '—',
-      icon: Users,
-      color: 'blue',
-    },
-    {
-      label: 'Total Transactions',
-      value: summary?.total_transactions ?? '—',
-      icon: ArrowUpDown,
-      color: 'green',
-    },
-    {
-      label: 'Date Range',
-      value: summary ? `${formatDate(summary.start_date)} – ${formatDate(summary.end_date)}` : '—',
-      icon: Calendar,
-      color: 'purple',
-    },
-    {
-      label: 'Institutions',
-      value: summary
-        ? new Set(connections.map((c) => c.institution_name).filter(Boolean)).size
-        : '—',
-      icon: Building2,
-      color: 'orange',
-    },
+    { label: 'Round-Up Donors', value: summary?.total_donors ?? '—', icon: Users, color: 'blue' },
+    { label: 'Funding Source Ready', value: summary?.funding_ready ?? '—', icon: ShieldCheck, color: 'green' },
+    { label: 'Institutions', value: summary?.institutions ?? '—', icon: Building2, color: 'purple' },
   ];
 
   const colorMap = {
-    blue: { bg: 'bg-blue-50', icon: 'text-blue-600', border: 'border-blue-200' },
-    green: { bg: 'bg-green-50', icon: 'text-green-600', border: 'border-green-200' },
+    blue:   { bg: 'bg-blue-50',   icon: 'text-blue-600',   border: 'border-blue-200' },
+    green:  { bg: 'bg-green-50',  icon: 'text-green-600',  border: 'border-green-200' },
     purple: { bg: 'bg-purple-50', icon: 'text-purple-600', border: 'border-purple-200' },
-    orange: { bg: 'bg-orange-50', icon: 'text-orange-600', border: 'border-orange-200' },
   };
 
   return (
     <div className="space-y-6 p-2">
-      {/* Page Header */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Round-Up Donors</h1>
-          <p className="text-gray-500 mt-1">
-            Donors who connected their bank accounts via Plaid for round-up donations
-          </p>
+          <p className="text-gray-500 mt-1">Donors who connected their bank accounts via Plaid for round-up donations</p>
         </div>
         <div className="flex items-center gap-2">
           {hasMockConnections && (
@@ -194,39 +137,8 @@ export default function RoundUpDonorsPage() {
         </div>
       </div>
 
-      {/* Date Range Filter */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-        <div className="flex flex-wrap items-end gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Start Date</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0E0061]/30"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">End Date</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0E0061]/30"
-            />
-          </div>
-          <button
-            onClick={fetchConnections}
-            disabled={loading}
-            className="px-4 py-2 bg-[#0E0061] text-white rounded-xl hover:bg-[#1a0099] transition-colors disabled:opacity-50 text-sm font-medium"
-          >
-            Apply
-          </button>
-        </div>
-      </div>
-
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {statCards.map((card) => {
           const colors = colorMap[card.color];
           return (
@@ -276,9 +188,7 @@ export default function RoundUpDonorsPage() {
         <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-white rounded-2xl border border-gray-100 shadow-sm">
           <Banknote className="w-10 h-10 mb-3 text-gray-300" />
           <p className="text-sm font-medium">No round-up donors found</p>
-          <p className="text-xs mt-1">
-            {search ? 'Try a different search term' : 'No donors have connected their bank accounts yet'}
-          </p>
+          <p className="text-xs mt-1">{search ? 'Try a different search term' : 'No donors have connected their bank accounts yet'}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -320,18 +230,25 @@ export default function RoundUpDonorsPage() {
                   {/* Institution */}
                   <div className="hidden sm:block text-right">
                     <div className="text-xs text-gray-500 font-medium">Institution</div>
-                    <div className="text-sm text-gray-800 font-semibold">
-                      {conn.institution_name || '—'}
-                    </div>
+                    <div className="text-sm text-gray-800 font-semibold">{conn.institution_name || '—'}</div>
                   </div>
 
-                  {/* Transactions count */}
-                  <div className="text-right">
-                    <div className="text-xs text-gray-500 font-medium">Transactions</div>
-                    <div className="text-sm font-bold text-gray-900">{conn.total_transactions}</div>
+                  {/* Funding Source */}
+                  <div className="hidden md:flex items-center gap-1.5">
+                    {conn.funding_source?.ready ? (
+                      <>
+                        <ShieldCheck className="w-4 h-4 text-green-500" />
+                        <span className="text-xs font-semibold text-green-600">ACH Ready</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShieldAlert className="w-4 h-4 text-amber-400" />
+                        <span className="text-xs font-semibold text-amber-600">ACH Pending</span>
+                      </>
+                    )}
                   </div>
 
-                  {/* Status */}
+                  {/* Connection Status */}
                   <div className="hidden md:flex items-center gap-1.5">
                     {conn.status === 'ACTIVE' ? (
                       <>
@@ -357,7 +274,6 @@ export default function RoundUpDonorsPage() {
                     <div className="text-xs text-gray-700">{formatDate(conn.connected_at)}</div>
                   </div>
 
-                  {/* Expand icon */}
                   {expandedDonor === conn.id ? (
                     <ChevronUp className="w-5 h-5 text-gray-400" />
                   ) : (
@@ -378,7 +294,39 @@ export default function RoundUpDonorsPage() {
                   >
                     <div className="border-t border-gray-100 px-5 py-4 space-y-5 bg-gray-50">
 
-                      {/* Accounts */}
+                      {/* Funding Source */}
+                      <div>
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                          <Link2 className="w-3.5 h-3.5" />
+                          Funding Source (ACH)
+                        </h3>
+                        {conn.funding_source?.ready ? (
+                          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {conn.funding_source.ach_details?.map((ach) => (
+                              <div key={ach.account_id} className="bg-white rounded-xl border border-green-200 p-3">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <ShieldCheck className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                  <span className="text-sm font-semibold text-gray-800">ACH Verified</span>
+                                </div>
+                                <div className="text-xs text-gray-500">Account ••••{ach.account_last4}</div>
+                                <div className="text-xs text-gray-500 mt-0.5">Routing: {ach.routing}</div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                            <ShieldAlert className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-semibold text-amber-800">Funding source not yet verified</p>
+                              <p className="text-xs text-amber-600 mt-0.5">
+                                {conn.funding_source?.error || 'ACH routing numbers are not available for this connection'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Bank Accounts */}
                       {conn.accounts?.length > 0 && (
                         <div>
                           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -387,19 +335,14 @@ export default function RoundUpDonorsPage() {
                           </h3>
                           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {conn.accounts.map((acc) => (
-                              <div
-                                key={acc.account_id}
-                                className="bg-white rounded-xl border border-gray-200 p-3"
-                              >
+                              <div key={acc.account_id} className="bg-white rounded-xl border border-gray-200 p-3">
                                 <div className="flex items-center justify-between mb-1">
                                   <span className="text-sm font-semibold text-gray-800">
                                     {acc.name || acc.official_name || 'Account'}
                                   </span>
                                   <span className="text-xs text-gray-400">••••{acc.mask}</span>
                                 </div>
-                                <div className="text-xs text-gray-500 capitalize">
-                                  {acc.subtype || acc.type}
-                                </div>
+                                <div className="text-xs text-gray-500 capitalize">{acc.subtype || acc.type}</div>
                                 {acc.balances?.current != null && (
                                   <div className="mt-2 text-sm font-bold text-gray-900">
                                     {formatCurrency(acc.balances.current, acc.balances.iso_currency_code)}
@@ -412,62 +355,6 @@ export default function RoundUpDonorsPage() {
                         </div>
                       )}
 
-                      {/* Transactions */}
-                      <div>
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                          <ArrowUpDown className="w-3.5 h-3.5" />
-                          Transactions ({conn.transactions?.length || 0} shown)
-                        </h3>
-
-                        {conn.transactions_error && (
-                          <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-3">
-                            <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                            {conn.transactions_error}
-                          </div>
-                        )}
-
-                        {conn.transactions?.length === 0 ? (
-                          <div className="text-xs text-gray-400 text-center py-6 bg-white rounded-xl border border-gray-100">
-                            No transactions in selected date range
-                          </div>
-                        ) : (
-                          <div className="overflow-x-auto rounded-xl border border-gray-200">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="bg-gray-100 text-xs text-gray-500 font-semibold">
-                                  <th className="text-left px-4 py-3">Date</th>
-                                  <th className="text-left px-4 py-3">Description</th>
-                                  <th className="text-left px-4 py-3 hidden sm:table-cell">Category</th>
-                                  <th className="text-right px-4 py-3">Amount</th>
-                                  <th className="text-left px-4 py-3 hidden md:table-cell">Account</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-100 bg-white">
-                                {conn.transactions.map((txn) => (
-                                  <tr key={txn.transaction_id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                                      {formatDate(txn.date)}
-                                    </td>
-                                    <td className="px-4 py-3 text-gray-800 font-medium max-w-[200px] truncate">
-                                      {txn.merchant_name || txn.name}
-                                    </td>
-                                    <td className="px-4 py-3 text-gray-500 text-xs hidden sm:table-cell">
-                                      {txn.category?.[txn.category.length - 1] || '—'}
-                                    </td>
-                                    <td className={`px-4 py-3 text-right font-semibold whitespace-nowrap ${txn.amount > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                      {txn.amount > 0 ? '-' : '+'}
-                                      {formatCurrency(Math.abs(txn.amount), txn.iso_currency_code)}
-                                    </td>
-                                    <td className="px-4 py-3 text-gray-500 text-xs hidden md:table-cell">
-                                      ••••{txn.account_id?.slice(-4)}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
                     </div>
                   </motion.div>
                 )}

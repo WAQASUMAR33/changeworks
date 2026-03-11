@@ -71,6 +71,7 @@ export async function GET(req) {
         ghlId: true,
         imageUrl: true,
         status: true,
+        stripeAccountId: true,
         created_at: true,
         updated_at: true
       }
