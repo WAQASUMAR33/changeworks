@@ -20,7 +20,6 @@ import {
   X,
   Shield,
   FileText,
-  Banknote,
 } from 'lucide-react';
 
 const DonorSidebar = () => {
@@ -110,11 +109,6 @@ const DonorSidebar = () => {
       name: 'Monthly Donations',
       icon: CreditCard,
       path: '/donor/dashboard/subscriptions',
-    },
-    {
-      name: "Round-Up's",
-      icon: Banknote,
-      path: '/donor/dashboard/round-up-transactions',
     },
     {
       name: 'Profile',
