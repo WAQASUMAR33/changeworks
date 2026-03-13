@@ -162,7 +162,15 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
   const onPlaidExit = useCallback((err, metadata) => {
     if (err) {
       console.error('Plaid Link Exit Error:', err);
-      setError('Connection was cancelled or failed. Please try again.');
+      if (err.error_code === 'NO_AUTH_ACCOUNTS') {
+        setError(
+          'No checking or savings account found. Please make sure you\'re logging in with a bank account (not a credit card account) that has an active checking or savings account.'
+        );
+      } else if (err.error_code === 'INSTITUTION_NOT_SUPPORTED') {
+        setError('This institution is not supported for bank connections. Please try a different bank.');
+      } else {
+        setError('Connection was cancelled or failed. Please try again.');
+      }
     }
   }, []);
 

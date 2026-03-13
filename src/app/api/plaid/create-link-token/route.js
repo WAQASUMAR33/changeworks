@@ -54,6 +54,14 @@ export async function POST(request) {
         user: {
           client_user_id: donorId.toString(),
         },
+        account_filters: {
+          depository: {
+            account_subtypes: ['checking', 'savings'],
+          },
+          credit: {
+            account_subtypes: ['credit card'],
+          },
+        },
         webhook: `${baseUrl.replace(/\/$/, '')}/api/plaid/webhook`,
       }),
       // Add timeout and retry configuration
