@@ -21,7 +21,7 @@ const PLAID_BASE_URL = getPlaidBaseUrl(PLAID_ENV);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
 
 const schema = z.object({
-  account_id:          z.string().min(1, 'account_id is required'),  // Plaid account_id to debit
+  account_id:          z.string().min(1, 'account_id is required'),  // Plaid account_id (spending source)
   plaid_connection_id: z.number().int().positive(),
   start_date:          z.string().min(1),
   end_date:            z.string().min(1),
@@ -34,7 +34,7 @@ function calcRoundUp(amount) {
   return cents === 0 ? 0 : parseFloat(((100 - cents) / 100).toFixed(2));
 }
 
-// ── Step 1: Fetch transactions from Plaid ────────────────────────────────────
+// Fetch transactions from Plaid (spending source — used only for round-up calculation)
 async function fetchTransactions(accessToken, startDate, endDate) {
   const response = await fetch(`${PLAID_BASE_URL}/transactions/get`, {
     method: 'POST',
@@ -63,33 +63,6 @@ async function fetchTransactions(accessToken, startDate, endDate) {
   return data.transactions || [];
 }
 
-// ── Step 2: Get a fresh Stripe bank account token from Plaid ─────────────────
-// The Plaid processor token is single-use — a new one is created per charge.
-async function getStripeBankToken(accessToken, accountId) {
-  const response = await fetch(`${PLAID_BASE_URL}/processor/stripe/bank_account_token/create`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-      'PLAID-SECRET': PLAID_SECRET_KEY,
-    },
-    body: JSON.stringify({
-      client_id: PLAID_CLIENT_ID,
-      secret: PLAID_SECRET_KEY,
-      access_token: accessToken,
-      account_id: accountId,
-    }),
-    signal: AbortSignal.timeout(15000),
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data?.error_message || `Plaid processor token error: ${data?.error_code}`);
-  }
-
-  return data.stripe_bank_account_token; // btok_xxx (single-use)
-}
-
 export async function POST(req) {
   try {
     if (!stripe) {
@@ -113,7 +86,7 @@ export async function POST(req) {
     const body    = await req.json();
     const { account_id, plaid_connection_id, start_date, end_date } = schema.parse(body);
 
-    // ── Load PlaidConnection with org's Stripe sub-account ───────────────────
+    // ── Load PlaidConnection (spending source) with org's Stripe sub-account ──
     const connection = await prisma.plaidConnection.findFirst({
       where: { id: plaid_connection_id, donor_id: donorId },
       include: {
@@ -126,7 +99,6 @@ export async function POST(req) {
       return NextResponse.json({ success: false, error: 'Plaid connection not found' }, { status: 404 });
     }
 
-    // The org's Stripe Connect sub-account (already stored in organizations table)
     if (!connection.organization.stripeAccountId) {
       return NextResponse.json(
         { success: false, error: 'Organization Stripe sub-account not connected' },
@@ -136,9 +108,33 @@ export async function POST(req) {
 
     const orgStripeAccountId = connection.organization.stripeAccountId.trim();
 
+    // ── Load donor's saved card for this org's connected account ─────────────
+    const pmRows = await prisma.$queryRaw`
+      SELECT stripe_customer_id, stripe_payment_method_id, label
+      FROM donor_payment_methods
+      WHERE donor_id       = ${donorId}
+        AND organization_id = ${connection.organization.id}
+        AND status         = 'active'
+      ORDER BY is_default DESC, created_at DESC
+      LIMIT 1
+    `;
+
+    if (!pmRows[0]) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'No funding card found for this organization. Please add a card to your account.',
+          error_code: 'MISSING_PAYMENT_METHOD',
+        },
+        { status: 400 }
+      );
+    }
+
+    const { stripe_customer_id, stripe_payment_method_id, label: cardLabel } = pmRows[0];
+
     // ── Step 1: Calculate round-up total from Plaid transactions ─────────────
-    const transactions      = await fetchTransactions(connection.access_token, start_date, end_date);
-    const purchases         = transactions.filter((t) => t.amount > 0); // debits only
+    const transactions = await fetchTransactions(connection.access_token, start_date, end_date);
+    const purchases    = transactions.filter((t) => t.amount > 0); // debits only
     const totalRoundUpDollars = parseFloat(
       purchases.reduce((sum, t) => sum + calcRoundUp(t.amount), 0).toFixed(2)
     );
@@ -168,7 +164,7 @@ export async function POST(req) {
       return NextResponse.json(
         {
           success: false,
-          error: `Round-up total $${totalRoundUpDollars} is below the $${MINIMUM_CHARGE_DOLLARS.toFixed(2)} minimum required for ACH. Amount will accumulate until next period.`,
+          error: `Round-up total $${totalRoundUpDollars} is below the $${MINIMUM_CHARGE_DOLLARS.toFixed(2)} minimum. Amount will accumulate until next period.`,
           accumulated_amount: totalRoundUpDollars,
           minimum_required:   MINIMUM_CHARGE_DOLLARS,
           below_minimum:      true,
@@ -178,112 +174,75 @@ export async function POST(req) {
     }
 
     const amountInCents = Math.round(totalRoundUpDollars * 100);
-    console.log(`💰 Round-up: $${totalRoundUpDollars} (${amountInCents}¢) → org ${orgStripeAccountId}`);
+    console.log(`💰 Round-up: $${totalRoundUpDollars} (${amountInCents}¢) — card: ${cardLabel} → org ${orgStripeAccountId}`);
 
-    // ── Step 2: Get fresh Plaid → Stripe bank account token ──────────────────
-    let stripeBankToken;
-    try {
-      stripeBankToken = await getStripeBankToken(connection.access_token, account_id);
-      console.log(`🏦 Plaid processor token created for account ${account_id}`);
-    } catch (plaidErr) {
-      console.error('Plaid processor token error:', plaidErr.message);
-      return NextResponse.json(
-        { success: false, error: 'Failed to get bank token from Plaid', details: plaidErr.message },
-        { status: 400 }
-      );
-    }
-
-    // ── Step 3: Attach bank token to a temporary Stripe Customer ─────────────
-    // Stripe ACH requires a Customer object to hold the bank account source.
-    // This customer is created per-charge and not stored — it is a billing
-    // intermediary only, not a Connect account.
-    let tempCustomer;
-    try {
-      tempCustomer = await stripe.customers.create(
-        {
-          email:  connection.donor.email,
-          name:   connection.donor.name,
-          source: stripeBankToken,          // attach Plaid bank token as payment source
-          metadata: {
-            donor_id:            donorId.toString(),
-            organization_id:     connection.organization.id.toString(),
-            plaid_connection_id: plaid_connection_id.toString(),
-            charge_period:       `${start_date}_to_${end_date}`,
-          },
-        },
-        { stripeAccount: orgStripeAccountId }  // created ON the org's sub-account
-      );
-      console.log(`✅ Temporary Stripe customer created: ${tempCustomer.id} on ${orgStripeAccountId}`);
-    } catch (stripeErr) {
-      console.error('Stripe customer create error:', stripeErr.message);
-      return NextResponse.json(
-        { success: false, error: 'Failed to attach bank account', details: stripeErr.message },
-        { status: 400 }
-      );
-    }
-
-    // ── Step 4: Platform fee calculation (same formula as rest of app) ────────
+    // ── Step 2: Platform fee calculation ─────────────────────────────────────
     const SPECIAL_ORG_EMAIL    = 'frankie@vallartacares.com';
     const isSpecialOrg         = connection.organization.email?.toLowerCase() === SPECIAL_ORG_EMAIL.toLowerCase();
+    // Card fees: ~2.9% + $0.30; budget 10% and net off the Stripe fee estimate
     const platformBudget       = Math.round(amountInCents * 0.10);
-    const estimatedStripeFee   = 80; // ACH flat fee ~$0.80
+    const estimatedStripeFee   = Math.round(amountInCents * 0.029) + 30;
     const applicationFeeAmount = isSpecialOrg ? 0 : Math.max(0, platformBudget - estimatedStripeFee);
 
-    // ── Step 5: ACH charge from donor's bank → org's Stripe sub-account ──────
+    // ── Step 3: Direct charge on the org's connected account ─────────────────
+    // The donor's Stripe customer and card source both live on the connected
+    // account, so we charge directly there and collect a platform fee.
     let charge;
     try {
       charge = await stripe.charges.create(
         {
           amount:                 amountInCents,
           currency:               'usd',
-          customer:               tempCustomer.id,
+          customer:               stripe_customer_id,  // customer on connected account
           application_fee_amount: applicationFeeAmount,
-          description:            `Monthly round-up donation (${start_date} → ${end_date}), ${purchases.length} transactions`,
           receipt_email:          connection.donor.email,
+          description:            `Monthly round-up donation (${start_date} → ${end_date}), ${purchases.length} transactions`,
           metadata: {
             donor_id:            donorId.toString(),
             organization_id:     connection.organization.id.toString(),
             plaid_connection_id: plaid_connection_id.toString(),
             plaid_account_id:    account_id,
+            card_label:          cardLabel,
             start_date,
             end_date,
             transaction_count:   purchases.length.toString(),
             round_up_dollars:    totalRoundUpDollars.toString(),
-            transaction_type:    'round_up_ach',
+            transaction_type:    'round_up_card',
           },
         },
-        { stripeAccount: orgStripeAccountId }
+        { stripeAccount: orgStripeAccountId }  // charge runs on connected account
       );
-      console.log(`✅ ACH charge ${charge.id} — status: ${charge.status} → ${orgStripeAccountId}`);
+      console.log(`✅ Card charge ${charge.id} — status: ${charge.status} on ${orgStripeAccountId}`);
     } catch (stripeErr) {
-      console.error('Stripe ACH charge error:', stripeErr.message);
+      console.error('Stripe card charge error:', stripeErr.message);
       return NextResponse.json(
-        { success: false, error: 'ACH charge failed', details: stripeErr.message },
+        { success: false, error: 'Card charge failed', details: stripeErr.message },
         { status: 400 }
       );
     }
 
-    // ── Step 6: Record in DB ──────────────────────────────────────────────────
+    // ── Step 4: Record in DB ──────────────────────────────────────────────────
     const trxRecord = await prisma.saveTrRecord.create({
       data: {
-        trx_id:              `ach_${charge.id}_${Date.now()}`,
+        trx_id:              `card_${charge.id}_${Date.now()}`,
         trx_date:            new Date(),
         trx_amount:          totalRoundUpDollars,
-        trx_method:          'ach',
+        trx_method:          'card',
         trx_donor_id:        donorId,
         trx_organization_id: connection.organization.id,
         trx_details: JSON.stringify({
-          charge_id:           charge.id,
-          stripe_status:       charge.status,
-          org_stripe_account:  orgStripeAccountId,
-          plaid_account_id:    account_id,
+          charge_id:          charge.id,
+          stripe_status:      charge.status,
+          org_stripe_account: orgStripeAccountId,
+          plaid_account_id:   account_id,
           plaid_connection_id,
+          card_label:         cardLabel,
           start_date,
           end_date,
-          transaction_count:   purchases.length,
-          round_up_dollars:    totalRoundUpDollars,
-          platform_fee_cents:  applicationFeeAmount,
-          transaction_type:    'round_up_ach',
+          transaction_count:  purchases.length,
+          round_up_dollars:   totalRoundUpDollars,
+          platform_fee_cents: applicationFeeAmount,
+          transaction_type:   'round_up_card',
         }),
         pay_status: charge.status === 'succeeded' ? 'completed' : 'pending',
       },
@@ -297,10 +256,7 @@ export async function POST(req) {
       transaction_count: purchases.length,
       transaction_id:    trxRecord.id,
       org_stripe_account: orgStripeAccountId,
-      message:
-        charge.status === 'pending'
-          ? 'ACH payment initiated — clears in 3–5 business days'
-          : 'Payment completed',
+      message:           charge.status === 'succeeded' ? 'Payment completed' : 'Payment initiated',
     });
 
   } catch (error) {

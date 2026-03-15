@@ -115,7 +115,8 @@ model Donor {
   organization      Organization?      @relation(fields: [organization_id], references: [id])
   saveTrRecords     SaveTrRecord[]     @relation("DonorTransactions")
   subscriptions     Subscription[]     @relation("DonorSubscriptions")
-  plaidConnections   PlaidConnection[]
+  plaidConnections  PlaidConnection[]
+  paymentMethods    DonorPaymentMethod[]
 
   @@index([organization_id], map: "donors_organization_id_fkey")
   @@map("donors")
@@ -325,6 +326,29 @@ model GHLAppInstallation {
   @@index([company_id])
   @@index([status])
   @@map("ghl_app_installations")
+}
+
+// Stores donor credit/debit card details (funding source for round-up charges)
+model DonorPaymentMethod {
+  id                       Int      @id @default(autoincrement())
+  donor_id                 Int
+  organization_id          Int
+  stripe_customer_id       String   @db.VarChar(255)
+  stripe_payment_method_id String   @unique @db.VarChar(255)
+  label                    String   @db.VarChar(100)  // e.g. "Visa x4242"
+  card_brand               String?  @db.VarChar(50)
+  card_last4               String?  @db.VarChar(4)
+  card_exp_month           Int?
+  card_exp_year            Int?
+  is_default               Boolean  @default(true)
+  status                   String   @default("active") @db.VarChar(50)
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
+
+  donor                    Donor    @relation(fields: [donor_id], references: [id])
+
+  @@index([donor_id])
+  @@map("donor_payment_methods")
 }
 
 // Generic key-value store for admin-configurable settings

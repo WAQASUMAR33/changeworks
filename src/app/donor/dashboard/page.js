@@ -13,7 +13,8 @@ import {
   AlertCircle,
   X,
   CheckCircle,
-  CreditCard
+  CreditCard,
+  Building2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import StripeProvider from './components/StripeProvider';
@@ -48,6 +49,17 @@ export default function DonorDashboard() {
     readyToCharge: false,
     fundingSourceReady: false,
     loading: true
+  });
+
+  // Round-up history state
+  const [roundupRecords, setRoundupRecords] = useState([]);
+  const [roundupLoading, setRoundupLoading] = useState(false);
+
+  // Card funding source state
+  const [cardFundingStatus, setCardFundingStatus] = useState({
+    hasCard: false,
+    card: null,
+    loading: true,
   });
 
   // Stripe subscription status state
@@ -115,6 +127,46 @@ export default function DonorDashboard() {
     } catch (error) {
       console.error('Error checking Plaid connection:', error);
       setPlaidConnectionStatus(prev => ({ ...prev, loading: false }));
+    }
+  }, []);
+
+  const checkCardFundingStatus = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const decoded = JSON.parse(atob(token.split('.')[1]));
+      const response = await fetch(`/api/stripe/get-payment-method?donor_id=${decoded.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCardFundingStatus({
+          hasCard: data.has_payment_method,
+          card: data.payment_method ?? null,
+          loading: false,
+        });
+      } else {
+        setCardFundingStatus(prev => ({ ...prev, loading: false }));
+      }
+    } catch {
+      setCardFundingStatus(prev => ({ ...prev, loading: false }));
+    }
+  }, []);
+
+  const fetchRoundupRecords = useCallback(async () => {
+    try {
+      setRoundupLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const response = await fetch('/api/donor/roundup-records', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setRoundupRecords(data.records || []);
+      }
+    } catch {
+      // non-fatal
+    } finally {
+      setRoundupLoading(false);
     }
   }, []);
 
@@ -261,10 +313,10 @@ export default function DonorDashboard() {
 
   const handlePlaidSuccess = (result) => {
     console.log('Plaid integration successful:', result);
-    // Refresh dashboard data to show updated stats
     fetchDashboardData();
-    // Refresh Plaid connection status
     checkPlaidConnection();
+    checkCardFundingStatus();
+    fetchRoundupRecords();
   };
 
   const handlePlaidDisconnect = async () => {
@@ -308,7 +360,9 @@ export default function DonorDashboard() {
     fetchOrganizations();
     checkPlaidConnection();
     checkSubscriptionStatus();
-  }, [fetchDashboardData, fetchOrganizations, checkPlaidConnection, checkSubscriptionStatus]);
+    checkCardFundingStatus();
+    fetchRoundupRecords();
+  }, [fetchDashboardData, fetchOrganizations, checkPlaidConnection, checkSubscriptionStatus, checkCardFundingStatus, fetchRoundupRecords]);
 
 
   const containerVariants = {
@@ -538,15 +592,19 @@ export default function DonorDashboard() {
                             : 'Bank account connected'
                           }
                         </p>
-                        {/* Funding source status badge */}
+                        {/* Card funding source status badge */}
                         <div className="mt-2">
-                          {plaidConnectionStatus.fundingSourceReady ? (
+                          {cardFundingStatus.loading ? (
                             <span className="inline-flex items-center gap-1 bg-white/20 text-white text-xs font-semibold px-2 py-1 rounded-full">
-                              <CheckCircle className="w-3 h-3" /> Funding Source Active
+                              <Loader2 className="w-3 h-3 animate-spin" /> Checking card...
+                            </span>
+                          ) : cardFundingStatus.hasCard ? (
+                            <span className="inline-flex items-center gap-1 bg-white/20 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                              <CreditCard className="w-3 h-3" /> {cardFundingStatus.card?.label ?? 'Card Active'}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 bg-yellow-400/30 text-yellow-100 text-xs font-semibold px-2 py-1 rounded-full">
-                              <AlertCircle className="w-3 h-3" /> Funding Source Pending
+                              <AlertCircle className="w-3 h-3" /> No funding card
                             </span>
                           )}
                         </div>
@@ -590,6 +648,78 @@ export default function DonorDashboard() {
               )}
             </div>
           </motion.div>
+
+          {/* Round-Up History — only when bank is connected */}
+          {plaidConnectionStatus.isConnected && (
+            <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Round-Up History</h3>
+                <span className="text-xs text-gray-500">Charged to your card via Plaid</span>
+              </div>
+
+              {roundupLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-600 mr-2" />
+                  <span className="text-gray-500 text-sm">Loading round-ups...</span>
+                </div>
+              ) : roundupRecords.length > 0 ? (
+                <div className="space-y-3">
+                  {roundupRecords.slice(0, 10).map((record) => (
+                    <div key={record.id} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 border border-gray-100">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Target className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {record.organization?.name ?? 'Organization'}
+                          </p>
+                          {record.card_label && (
+                            <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                              <CreditCard className="w-3 h-3" /> {record.card_label}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <p className="text-xs text-gray-500">
+                            {new Date(record.trx_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </p>
+                          {record.start_date && record.end_date && (
+                            <p className="text-xs text-gray-400">
+                              ({record.start_date} → {record.end_date})
+                            </p>
+                          )}
+                          {record.transaction_count != null && (
+                            <p className="text-xs text-gray-400">{record.transaction_count} txns</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <span className="text-sm font-semibold text-blue-700">${Number(record.trx_amount).toFixed(2)}</span>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          record.pay_status === 'completed'
+                            ? 'bg-green-100 text-green-700'
+                            : record.pay_status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {record.pay_status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Building2 className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <p className="text-gray-500 text-sm">No round-up charges yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Round-ups will appear here once processed</p>
+                </div>
+              )}
+            </motion.div>
+          )}
 
           {/* Recent Activity */}
           <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">

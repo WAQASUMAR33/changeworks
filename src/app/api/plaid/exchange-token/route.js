@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import jwt from "jsonwebtoken";
 import { emailService } from "@/app/lib/email-service";
-
 // Plaid configuration
 const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
 const PLAID_SECRET_KEY = process.env.PLAID_SECRET_KEY;
