@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Banknote,
@@ -11,9 +11,9 @@ import {
   TrendingUp,
   Calendar,
   CreditCard,
-  Heart,
-  Link2,
   RefreshCw,
+  ArrowUpRight,
+  ArrowDownLeft,
 } from 'lucide-react';
 
 const formatCurrency = (amount) =>
@@ -22,58 +22,62 @@ const formatCurrency = (amount) =>
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
   return new Date(dateStr).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+    year: 'numeric', month: 'short', day: 'numeric',
   });
 };
 
+// Round-up calculation: $4.30 → $0.70
+function calcRoundUp(amount) {
+  if (!amount || amount <= 0) return 0;
+  const cents = Math.round(amount * 100) % 100;
+  return cents === 0 ? 0 : parseFloat(((100 - cents) / 100).toFixed(2));
+}
+
+// Default date range: last 30 days
+function getDefaultDates() {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 30);
+  return {
+    start: start.toISOString().split('T')[0],
+    end: end.toISOString().split('T')[0],
+  };
+}
+
 export default function DonorRoundUpTransactionsPage() {
+  const defaults = getDefaultDates();
+  const [startDate, setStartDate] = useState(defaults.start);
+  const [endDate, setEndDate] = useState(defaults.end);
+
   const [connections, setConnections] = useState([]);
-  const [records, setRecords] = useState([]);
+  const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [connectionsLoading, setConnectionsLoading] = useState(true);
-  const [error, setError] = useState('');
   const [loaded, setLoaded] = useState(false);
-
-  // Load bank connections on mount (lightweight)
-  useEffect(() => {
-    const loadConnections = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) { window.location.href = '/donor/login'; return; }
-
-        const res = await fetch('/api/donor/bank-connections', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (data.success) setConnections(data.connections || []);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setConnectionsLoading(false);
-      }
-    };
-    loadConnections();
-  }, []);
+  const [error, setError] = useState('');
 
   const loadTransactions = async () => {
     try {
       setLoading(true);
       setError('');
+
       const token = localStorage.getItem('token');
       if (!token) { window.location.href = '/donor/login'; return; }
 
-      const res = await fetch('/api/donor/roundup-records', {
+      const params = new URLSearchParams({ start_date: startDate, end_date: endDate });
+      const res = await fetch(`/api/plaid/donor-transactions?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       const data = await res.json();
-      if (data.success) {
-        setRecords(data.records || []);
-        setLoaded(true);
-      } else {
+
+      if (!res.ok || !data.success) {
         setError(data.error || 'Failed to load transactions');
+        return;
       }
+
+      setConnections(data.connections || []);
+      setSummary(data.summary || null);
+      setLoaded(true);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -81,14 +85,19 @@ export default function DonorRoundUpTransactionsPage() {
     }
   };
 
-  const total = records.reduce((sum, r) => sum + (r.trx_amount || 0), 0);
+  // Aggregate all transactions across connections
+  const allTransactions = connections.flatMap(conn =>
+    (conn.transactions || []).map(t => ({ ...t, _institution: conn.institution_name }))
+  );
+  const purchases = allTransactions.filter(t => t.amount > 0);
+  const totalRoundUp = purchases.reduce((sum, t) => sum + calcRoundUp(t.amount), 0);
 
   return (
     <div className="space-y-6 p-2">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Round-Up Program</h1>
-        <p className="text-gray-500 mt-1">Your connected bank accounts and round-up donation history</p>
+        <h1 className="text-2xl font-bold text-gray-900">Round-Up Transactions</h1>
+        <p className="text-gray-500 mt-1">Your bank transactions and estimated round-up amounts</p>
       </div>
 
       {error && (
@@ -98,223 +107,205 @@ export default function DonorRoundUpTransactionsPage() {
         </div>
       )}
 
-      {/* ── Connected Banks ─────────────────────────────────── */}
-      <div>
-        <h2 className="text-base font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <Link2 className="w-4 h-4 text-blue-600" />
-          Connected Bank Accounts
-        </h2>
-
-        {connectionsLoading ? (
-          <div className="flex items-center justify-center py-10 bg-white rounded-2xl border border-gray-100 shadow-sm text-gray-400">
-            <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            <span className="text-sm">Loading bank accounts...</span>
-          </div>
-        ) : connections.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm text-gray-400">
-            <Building2 className="w-10 h-10 mb-3 text-gray-300" />
-            <p className="text-sm font-medium">No bank accounts connected</p>
-            <p className="text-xs mt-1">Connect your bank from the dashboard to start round-ups</p>
-          </div>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {connections.map((conn, idx) => {
-              const accounts = (() => {
-                try { return JSON.parse(conn.accounts || '[]'); } catch { return []; }
-              })();
-
-              return (
-                <motion.div
-                  key={conn.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4"
-                >
-                  {/* Institution */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Building2 className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">
-                        {conn.institution_name || 'Bank Account'}
-                      </p>
-                      <p className="text-xs text-gray-400">Connected {formatDate(conn.created_at)}</p>
-                    </div>
-                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full flex-shrink-0 ${
-                      conn.status === 'ACTIVE'
-                        ? 'bg-green-50 text-green-700'
-                        : 'bg-amber-50 text-amber-700'
-                    }`}>
-                      {conn.status === 'ACTIVE'
-                        ? <><CheckCircle className="w-3 h-3" /> Active</>
-                        : <><AlertCircle className="w-3 h-3" /> {conn.status}</>
-                      }
-                    </span>
-                  </div>
-
-                  {/* Organisation */}
-                  {conn.organization && (
-                    <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
-                      <Heart className="w-4 h-4 text-pink-500 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500">Donating to</p>
-                        <p className="text-sm font-semibold text-gray-800 truncate">{conn.organization.name}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Linked Accounts */}
-                  {accounts.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Linked Accounts</p>
-                      {accounts.map((acc) => (
-                        <div key={acc.account_id || acc.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                            <div>
-                              <p className="text-sm font-medium text-gray-800">
-                                {acc.name || acc.official_name || 'Account'}
-                              </p>
-                              <p className="text-xs text-gray-400 capitalize">{acc.subtype || acc.type || ''}</p>
-                            </div>
-                          </div>
-                          {acc.mask && (
-                            <span className="text-xs text-gray-400">••••{acc.mask}</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
+      {/* Date range + fetch button */}
+      <div className="flex flex-wrap items-end gap-3 bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-gray-500">From</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={e => setStartDate(e.target.value)}
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-gray-500">To</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={e => setEndDate(e.target.value)}
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+          />
+        </div>
+        <button
+          onClick={loadTransactions}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors duration-200"
+        >
+          {loading
+            ? <><Loader2 className="w-4 h-4 animate-spin" /> Loading...</>
+            : <><RefreshCw className="w-4 h-4" /> {loaded ? 'Refresh' : 'Fetch Transactions'}</>
+          }
+        </button>
       </div>
 
-      {/* ── Donation History ───────────────────────────────── */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold text-gray-700 flex items-center gap-2">
-            <Banknote className="w-4 h-4 text-emerald-600" />
-            Round-Up Donation History
-          </h2>
-          <button
-            onClick={loadTransactions}
-            disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors duration-200"
-          >
-            {loading ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Loading...</>
-            ) : (
-              <><RefreshCw className="w-4 h-4" /> {loaded ? 'Refresh' : 'Show Transactions'}</>
-            )}
-          </button>
+      {/* Placeholder before first load */}
+      {!loaded && !loading && (
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm text-gray-400">
+          <Banknote className="w-12 h-12 mb-3 text-gray-300" />
+          <p className="text-sm font-medium text-gray-500">Select a date range and click &quot;Fetch Transactions&quot;</p>
         </div>
+      )}
 
-        {!loaded && !loading && (
-          <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm text-gray-400">
-            <Banknote className="w-10 h-10 mb-3 text-gray-300" />
-            <p className="text-sm font-medium text-gray-500">Click &quot;Show Transactions&quot; to load your round-up history</p>
-          </div>
-        )}
-
-        {loaded && (
-          <>
-            {/* Summary Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl border border-emerald-200 shadow-sm p-5">
-                <div className="inline-flex p-2 rounded-xl bg-emerald-50 mb-3">
-                  <TrendingUp className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div className="text-2xl font-bold text-gray-900">{formatCurrency(total)}</div>
-                <div className="text-xs text-gray-500 mt-1">Total Round-Ups Donated</div>
-              </motion.div>
-
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-                className="bg-white rounded-2xl border border-blue-200 shadow-sm p-5">
-                <div className="inline-flex p-2 rounded-xl bg-blue-50 mb-3">
-                  <Banknote className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="text-2xl font-bold text-gray-900">{records.length}</div>
-                <div className="text-xs text-gray-500 mt-1">Total Charges</div>
-              </motion.div>
-
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                className="bg-white rounded-2xl border border-purple-200 shadow-sm p-5">
-                <div className="inline-flex p-2 rounded-xl bg-purple-50 mb-3">
-                  <Calendar className="w-5 h-5 text-purple-600" />
-                </div>
-                <div className="text-2xl font-bold text-gray-900">
-                  {records.length > 0 ? formatDate(records[0].trx_date) : '—'}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">Last Charge Date</div>
-              </motion.div>
-            </div>
-
-            {records.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm text-gray-400">
-                <Banknote className="w-10 h-10 mb-3 text-gray-300" />
-                <p className="text-sm font-medium">No round-up donations yet</p>
-                <p className="text-xs mt-1">Your round-up charges will appear here</p>
+      {/* Results */}
+      {loaded && (
+        <>
+          {/* Summary cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl border border-emerald-200 shadow-sm p-5">
+              <div className="inline-flex p-2 rounded-xl bg-emerald-50 mb-3">
+                <TrendingUp className="w-5 h-5 text-emerald-600" />
               </div>
-            ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-gray-50 text-xs text-gray-500 font-semibold border-b border-gray-100">
-                        <th className="text-left px-5 py-3">Date</th>
-                        <th className="text-left px-5 py-3 hidden sm:table-cell">Organization</th>
-                        <th className="text-right px-5 py-3">Amount</th>
-                        <th className="text-left px-5 py-3">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {records.map((record) => (
-                        <tr key={record.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-5 py-4 text-gray-600 whitespace-nowrap">
-                            {formatDate(record.trx_date)}
+              <div className="text-2xl font-bold text-gray-900">{formatCurrency(totalRoundUp)}</div>
+              <div className="text-xs text-gray-500 mt-1">Total Round-Up</div>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+              className="bg-white rounded-2xl border border-blue-200 shadow-sm p-5">
+              <div className="inline-flex p-2 rounded-xl bg-blue-50 mb-3">
+                <Banknote className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="text-2xl font-bold text-gray-900">{purchases.length}</div>
+              <div className="text-xs text-gray-500 mt-1">Transactions</div>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+              className="bg-white rounded-2xl border border-purple-200 shadow-sm p-5">
+              <div className="inline-flex p-2 rounded-xl bg-purple-50 mb-3">
+                <Building2 className="w-5 h-5 text-purple-600" />
+              </div>
+              <div className="text-2xl font-bold text-gray-900">{connections.length}</div>
+              <div className="text-xs text-gray-500 mt-1">Bank Accounts</div>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+              className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="inline-flex p-2 rounded-xl bg-gray-50 mb-3">
+                <Calendar className="w-5 h-5 text-gray-600" />
+              </div>
+              <div className="text-sm font-bold text-gray-900">{formatDate(startDate)}</div>
+              <div className="text-xs text-gray-500 mt-1">→ {formatDate(endDate)}</div>
+            </motion.div>
+          </div>
+
+          {/* No connections */}
+          {connections.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm text-gray-400">
+              <Building2 className="w-10 h-10 mb-3 text-gray-300" />
+              <p className="text-sm font-medium">No bank accounts connected</p>
+              <p className="text-xs mt-1">Connect your bank from the dashboard to start round-ups</p>
+            </div>
+          )}
+
+          {/* Transactions per connection */}
+          {connections.map((conn, ci) => (
+            <div key={conn.id}>
+              {/* Bank header */}
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-800">{conn.institution_name || 'Bank Account'}</p>
+                  <p className="text-xs text-gray-400">{conn.accounts?.length ?? 0} account(s)</p>
+                </div>
+                <span className={`ml-auto inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
+                  conn.status === 'ACTIVE' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+                }`}>
+                  {conn.status === 'ACTIVE'
+                    ? <><CheckCircle className="w-3 h-3" /> Active</>
+                    : <><AlertCircle className="w-3 h-3" /> {conn.status}</>}
+                </span>
+              </div>
+
+              {conn.transactions_error && (
+                <div className="mb-3 flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  {conn.transactions_error}
+                </div>
+              )}
+
+              {conn.transactions?.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 bg-white rounded-2xl border border-gray-100 shadow-sm text-gray-400 mb-4">
+                  <CreditCard className="w-8 h-8 mb-2 text-gray-300" />
+                  <p className="text-sm">No transactions in this period</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 text-xs text-gray-500 font-semibold border-b border-gray-100">
+                          <th className="text-left px-5 py-3">Date</th>
+                          <th className="text-left px-5 py-3">Description</th>
+                          <th className="text-left px-5 py-3 hidden md:table-cell">Category</th>
+                          <th className="text-right px-5 py-3">Amount</th>
+                          <th className="text-right px-5 py-3 text-emerald-600">Round-Up</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {conn.transactions.map((t) => {
+                          const roundUp = calcRoundUp(t.amount);
+                          const isDebit = t.amount > 0;
+                          return (
+                            <tr key={t.transaction_id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-5 py-3 text-gray-500 whitespace-nowrap text-xs">
+                                {formatDate(t.date)}
+                              </td>
+                              <td className="px-5 py-3 max-w-[200px]">
+                                <p className="text-gray-800 font-medium truncate">{t.merchant_name || t.name}</p>
+                                {t.merchant_name && t.name !== t.merchant_name && (
+                                  <p className="text-xs text-gray-400 truncate">{t.name}</p>
+                                )}
+                              </td>
+                              <td className="px-5 py-3 hidden md:table-cell">
+                                <span className="text-xs text-gray-400">
+                                  {t.personal_finance_category?.primary || t.category?.[0] || '—'}
+                                </span>
+                              </td>
+                              <td className="px-5 py-3 text-right whitespace-nowrap">
+                                <span className={`font-semibold flex items-center justify-end gap-1 ${isDebit ? 'text-red-600' : 'text-emerald-600'}`}>
+                                  {isDebit
+                                    ? <ArrowUpRight className="w-3 h-3" />
+                                    : <ArrowDownLeft className="w-3 h-3" />}
+                                  {formatCurrency(Math.abs(t.amount))}
+                                </span>
+                              </td>
+                              <td className="px-5 py-3 text-right whitespace-nowrap">
+                                {roundUp > 0
+                                  ? <span className="font-bold text-emerald-600">{formatCurrency(roundUp)}</span>
+                                  : <span className="text-gray-300">—</span>}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-emerald-50 border-t border-emerald-100">
+                          <td colSpan={3} className="px-5 py-3 text-xs font-semibold text-emerald-700 hidden md:table-cell">
+                            Total Round-Up for {conn.institution_name}
                           </td>
-                          <td className="px-5 py-4 hidden sm:table-cell">
-                            <div className="flex items-center gap-2">
-                              <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                              <span className="text-gray-800 font-medium truncate max-w-[180px]">
-                                {record.organization?.name || '—'}
-                              </span>
-                            </div>
+                          <td colSpan={1} className="px-5 py-3 text-xs font-semibold text-emerald-700 md:hidden">
+                            Total Round-Up
                           </td>
-                          <td className="px-5 py-4 text-right font-bold text-emerald-600 whitespace-nowrap">
-                            {formatCurrency(record.trx_amount)}
-                          </td>
-                          <td className="px-5 py-4">
-                            {record.pay_status === 'completed' ? (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 px-2 py-1 rounded-full">
-                                <CheckCircle className="w-3 h-3" /> Completed
-                              </span>
-                            ) : record.pay_status === 'pending' ? (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-1 rounded-full">
-                                <Loader2 className="w-3 h-3 animate-spin" /> Pending
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-50 px-2 py-1 rounded-full">
-                                <AlertCircle className="w-3 h-3" /> {record.pay_status}
-                              </span>
+                          <td className="px-5 py-3 text-right font-bold text-emerald-700 whitespace-nowrap" colSpan={2}>
+                            {formatCurrency(
+                              (conn.transactions || [])
+                                .filter(t => t.amount > 0)
+                                .reduce((sum, t) => sum + calcRoundUp(t.amount), 0)
                             )}
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </tfoot>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+              )}
+            </div>
+          ))}
+        </>
+      )}
     </div>
   );
 }
