@@ -14,6 +14,8 @@ import {
   RefreshCw,
   ArrowUpRight,
   ArrowDownLeft,
+  Zap,
+  X,
 } from 'lucide-react';
 
 const formatCurrency = (amount) =>
@@ -55,6 +57,11 @@ export default function DonorRoundUpTransactionsPage() {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
 
+  // Charge state
+  const [charging, setCharging] = useState(false);
+  const [chargeResult, setChargeResult] = useState(null); // { success, message, amount }
+  const [chargeError, setChargeError] = useState('');
+
   const loadTransactions = async () => {
     try {
       setLoading(true);
@@ -75,13 +82,75 @@ export default function DonorRoundUpTransactionsPage() {
         return;
       }
 
-      setConnections(data.connections || []);
+      // Attach raw accounts JSON for charge-roundup account_id lookup
+      const conns = (data.connections || []).map(c => ({
+        ...c,
+        accounts_raw: JSON.stringify(c.accounts || []),
+      }));
+      setConnections(conns);
       setSummary(data.summary || null);
       setLoaded(true);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const chargeRoundUp = async (conn) => {
+    try {
+      setCharging(true);
+      setChargeError('');
+      setChargeResult(null);
+
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      // Use the first checking/savings account from this connection
+      let accounts = [];
+      try { accounts = JSON.parse(conn.accounts_raw || '[]'); } catch { /**/ }
+      // Prefer checking, then savings, then first account
+      const account =
+        accounts.find(a => a.subtype === 'checking') ||
+        accounts.find(a => a.subtype === 'savings') ||
+        accounts[0];
+
+      if (!account?.account_id) {
+        setChargeError('No account found for this connection.');
+        return;
+      }
+
+      const res = await fetch('/api/plaid/charge-roundup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          account_id: account.account_id,
+          plaid_connection_id: conn.id,
+          start_date: startDate,
+          end_date: endDate,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setChargeError(data.error || 'Charge failed');
+        return;
+      }
+
+      setChargeResult({
+        success: true,
+        message: data.message,
+        amount: data.amount_dollars,
+        charge_id: data.charge_id,
+      });
+    } catch (err) {
+      setChargeError(err.message);
+    } finally {
+      setCharging(false);
     }
   };
 
@@ -198,6 +267,38 @@ export default function DonorRoundUpTransactionsPage() {
             </div>
           )}
 
+          {/* Charge result banner */}
+          {chargeResult && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-between gap-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl px-5 py-4">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-sm">Charge Successful!</p>
+                  <p className="text-xs text-emerald-700">
+                    {formatCurrency(chargeResult.amount)} donated · {chargeResult.message} · ID: {chargeResult.charge_id}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setChargeResult(null)} className="text-emerald-500 hover:text-emerald-700">
+                <X className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
+
+          {chargeError && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-800 rounded-2xl px-5 py-4">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <p className="text-sm">{chargeError}</p>
+              </div>
+              <button onClick={() => setChargeError('')} className="text-red-400 hover:text-red-600">
+                <X className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
+
           {/* Transactions per connection */}
           {connections.map((conn, ci) => (
             <div key={conn.id}>
@@ -217,6 +318,17 @@ export default function DonorRoundUpTransactionsPage() {
                     ? <><CheckCircle className="w-3 h-3" /> Active</>
                     : <><AlertCircle className="w-3 h-3" /> {conn.status}</>}
                 </span>
+                {conn.status === 'ACTIVE' && (
+                  <button
+                    onClick={() => chargeRoundUp(conn)}
+                    disabled={charging}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-xl transition-colors duration-200"
+                  >
+                    {charging
+                      ? <><Loader2 className="w-3 h-3 animate-spin" /> Charging...</>
+                      : <><Zap className="w-3 h-3" /> Charge Round-Up</>}
+                  </button>
+                )}
               </div>
 
               {conn.transactions_error && (
