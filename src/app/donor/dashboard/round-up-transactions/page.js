@@ -291,9 +291,19 @@ export default function DonorRoundUpTransactionsPage() {
               className="flex items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-800 rounded-2xl px-5 py-4">
               <div className="flex items-center gap-3">
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                <p className="text-sm">{chargeError}</p>
+                <div>
+                  <p className="text-sm font-medium">{chargeError}</p>
+                  {chargeError.includes('No funding card') && (
+                    <a
+                      href="/donor/dashboard"
+                      className="inline-flex items-center gap-1 mt-1 text-xs font-semibold text-blue-600 hover:underline"
+                    >
+                      <CreditCard className="w-3 h-3" /> Go to Dashboard to add a card
+                    </a>
+                  )}
+                </div>
               </div>
-              <button onClick={() => setChargeError('')} className="text-red-400 hover:text-red-600">
+              <button onClick={() => setChargeError('')} className="text-red-400 hover:text-red-600 flex-shrink-0">
                 <X className="w-4 h-4" />
               </button>
             </motion.div>
