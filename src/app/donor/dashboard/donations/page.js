@@ -1,20 +1,36 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Heart, 
-  Calendar, 
-  DollarSign, 
-  Building2, 
+import {
+  Heart,
+  Calendar,
+  DollarSign,
+  Building2,
   Search,
   Filter,
   Loader2,
   AlertCircle,
-  Eye
+  Eye,
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { buildOrgLogoUrl } from '@/lib/image-utils';
+
+const METHOD_OPTIONS = [
+  { label: 'All Methods', value: '' },
+  { label: "Round Up's", value: "Round Up's" },
+  { label: 'Recurring', value: 'Recurring' },
+  { label: 'One Time', value: 'One Time' },
+];
+
+const STATUS_OPTIONS = [
+  { label: 'All Statuses', value: '' },
+  { label: 'Completed', value: 'completed' },
+  { label: 'Succeeded', value: 'succeeded' },
+  { label: 'Pending', value: 'pending' },
+  { label: 'Failed', value: 'failed' },
+];
 
 export default function DonorDonationsPage() {
   const [donations, setDonations] = useState([]);
@@ -24,20 +40,22 @@ export default function DonorDonationsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [selectedMethod, setSelectedMethod] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedDonation, setSelectedDonation] = useState(null);
-
+  const [methodDropdownOpen, setMethodDropdownOpen] = useState(false);
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
 
   const fetchDonations = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
-        setError('No authentication token found.');
+        setError('No authentication token found');
         return;
       }
 
-      // Decode token to get donor ID
       const payload = JSON.parse(atob(token.split('.')[1]));
       const donorId = payload.id;
 
@@ -49,16 +67,16 @@ export default function DonorDonationsPage() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setDonations(data.transactions || []);
         setFilteredDonations(data.transactions || []);
       } else {
-        setError(data.error || 'Failed to load donations.');
+        setError(data.error || 'Failed to load donations');
       }
     } catch (err) {
       console.error('Error fetching donations:', err);
-      setError('Failed to load donations.');
+      setError('Failed to load donations');
     } finally {
       setLoading(false);
     }
@@ -71,7 +89,6 @@ export default function DonorDonationsPage() {
   useEffect(() => {
     let filtered = donations;
 
-    // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(donation =>
         donation.organization?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,7 +96,6 @@ export default function DonorDonationsPage() {
       );
     }
 
-    // Filter by date range
     if (startDate) {
       const start = new Date(startDate);
       start.setHours(0, 0, 0, 0);
@@ -91,8 +107,20 @@ export default function DonorDonationsPage() {
       filtered = filtered.filter(donation => new Date(donation.created_at) <= end);
     }
 
+    if (selectedMethod) {
+      filtered = filtered.filter(donation =>
+        getTransactionTypeLabel(donation.method) === selectedMethod
+      );
+    }
+
+    if (selectedStatus) {
+      filtered = filtered.filter(donation =>
+        donation.status?.toLowerCase() === selectedStatus.toLowerCase()
+      );
+    }
+
     setFilteredDonations(filtered);
-  }, [donations, searchTerm, startDate, endDate]);
+  }, [donations, searchTerm, startDate, endDate, selectedMethod, selectedStatus]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -127,6 +155,12 @@ export default function DonorDonationsPage() {
 
   const getTransactionTypeColor = (method) => {
     switch (method?.toLowerCase()) {
+      case 'payment':
+        return 'text-green-600 bg-green-100';
+      case 'subscription':
+        return 'text-purple-600 bg-purple-100';
+      case 'one-time':
+        return 'text-blue-600 bg-blue-100';
       case 'stripe':
         return 'text-blue-600 bg-blue-100';
       case 'stripe_subscription':
@@ -146,10 +180,16 @@ export default function DonorDonationsPage() {
 
   const getTransactionTypeLabel = (method) => {
     switch (method?.toLowerCase()) {
+      case 'payment':
+        return "Round Up's";
+      case 'subscription':
+        return 'Recurring';
+      case 'one-time':
+        return 'One Time';
       case 'stripe':
-        return 'One-time';
+        return 'One Time';
       case 'stripe_subscription':
-        return 'Subscription';
+        return 'Recurring';
       case 'stripe_subscription_recurring':
         return 'Monthly';
       case 'plaid':
@@ -159,7 +199,7 @@ export default function DonorDonationsPage() {
       case 'cash':
         return 'Cash';
       default:
-        return 'Payment';
+        return "Round Up's";
     }
   };
 
@@ -188,7 +228,7 @@ export default function DonorDonationsPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading donations.</p>
+          <p className="text-gray-600">Loading donations</p>
         </div>
       </div>
     );
@@ -204,7 +244,7 @@ export default function DonorDonationsPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Donations.</h1>
+          <h1 className="text-3xl font-bold text-gray-900">My Donations</h1>
           <p className="text-gray-600 mt-2">View and manage your donation history.</p>
         </div>
       </motion.div>
@@ -214,7 +254,7 @@ export default function DonorDonationsPage() {
         <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm font-medium text-gray-600">Total Donated.</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600">Total Donated</p>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 {formatAmount(donations
                   .filter(donation => ['completed', 'succeeded'].includes(donation.status?.toLowerCase()))
@@ -230,7 +270,7 @@ export default function DonorDonationsPage() {
         <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm font-medium text-gray-600">Total Donations.</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600">Total Donations</p>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">{donations.length}</p>
             </div>
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -242,14 +282,14 @@ export default function DonorDonationsPage() {
         <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm font-medium text-gray-600">This Month.</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600">This Month</p>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 {formatAmount(
                   donations
                     .filter(donation => {
                       const donationDate = new Date(donation.created_at);
                       const now = new Date();
-                      return donationDate.getMonth() === now.getMonth() && 
+                      return donationDate.getMonth() === now.getMonth() &&
                              donationDate.getFullYear() === now.getFullYear() &&
                              ['completed', 'succeeded'].includes(donation.status?.toLowerCase());
                     })
@@ -266,7 +306,7 @@ export default function DonorDonationsPage() {
         <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm font-medium text-gray-600">Organizations.</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600">Organizations</p>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 {new Set(donations.map(donation => donation.organization?.id)).size}
               </p>
@@ -280,8 +320,9 @@ export default function DonorDonationsPage() {
 
       {/* Filters */}
       <motion.div variants={itemVariants} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-black" />
               <input
@@ -292,30 +333,77 @@ export default function DonorDonationsPage() {
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 w-full sm:w-64 placeholder-gray-800 text-black"
               />
             </div>
+
+            {/* Method filter */}
+            <div className="relative">
+              <button
+                onClick={() => { setMethodDropdownOpen(!methodDropdownOpen); setStatusDropdownOpen(false); }}
+                className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 bg-white text-black min-w-[150px] justify-between"
+              >
+                <span className="text-sm">{selectedMethod || 'All Methods'}</span>
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              </button>
+              {methodDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1">
+                  {METHOD_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => { setSelectedMethod(opt.value); setMethodDropdownOpen(false); }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors duration-150 ${selectedMethod === opt.value ? 'font-semibold text-[#0E0061]' : 'text-gray-700'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Status filter */}
+            <div className="relative">
+              <button
+                onClick={() => { setStatusDropdownOpen(!statusDropdownOpen); setMethodDropdownOpen(false); }}
+                className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 bg-white text-black min-w-[150px] justify-between"
+              >
+                <span className="text-sm capitalize">{selectedStatus || 'All Statuses'}</span>
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              </button>
+              {statusDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1">
+                  {STATUS_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => { setSelectedStatus(opt.value); setStatusDropdownOpen(false); }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors duration-150 ${selectedStatus === opt.value ? 'font-semibold text-[#0E0061]' : 'text-gray-700'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Date range */}
             <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-black" />
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-black"
-                />
-              </div>
+              <Calendar className="w-4 h-4 text-black" />
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-black"
+              />
               <span className="text-black">to</span>
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-black" />
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-black"
-                />
-              </div>
+              <Calendar className="w-4 h-4 text-black" />
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-black"
+              />
             </div>
           </div>
+
           <div className="text-sm text-black">
-            Showing {filteredDonations.length} of {donations.length} donations.
+            Showing {filteredDonations.length} of {donations.length} donations
           </div>
         </div>
       </motion.div>
@@ -325,13 +413,13 @@ export default function DonorDonationsPage() {
         {error ? (
           <div className="p-8 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Donations.</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Donations</h3>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={fetchDonations}
               className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200"
             >
-              Try Again.
+              Try Again
             </button>
           </div>
         ) : filteredDonations.length > 0 ? (
@@ -339,12 +427,12 @@ export default function DonorDonationsPage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Organization.</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Amount.</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Method.</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date.</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status.</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions.</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Organization</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Amount</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Method</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -370,7 +458,7 @@ export default function DonorDonationsPage() {
                               }}
                             />
                           ) : null}
-                          <div 
+                          <div
                             className={`w-full h-full flex items-center justify-center ${donation.organization?.imageUrl ? 'hidden' : 'flex'}`}
                           >
                             <Building2 className="w-5 h-5 text-blue-600" />
@@ -422,13 +510,13 @@ export default function DonorDonationsPage() {
         ) : (
           <div className="p-8 text-center">
             <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Donations Found.</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Donations Found</h3>
             <p className="text-gray-600 mb-4">
-              {searchTerm || startDate || endDate
-                ? 'No donations match your current filters.'
-                : 'You haven\'t made any donations yet.'}
+              {searchTerm || startDate || endDate || selectedMethod || selectedStatus
+                ? 'No donations match your current filters'
+                : "You haven't made any donations yet"}
             </p>
-            {!searchTerm && !startDate && !endDate && (
+            {!searchTerm && !startDate && !endDate && !selectedMethod && !selectedStatus && (
               <button className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200">
                 Make Your First Donation
               </button>
@@ -455,7 +543,7 @@ export default function DonorDonationsPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-800">Donation Details.</h3>
+                <h3 className="text-xl font-bold text-gray-800">Donation Details</h3>
                 <button
                   onClick={() => setSelectedDonation(null)}
                   className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
@@ -466,7 +554,7 @@ export default function DonorDonationsPage() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Organization.</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden">
                       {selectedDonation.organization?.imageUrl ? (
@@ -482,7 +570,7 @@ export default function DonorDonationsPage() {
                           }}
                         />
                       ) : null}
-                      <div 
+                      <div
                         className={`w-full h-full flex items-center justify-center ${selectedDonation.organization?.imageUrl ? 'hidden' : 'flex'}`}
                       >
                         <Building2 className="w-6 h-6 text-blue-600" />
@@ -491,24 +579,24 @@ export default function DonorDonationsPage() {
                     <p className="text-gray-900 font-medium">{selectedDonation.organization?.name || 'Unknown'}</p>
                   </div>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount.</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
                   <p className="text-2xl font-bold text-gray-900">{formatAmount(selectedDonation.amount || 0)}</p>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
                   <p className="text-gray-900">{formatDate(selectedDonation.created_at)}</p>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                   <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(selectedDonation.status)}`}>
                     {selectedDonation.status || 'Completed'}
                   </span>
                 </div>
-                
+
                 {selectedDonation.description && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>

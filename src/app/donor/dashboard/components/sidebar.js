@@ -111,16 +111,6 @@ const DonorSidebar = () => {
       icon: CreditCard,
       path: '/donor/dashboard/subscriptions',
     },
-    {
-      name: "Round-Up's",
-      icon: Banknote,
-      path: '/donor/dashboard/round-up-transactions',
-    },
-    {
-      name: 'Profile',
-      icon: User,
-      path: '/donor/dashboard/profile',
-    },
   ];
 
   const SidebarContent = ({ onMobileClose }) => (
@@ -224,15 +214,6 @@ const DonorSidebar = () => {
           </Link>
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center space-x-3 px-3 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200 group"
-        >
-          <LogOut className="w-5 h-5 flex-shrink-0 text-red-500" />
-          {isExpanded && (
-            <span className="font-medium truncate">Logout</span>
-          )}
-        </button>
       </div>
     </div>
   );
