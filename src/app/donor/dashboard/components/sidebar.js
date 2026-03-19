@@ -115,51 +115,17 @@ const DonorSidebar = () => {
 
   const SidebarContent = ({ onMobileClose }) => (
     <div className="flex flex-col h-full min-h-screen">
-      {/* Header with Organization Logo, Donor Info, and Pin/Close */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-        {/* Organization Logo and Donor Info */}
-        {isExpanded && (
-          <div className="flex items-center space-x-3 flex-1 min-w-0">
-            {/* Organization Image - Removed as per request */}
-
-            {/* Donor Name */}
-            {user && (
-              <div className="flex-1 min-w-0">
-                <h2 className="text-sm font-bold text-gray-800 truncate">{user.name}</h2>
-                <p className="text-xs text-gray-500">Donor</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Pin/Close buttons */}
-        <div className="flex items-center space-x-2">
-          {/* Mobile close button */}
-          {onMobileClose && (
-            <button
-              onClick={onMobileClose}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 lg:hidden"
-            >
-              <X className="w-4 h-4 text-gray-600" />
-            </button>
-          )}
-          {/* Desktop pin button */}
+      {/* Mobile close button */}
+      {onMobileClose && (
+        <div className="flex justify-end p-2 lg:hidden">
           <button
-            onClick={() => {
-              const newPinnedState = !isPinned;
-              setIsPinned(newPinnedState);
-              localStorage.setItem('sidebar-pinned', JSON.stringify(newPinnedState));
-            }}
-            className="hidden lg:block p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+            onClick={onMobileClose}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
           >
-            {isPinned ? (
-              <Pin className="w-4 h-4 text-gray-600" />
-            ) : (
-              <PinOff className="w-4 h-4 text-gray-400" />
-            )}
+            <X className="w-4 h-4 text-gray-600" />
           </button>
         </div>
-      </div>
+      )}
 
       {/* Navigation Menu */}
       <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">

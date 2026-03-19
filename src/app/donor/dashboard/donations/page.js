@@ -19,9 +19,9 @@ import { buildOrgLogoUrl } from '@/lib/image-utils';
 
 const METHOD_OPTIONS = [
   { label: 'All Methods', value: '' },
-  { label: "Round Up's", value: "Round Up's" },
-  { label: 'Recurring', value: 'Recurring' },
-  { label: 'One Time', value: 'One Time' },
+  { label: 'round up', value: 'round up' },
+  { label: 'recurring donation', value: 'recurring donation' },
+  { label: 'one-time donation', value: 'one-time donation' },
 ];
 
 const STATUS_OPTIONS = [
@@ -181,25 +181,25 @@ export default function DonorDonationsPage() {
   const getTransactionTypeLabel = (method) => {
     switch (method?.toLowerCase()) {
       case 'payment':
-        return "Round Up's";
+        return 'round up';
       case 'subscription':
-        return 'Recurring';
+        return 'recurring donation';
       case 'one-time':
-        return 'One Time';
+        return 'one-time donation';
       case 'stripe':
-        return 'One Time';
+        return 'one-time donation';
       case 'stripe_subscription':
-        return 'Recurring';
+        return 'recurring donation';
       case 'stripe_subscription_recurring':
-        return 'Monthly';
+        return 'recurring donation';
       case 'plaid':
-        return 'Bank Transfer';
+        return 'round up';
       case 'bank_transfer':
-        return 'Bank Transfer';
+        return 'round up';
       case 'cash':
-        return 'Cash';
+        return 'cash';
       default:
-        return "Round Up's";
+        return 'round up';
     }
   };
 
