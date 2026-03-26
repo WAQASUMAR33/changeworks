@@ -133,6 +133,10 @@ export async function GET(req) {
 
     const organizationId = decoded.id;
 
+    // Debug: count all plaid_connections regardless of org to verify DB access
+    const totalCount = await prisma.plaidConnection.count();
+    const orgCount = await prisma.plaidConnection.count({ where: { organization_id: organizationId } });
+
     const connections = await prisma.plaidConnection.findMany({
       where: { organization_id: organizationId },
       include: {
@@ -189,6 +193,11 @@ export async function GET(req) {
         total_donors: enrichedConnections.length,
         funding_ready: fundingReadyCount,
         institutions: new Set(enrichedConnections.map((c) => c.institution_id).filter(Boolean)).size,
+      },
+      _debug: {
+        queried_org_id: organizationId,
+        total_plaid_connections_in_db: totalCount,
+        connections_for_this_org: orgCount,
       },
     });
   } catch (error) {
