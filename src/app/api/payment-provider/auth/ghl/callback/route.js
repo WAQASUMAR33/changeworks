@@ -8,6 +8,7 @@ import { verifyStateToken } from '@/app/lib/payment-provider/crypto';
 export async function GET(request) {
   const reqUrl  = new URL(request.url);
   const baseUrl = process.env.GHL_APP_URL || process.env.NEXT_PUBLIC_APP_URL || `${reqUrl.protocol}//${reqUrl.host}`;
+  const successUrl  = `${baseUrl}/payment-provider/ghl-connected`;
   const dashboardUrl = `${baseUrl}/organization/dashboard/payment-provider`;
 
   const { searchParams } = reqUrl;
@@ -17,7 +18,7 @@ export async function GET(request) {
 
   try {
     if (error) {
-      return NextResponse.redirect(`${dashboardUrl}?error=ghl_denied`);
+      return NextResponse.redirect(`${successUrl}?error=ghl_denied`);
     }
     if (!code) {
       return NextResponse.json({ error: 'Missing code' }, { status: 400 });
@@ -38,7 +39,7 @@ export async function GET(request) {
     } catch (err) {
       const detail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
       console.error('[GHL OAuth] Token exchange failed:', detail);
-      return NextResponse.redirect(`${dashboardUrl}?error=ghl_token_exchange&detail=${encodeURIComponent(detail)}`);
+      return NextResponse.redirect(`${successUrl}?error=ghl_token_exchange&detail=${encodeURIComponent(detail)}`);
     }
 
     const locationId = tokenData.locationId ?? stateData?.locationId;
@@ -61,9 +62,9 @@ export async function GET(request) {
       console.warn('[GHL callback] createGHLPaymentProvider failed (non-fatal):', err.message);
     }
 
-    return NextResponse.redirect(`${dashboardUrl}?locationId=${locationId}&connected=ghl`);
+    return NextResponse.redirect(`${successUrl}?locationId=${locationId}`);
   } catch (err) {
     console.error('[GHL callback] Unhandled error:', err.message);
-    return NextResponse.redirect(`${dashboardUrl}?error=ghl_callback_error&detail=${encodeURIComponent(err.message)}`);
+    return NextResponse.redirect(`${successUrl}?error=ghl_callback_error&detail=${encodeURIComponent(err.message)}`);
   }
 }
