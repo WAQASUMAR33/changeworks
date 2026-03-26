@@ -351,6 +351,126 @@ model DonorPaymentMethod {
   @@map("donor_payment_methods")
 }
 
+// ─── Payment Provider Models (GHL + Stripe Connect) ──────────────────────────
+
+// GHL OAuth tokens per location (used by payment_provider)
+model GhlConnection {
+  id           Int      @id @default(autoincrement())
+  locationId   String   @unique @db.VarChar(100)
+  companyId    String?  @db.VarChar(100)
+  userId       String?  @db.VarChar(100)
+  accessToken  String   @db.Text
+  refreshToken String?  @db.Text
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stripeConnection GhlStripeConnection?
+  webhookLogs      GhlWebhookLog[]
+  paymentEvents    GhlPaymentEvent[]
+
+  @@index([companyId])
+  @@map("ghl_connections")
+}
+
+// Stripe Connect credentials per GHL location
+model GhlStripeConnection {
+  id              Int      @id @default(autoincrement())
+  locationId      String   @unique @db.VarChar(100)
+  stripeAccountId String   @unique @db.VarChar(255)
+  accessToken     String   @db.Text
+  refreshToken    String?  @db.Text
+  publishableKey  String   @db.VarChar(255)
+  livemode        Boolean  @default(false)
+  tokenType       String?  @db.VarChar(50)
+  scope           String?  @db.VarChar(500)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  connection GhlConnection @relation(fields: [locationId], references: [locationId])
+
+  @@index([stripeAccountId])
+  @@map("ghl_stripe_connections")
+}
+
+// Individual payment events (PaymentIntents, subscriptions) per GHL location
+model GhlPaymentEvent {
+  id              Int      @id @default(autoincrement())
+  locationId      String   @db.VarChar(100)
+  stripeAccountId String   @db.VarChar(255)
+  paymentIntentId String   @unique @db.VarChar(255)
+  entityId        String?  @db.VarChar(255)
+  entityType      String?  @db.VarChar(100)
+  amount          Int
+  currency        String   @default("usd") @db.VarChar(10)
+  status          String   @db.VarChar(50)
+  failureReason   String?  @db.VarChar(500)
+  refundedAmount  Int      @default(0)
+  customerName    String?  @db.VarChar(255)
+  customerEmail   String?  @db.VarChar(255)
+  customerPhone   String?  @db.VarChar(50)
+  metadata        String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  connection GhlConnection @relation(fields: [locationId], references: [locationId])
+
+  @@index([locationId])
+  @@index([entityId])
+  @@index([status])
+  @@map("ghl_payment_events")
+}
+
+// GHL product → Stripe product/price mapping
+model GhlProductSync {
+  id              Int      @id @default(autoincrement())
+  locationId      String   @db.VarChar(100)
+  ghlProductId    String   @db.VarChar(255)
+  stripeProductId String   @db.VarChar(255)
+  stripePriceId   String?  @db.VarChar(255)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([locationId, ghlProductId], name: "locationId_ghlProductId")
+  @@index([locationId])
+  @@map("ghl_product_sync")
+}
+
+// GHL price → Stripe price mapping
+model GhlPriceSync {
+  id            Int      @id @default(autoincrement())
+  locationId    String   @db.VarChar(100)
+  ghlPriceId    String   @db.VarChar(255)
+  ghlProductId  String   @db.VarChar(255)
+  stripePriceId String   @db.VarChar(255)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([locationId, ghlPriceId], name: "locationId_ghlPriceId")
+  @@index([locationId])
+  @@map("ghl_price_sync")
+}
+
+// Webhook idempotency log (Stripe + GHL webhooks)
+model GhlWebhookLog {
+  id          Int       @id @default(autoincrement())
+  source      String    @db.VarChar(50)  // "stripe" | "ghl"
+  eventId     String    @unique @db.VarChar(255)
+  eventType   String    @db.VarChar(100)
+  locationId  String?   @db.VarChar(100)
+  payload     String    @db.LongText
+  status      String    @default("PENDING") @db.VarChar(20)  // PENDING | PROCESSED | FAILED
+  error       String?   @db.Text
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  connection GhlConnection? @relation(fields: [locationId], references: [locationId])
+
+  @@index([locationId])
+  @@index([status])
+  @@map("ghl_webhook_logs")
+}
+
 // Generic key-value store for admin-configurable settings
 model AppSetting {
   id         Int      @id @default(autoincrement())

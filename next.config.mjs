@@ -12,6 +12,17 @@ const nextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        source: '/payment-provider/checkout',
+        headers: [
+          { key: 'Content-Security-Policy', value: "frame-ancestors *" },
+          { key: 'X-Frame-Options', value: 'ALLOWALL' },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

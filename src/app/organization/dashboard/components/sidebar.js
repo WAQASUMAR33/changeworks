@@ -26,6 +26,7 @@ import {
   RefreshCw,
   FileText,
   Banknote,
+  Zap,
 } from 'lucide-react';
 
 const OrgSidebar = () => {
@@ -106,6 +107,11 @@ const OrgSidebar = () => {
       name: 'Round-Up Donors',
       icon: Banknote,
       path: '/organization/dashboard/round-up-donors',
+    },
+    {
+      name: 'Payment Provider',
+      icon: Zap,
+      path: '/organization/dashboard/payment-provider',
     },
     {
       name: 'Settings',
