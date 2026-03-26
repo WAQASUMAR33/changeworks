@@ -143,24 +143,18 @@ export async function GET(req) {
       orderBy: { created_at: 'desc' },
     });
 
-    const validConnections = [];
-    const invalidIds = [];
+    const enrichedConnections = [];
 
     await Promise.all(
       connections.map(async (conn) => {
         const accountsData = await fetchPlaidAccounts(conn.access_token);
-
-        if (accountsData.status === 'INVALID') {
-          invalidIds.push(conn.id);
-          return;
-        }
 
         const [institutionData, fundingSource] = await Promise.all([
           fetchPlaidInstitution(conn.institution_id),
           checkFundingSource(conn.access_token),
         ]);
 
-        validConnections.push({
+        enrichedConnections.push({
           id: conn.id,
           status: accountsData.status,
           institution_name: institutionData?.name || conn.institution_name || null,
@@ -184,22 +178,17 @@ export async function GET(req) {
       })
     );
 
-    if (invalidIds.length > 0) {
-      await prisma.plaidConnection.deleteMany({ where: { id: { in: invalidIds } } });
-    }
+    enrichedConnections.sort((a, b) => new Date(b.connected_at) - new Date(a.connected_at));
 
-    validConnections.sort((a, b) => new Date(b.connected_at) - new Date(a.connected_at));
-
-    const fundingReadyCount = validConnections.filter((c) => c.funding_source?.ready).length;
+    const fundingReadyCount = enrichedConnections.filter((c) => c.funding_source?.ready).length;
 
     return NextResponse.json({
       success: true,
-      connections: validConnections,
-      removed_invalid: invalidIds.length,
+      connections: enrichedConnections,
       summary: {
-        total_donors: validConnections.length,
+        total_donors: enrichedConnections.length,
         funding_ready: fundingReadyCount,
-        institutions: new Set(validConnections.map((c) => c.institution_id).filter(Boolean)).size,
+        institutions: new Set(enrichedConnections.map((c) => c.institution_id).filter(Boolean)).size,
       },
     });
   } catch (error) {
