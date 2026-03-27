@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { exchangeGHLCode, createGHLPaymentProvider } from '@/app/lib/payment-provider/ghl';
+import { exchangeGHLCode, connectGHLPaymentProvider } from '@/app/lib/payment-provider/ghl';
 import { saveGHLTokens } from '@/app/lib/payment-provider/tokenStore';
 import { verifyStateToken } from '@/app/lib/payment-provider/crypto';
 
@@ -57,12 +57,12 @@ export async function GET(request) {
     });
 
     try {
-      await createGHLPaymentProvider(locationId);
+      await connectGHLPaymentProvider(locationId);
     } catch (err) {
-      console.warn('[GHL callback] createGHLPaymentProvider failed (non-fatal):', err.message);
+      console.warn('[GHL callback] connectGHLPaymentProvider failed (non-fatal):', err.message);
     }
 
-    return NextResponse.redirect(`${successUrl}?locationId=${locationId}`);
+    return NextResponse.redirect(`${dashboardUrl}?connected=ghl&locationId=${locationId}`);
   } catch (err) {
     console.error('[GHL callback] Unhandled error:', err.message);
     return NextResponse.redirect(`${successUrl}?error=ghl_callback_error&detail=${encodeURIComponent(err.message)}`);

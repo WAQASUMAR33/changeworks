@@ -134,14 +134,23 @@ export async function listPaymentIntegrations(locationId) {
 export async function createGHLPaymentProvider(locationId) {
   const appUrl = process.env.GHL_APP_URL || process.env.NEXT_PUBLIC_APP_URL;
   const client = await ghlClient(locationId);
-  const { data } = await client.post(`/payments/custom-provider/provider?locationId=${locationId}`, {
-    name:        'ChangeWorks',
-    description: 'Accept payments via Stripe Connect',
-    paymentsUrl: `${appUrl}/payment-provider/checkout`,
-    queryUrl:    `${appUrl}/api/payment-provider/payments/status`,
-    imageUrl:    'https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg',
-  });
-  return data;
+  try {
+    const { data } = await client.post(`/payments/custom-provider/provider?locationId=${locationId}`, {
+      name:        'ChangeWorks',
+      description: 'Accept payments via Stripe Connect',
+      paymentsUrl: `${appUrl}/payment-provider/checkout`,
+      queryUrl:    `${appUrl}/api/payment-provider/payments/status`,
+      imageUrl:    'https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg',
+    });
+    return data;
+  } catch (err) {
+    // Provider already exists — not an error, proceed to connect step
+    if (err.response?.status === 409 || err.response?.status === 422) {
+      console.log(`[GHL] Provider already exists for ${locationId}, skipping create.`);
+      return { alreadyExists: true };
+    }
+    throw err;
+  }
 }
 
 export async function connectGHLPaymentProvider(locationId) {
