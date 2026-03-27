@@ -149,8 +149,10 @@ export default function PaymentProviderPage() {
   }, [tab, locationId, fetchProducts]);
 
   // ── Actions ───────────────────────────────────────────────────────────────
+  const GHL_INSTALL_URL = 'https://marketplace.gohighlevel.com/oauth/chooselocation?response_type=code&redirect_uri=https%3A%2F%2Fghl-stripe-payment.vercel.app%2Fapi%2Fauth%2Fghl%2Fcallback&client_id=69b31e9781d1b32fb138a905-mmnx34cp&scope=payments%2Forders.readonly+payments%2Forders.write+payments%2Forders.collectPayment+payments%2Fintegration.readonly+payments%2Fintegration.write+payments%2Ftransactions.readonly+payments%2Fsubscriptions.readonly+payments%2Fcoupons.readonly+payments%2Fcoupons.write+payments%2Fcustom-provider.readonly+payments%2Fcustom-provider.write+saas%2Flocation.read+oauth.readonly+locations.readonly&version_id=69b31e9781d1b32fb138a905';
+
   function connectGHL() {
-    window.location.href = `/api/payment-provider/auth/ghl${locationId ? `?locationId=${locationId}` : ''}`;
+    window.location.href = GHL_INSTALL_URL;
   }
   function connectStripe() {
     if (!locationId) { setError('Enter a Location ID first.'); return; }
@@ -310,7 +312,7 @@ export default function PaymentProviderPage() {
                 className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#0E0061] focus:ring-1 focus:ring-[#0E0061]/20"
               />
               <button onClick={connectGHL} className="flex items-center gap-2 px-4 py-2.5 bg-[#0E0061] text-white text-sm font-semibold rounded-xl hover:bg-[#0E0061]/90 transition-colors">
-                Connect GHL <ChevronRight className="w-4 h-4" />
+                Connect <ChevronRight className="w-4 h-4" />
               </button>
             </div>
             {locationId && <p className="mt-2 text-xs text-gray-400">Location ID: <span className="font-mono">{locationId}</span></p>}
