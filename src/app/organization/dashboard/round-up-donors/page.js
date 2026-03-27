@@ -326,34 +326,6 @@ export default function RoundUpDonorsPage() {
                         )}
                       </div>
 
-                      {/* Bank Accounts */}
-                      {conn.accounts?.length > 0 && (
-                        <div>
-                          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                            <CreditCard className="w-3.5 h-3.5" />
-                            Bank Accounts
-                          </h3>
-                          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {conn.accounts.map((acc) => (
-                              <div key={acc.account_id} className="bg-white rounded-xl border border-gray-200 p-3">
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="text-sm font-semibold text-gray-800">
-                                    {acc.name || acc.official_name || 'Account'}
-                                  </span>
-                                  <span className="text-xs text-gray-400">••••{acc.mask}</span>
-                                </div>
-                                <div className="text-xs text-gray-500 capitalize">{acc.subtype || acc.type}</div>
-                                {acc.balances?.current != null && (
-                                  <div className="mt-2 text-sm font-bold text-gray-900">
-                                    {formatCurrency(acc.balances.current, acc.balances.iso_currency_code)}
-                                    <span className="text-xs text-gray-400 font-normal ml-1">balance</span>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
 
                     </div>
                   </motion.div>
