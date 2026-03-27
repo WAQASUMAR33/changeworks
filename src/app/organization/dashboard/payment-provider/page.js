@@ -149,7 +149,7 @@ export default function PaymentProviderPage() {
   }, [tab, locationId, fetchProducts]);
 
   // ── Actions ───────────────────────────────────────────────────────────────
-  const GHL_INSTALL_URL = 'https://marketplace.leadconnectorhq.com/oauth/chooselocation?response_type=code&redirect_uri=https%3A%2F%2Fghl-stripe-payment.vercel.app%2Fapi%2Fauth%2Fghl%2Fcallback&client_id=69b31e9781d1b32fb138a905-mmnx34cp&scope=payments%2Forders.readonly+payments%2Forders.write+payments%2Forders.collectPayment+payments%2Fintegration.readonly+payments%2Fintegration.write+payments%2Ftransactions.readonly+payments%2Fsubscriptions.readonly+payments%2Fcoupons.readonly+payments%2Fcoupons.write+payments%2Fcustom-provider.readonly+payments%2Fcustom-provider.write+saas%2Flocation.read+oauth.readonly+locations.readonly&version_id=69b31e9781d1b32fb138a905';
+  const GHL_INSTALL_URL = 'https://marketplace.gohighlevel.com/oauth/chooselocation?response_type=code&redirect_uri=https%3A%2F%2Fapp.changeworksfund.org%2Fapi%2Fpayment-provider%2Fauth%2Fghl%2Fcallback&client_id=69b31e9781d1b32fb138a905-mmnx34cp&scope=locations.readonly+products.readonly+products.write+products%2Fprices.readonly+products%2Fprices.write+products%2Fcollection.readonly+products%2Fcollection.write+payments%2Forders.readonly+payments%2Forders.write+payments%2Forders.collectPayment+payments%2Fintegration.readonly+payments%2Fintegration.write+payments%2Ftransactions.readonly+payments%2Fsubscriptions.readonly+payments%2Fcustom-provider.readonly+payments%2Fcustom-provider.write&version_id=69ba8c44d4a5d66b35362625';
 
   function connectGHL() {
     window.location.href = GHL_INSTALL_URL;
