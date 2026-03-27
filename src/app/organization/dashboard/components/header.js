@@ -2,10 +2,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { 
+import Link from 'next/link';
+import {
   LogOut,
   ChevronDown,
-  Building2
+  Building2,
+  User,
 } from 'lucide-react';
 
 // Helper function to build organization logo URL
@@ -186,6 +188,14 @@ export default function OrgHeader() {
                                     </div>
                                     
                                     <div className="p-2">
+                                        <Link
+                                            href="/organization/dashboard/settings/profile"
+                                            onClick={() => setShowProfile(false)}
+                                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                                        >
+                                            <User className="w-4 h-4" />
+                                            <span>Profile</span>
+                                        </Link>
                                         <button
                                             onClick={handleLogout}
                                             className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
