@@ -450,14 +450,9 @@ export default function DonorDashboard() {
                 className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer"
                 onClick={() => window.location.href = stat.path}
               >
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="flex items-center mb-3 sm:mb-4">
                   <div className={`p-2 sm:p-3 rounded-lg bg-${stat.color}-100`}>
                     <Icon className={`w-5 h-5 sm:w-6 sm:h-6 text-${stat.color}-600`} />
-                  </div>
-                  <div className={`text-xs sm:text-sm font-medium ${stat.changeType === 'increase' ? 'text-green-600' :
-                    stat.changeType === 'decrease' ? 'text-red-600' : 'text-gray-600'
-                    }`}>
-                    {stat.change}
                   </div>
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
