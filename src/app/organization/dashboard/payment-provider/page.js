@@ -416,6 +416,19 @@ export default function PaymentProviderPage() {
             </div>
           )}
 
+          {/* Connect Stripe — shown when not connected */}
+          {!stripeStatus?.connected && !loading && !autoConnecting && locationId && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-gray-900 mb-1">Connect Stripe Account</p>
+                <p className="text-sm text-gray-500">Link your Stripe account to start accepting payments.</p>
+              </div>
+              <button onClick={connectStripe} className="flex items-center gap-2 px-4 py-2.5 bg-[#0E0061] text-white text-sm font-semibold rounded-xl hover:bg-[#0E0061]/90 transition-colors">
+                <ExternalLink className="w-4 h-4" />Connect Stripe
+              </button>
+            </div>
+          )}
+
           {/* Provider activation status */}
           {providerLoading && (
             <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-center gap-3 text-blue-700 text-sm font-medium">
