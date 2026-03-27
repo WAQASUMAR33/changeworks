@@ -384,7 +384,6 @@ export default function PaymentProviderPage() {
                 <div><p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Email</p><p className="text-sm">{stripeStatus.email || '—'}</p></div>
                 <div><p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Account ID</p><p className="text-xs font-mono text-gray-500">{stripeStatus.stripeAccountId}</p></div>
                 <div><p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Country</p><p className="text-sm">{stripeStatus.country?.toUpperCase() || '—'}</p></div>
-                <div className="ml-auto self-center"><Badge status={stripeStatus.livemode ? 'live' : 'test'} /></div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
