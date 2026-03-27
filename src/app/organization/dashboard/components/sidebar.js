@@ -7,26 +7,17 @@ import Link from 'next/link';
 
 import {
   Settings,
-  LogOut,
-  CircleUserRound,
-  ChevronDown,
   ChevronRight,
   LayoutDashboard,
-  Gift,
-  Users,
   ClipboardPlus,
-  Home,
   Shield,
   Menu,
   X,
-  ChevronLeft,
-  Pin,
-  PinOff,
   CreditCard,
   RefreshCw,
   FileText,
   Banknote,
-  Zap,
+  ChevronDown,
 } from 'lucide-react';
 
 const OrgSidebar = () => {
@@ -59,19 +50,6 @@ const OrgSidebar = () => {
       ...prev,
       [name]: !prev[name],
     }));
-  };
-
-  const handleLogout = () => {
-    // Clear session storage
-    sessionStorage.removeItem('orgToken');
-    sessionStorage.removeItem('orgUser');
-    
-    // Also clear any old localStorage data
-    localStorage.removeItem('orgToken');
-    localStorage.removeItem('orgUser');
-    localStorage.removeItem('orgRememberMe');
-    
-    router.push('/organization/login');
   };
 
   const togglePin = () => {
@@ -109,17 +87,9 @@ const OrgSidebar = () => {
       path: '/organization/dashboard/round-up-donors',
     },
     {
-      name: 'Payment Provider',
-      icon: Zap,
-      path: '/organization/dashboard/payment-provider',
-    },
-    {
       name: 'Settings',
       icon: Settings,
-      path: '/organization/dashboard/settings',
-      subItems: [
-        { name: 'Profile', path: '/organization/dashboard/settings/profile' }
-      ],
+      path: '/organization/dashboard/payment-provider',
     },
   ];
 
@@ -309,30 +279,6 @@ const OrgSidebar = () => {
           </Link>
         </div>
 
-        {/* Modern Logout Button */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleLogout}
-          className="w-full flex items-center px-4 py-4 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-2xl transition-all duration-300 group"
-        >
-          <div className="p-2 rounded-xl bg-red-500/10 group-hover:bg-red-500/20 transition-all duration-200">
-            <LogOut className="w-5 h-5" />
-          </div>
-          <AnimatePresence>
-            {isExpanded && (
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.3 }}
-                className="ml-4 font-semibold text-sm"
-              >
-                Logout
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </motion.button>
       </div>
     </div>
   );

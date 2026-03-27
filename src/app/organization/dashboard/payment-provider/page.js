@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Wifi, WifiOff, CreditCard, RefreshCw, Package, Settings,
+  Wifi, WifiOff, CreditCard, RefreshCw, Package,
   CheckCircle, AlertCircle, XCircle, ExternalLink, Loader2,
   ChevronRight, DollarSign, BarChart2, Zap, Unplug,
 } from 'lucide-react';
@@ -300,7 +300,6 @@ export default function PaymentProviderPage() {
     { key: 'dashboard',    label: 'Dashboard',    icon: BarChart2  },
     { key: 'transactions', label: 'Transactions', icon: CreditCard },
     { key: 'products',     label: 'Products',     icon: Package    },
-    { key: 'settings',     label: 'Settings',     icon: Settings   },
   ];
 
   return (
@@ -585,39 +584,6 @@ export default function PaymentProviderPage() {
       )}
 
       {/* ── SETTINGS TAB ─────────────────────────────────────────────────────── */}
-      {tab === 'settings' && (
-        <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h2 className="font-semibold text-gray-900 mb-1">Register / Re-register Provider</h2>
-            <p className="text-sm text-gray-500 mb-4">Force-register the ChangeWorks payment provider in GHL for this location. Use this if payments aren't appearing in GHL.</p>
-            <button onClick={registerProvider} disabled={!locationId || providerLoading} className="flex items-center gap-2 px-4 py-2.5 bg-[#0E0061] text-white text-sm font-semibold rounded-xl hover:bg-[#0E0061]/90 disabled:opacity-50 transition-colors">
-              {providerLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-              {providerLoading ? 'Registering…' : 'Register Provider'}
-            </button>
-            {providerResult && (
-              <pre className="mt-4 p-4 bg-gray-900 text-green-400 text-xs rounded-xl overflow-auto max-h-60">
-                {JSON.stringify(providerResult, null, 2)}
-              </pre>
-            )}
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h2 className="font-semibold text-gray-900 mb-1">Webhook Endpoints</h2>
-            <p className="text-sm text-gray-500 mb-4">Configure these in GHL and Stripe dashboards:</p>
-            <div className="space-y-3">
-              {[
-                { label: 'Stripe Webhook', value: `${typeof window !== 'undefined' ? window.location.origin : ''}/api/payment-provider/webhooks/stripe` },
-                { label: 'GHL Webhook',    value: `${typeof window !== 'undefined' ? window.location.origin : ''}/api/payment-provider/webhooks/ghl` },
-              ].map(({ label, value }) => (
-                <div key={label}>
-                  <p className="text-xs text-gray-400 mb-1">{label}</p>
-                  <code className="block text-xs bg-gray-50 border border-gray-100 rounded-lg p-2.5 font-mono text-gray-600 break-all">{value}</code>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
