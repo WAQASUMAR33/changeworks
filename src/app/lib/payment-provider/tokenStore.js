@@ -53,6 +53,10 @@ export async function saveStripeAccount(locationId, data) {
     await prisma.ghlStripeConnection.deleteMany({ where: { locationId } });
     return;
   }
+  // Remove any conflicting row that already owns this stripeAccountId under a different locationId
+  await prisma.ghlStripeConnection.deleteMany({
+    where: { stripeAccountId: data.stripeAccountId, NOT: { locationId } },
+  });
   await prisma.ghlStripeConnection.upsert({
     where:  { locationId },
     create: {
