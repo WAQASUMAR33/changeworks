@@ -65,7 +65,7 @@ export default function PaymentProviderPage() {
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncResult,  setSyncResult]  = useState(null);
 
-  // ── Init: read org's ghlId + stripeAccountId from sessionStorage ─────────
+  // ── Init: fetch org connection info from DB ───────────────────────────────
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
     const locFromUrl = sp.get('locationId') ?? '';
@@ -76,7 +76,6 @@ export default function PaymentProviderPage() {
       const onboarding = sp.get('onboarding');
       if (connected === 'ghl') {
         setStatusMsg('GHL account connected successfully! Activating payment provider…');
-        // Auto-register the provider right after GHL OAuth
         setTimeout(() => registerProviderFor(locFromUrl), 800);
       }
       if (connected === 'stripe') setStatusMsg('Stripe account connected successfully!');
@@ -84,12 +83,22 @@ export default function PaymentProviderPage() {
       if (sp.get('error')) setError(`Error: ${sp.get('error')}`);
       window.history.replaceState({}, '', `/organization/dashboard/payment-provider?locationId=${locFromUrl}`);
     } else {
-      // Fall back to the org's ghlId + auto-connect Stripe from DB
+      // Fetch stripeAccountId + ghlLocationId directly from DB
       try {
         const orgUser = JSON.parse(sessionStorage.getItem('orgUser') ?? '{}');
-        if (orgUser.ghlId) setLocationId(orgUser.ghlId);
-        if (orgUser.ghlId && orgUser.stripeAccountId) {
-          autoConnectStripe(orgUser.ghlId, orgUser.stripeAccountId);
+        if (orgUser.id) {
+          fetch(`/api/organization/connection-info?organizationId=${orgUser.id}`)
+            .then(r => r.json())
+            .then(d => {
+              if (d.success) {
+                const locId = d.ghlLocationId || orgUser.ghlId || '';
+                if (locId) setLocationId(locId);
+                if (locId && d.stripeAccountId) {
+                  autoConnectStripe(locId, d.stripeAccountId);
+                }
+              }
+            })
+            .catch(() => {});
         }
       } catch {}
     }
