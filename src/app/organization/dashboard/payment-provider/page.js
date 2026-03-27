@@ -74,7 +74,11 @@ export default function PaymentProviderPage() {
       setLocationId(locFromUrl);
       const connected = sp.get('connected');
       const onboarding = sp.get('onboarding');
-      if (connected === 'ghl')    setStatusMsg('GHL account connected successfully!');
+      if (connected === 'ghl') {
+        setStatusMsg('GHL account connected successfully! Activating payment provider…');
+        // Auto-register the provider right after GHL OAuth
+        setTimeout(() => registerProviderFor(locFromUrl), 800);
+      }
       if (connected === 'stripe') setStatusMsg('Stripe account connected successfully!');
       if (onboarding === 'complete') setStatusMsg('Stripe onboarding complete!');
       if (sp.get('error')) setError(`Error: ${sp.get('error')}`);
@@ -212,15 +216,19 @@ export default function PaymentProviderPage() {
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   }
-  async function registerProvider() {
-    if (!locationId) { setError('Location ID is required.'); return; }
+  async function registerProviderFor(locId) {
+    if (!locId) return;
     setProviderLoading(true); setProviderResult(null);
     try {
-      const r = await fetch('/api/payment-provider/admin/register-provider', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ locationId }) });
-      setProviderResult(await r.json());
+      const r = await fetch('/api/payment-provider/admin/register-provider', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ locationId: locId }) });
+      const d = await r.json();
+      setProviderResult(d);
+      if (d.connect?.ok) setStatusMsg('Payment provider activated successfully in GHL!');
+      else setStatusMsg('Provider registered — check Settings tab for details.');
     } catch (e) { setProviderResult({ error: e.message }); }
     finally { setProviderLoading(false); }
   }
+  function registerProvider() { registerProviderFor(locationId); }
   async function createProduct() {
     if (!prodForm.name || !prodForm.price) { setProdError('Name and price are required.'); return; }
     setProdSaving(true); setProdError('');
@@ -315,6 +323,28 @@ export default function PaymentProviderPage() {
       {/* ── DASHBOARD TAB ────────────────────────────────────────────────────── */}
       {tab === 'dashboard' && (
         <div className="space-y-6">
+
+          {/* Activate Provider Banner */}
+          {locationId && isFullyOnboarded && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-5 flex items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-yellow-800 text-sm">Payment Provider Not Activated in GHL</p>
+                  <p className="text-yellow-700 text-xs mt-0.5">Live &amp; test modes are disabled. Click Activate to enable ChangeWorks as a payment provider in your GHL location.</p>
+                </div>
+              </div>
+              <button
+                onClick={registerProvider}
+                disabled={providerLoading}
+                className="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-[#0E0061] text-white text-sm font-semibold rounded-xl hover:bg-[#0E0061]/90 disabled:opacity-50 transition-colors"
+              >
+                {providerLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                {providerLoading ? 'Activating…' : 'Activate Provider'}
+              </button>
+            </div>
+          )}
+
           {/* Step 1: GHL Location */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
