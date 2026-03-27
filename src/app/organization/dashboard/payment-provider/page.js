@@ -341,143 +341,92 @@ export default function PaymentProviderPage() {
       {tab === 'dashboard' && (
         <div className="space-y-6">
 
-          {/* Activate Provider Banner */}
-          {locationId && isFullyOnboarded && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-5 flex items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          {/* Status Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* GHL Location */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#0E0061]/10 flex items-center justify-center">
+                  <Wifi className="w-5 h-5 text-[#0E0061]" />
+                </div>
                 <div>
-                  <p className="font-semibold text-yellow-800 text-sm">Payment Provider Not Activated in GHL</p>
-                  <p className="text-yellow-700 text-xs mt-0.5">Live &amp; test modes are disabled. Click Activate to enable ChangeWorks as a payment provider in your GHL location.</p>
+                  <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">GHL Location</p>
+                  <p className="text-sm font-mono text-gray-600 mt-0.5">{locationId || '—'}</p>
                 </div>
               </div>
-              <button
-                onClick={registerProvider}
-                disabled={providerLoading}
-                className="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-[#0E0061] text-white text-sm font-semibold rounded-xl hover:bg-[#0E0061]/90 disabled:opacity-50 transition-colors"
-              >
-                {providerLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                {providerLoading ? 'Activating…' : 'Activate Provider'}
-              </button>
+              {locationId
+                ? <span className="flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full"><Wifi className="w-3 h-3" />Connected</span>
+                : <span className="flex items-center gap-1 text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full"><WifiOff className="w-3 h-3" />Not connected</span>}
             </div>
-          )}
 
-          {/* Step 1: GHL Location */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
+            {/* Stripe Account */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#0E0061]/10 text-[#0E0061] flex items-center justify-center text-sm font-bold">1</div>
-                <h2 className="font-semibold text-gray-900">GHL Location</h2>
-              </div>
-              {locationId ? <span className="flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full"><Wifi className="w-3 h-3" />Connected</span>
-                          : <span className="flex items-center gap-1 text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full"><WifiOff className="w-3 h-3" />Not connected</span>}
-            </div>
-            <div className="flex gap-3">
-              <input
-                type="text"
-                placeholder="Enter GHL Location ID"
-                value={locationId}
-                onChange={(e) => setLocationId(e.target.value)}
-                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#0E0061] focus:ring-1 focus:ring-[#0E0061]/20"
-              />
-              <button onClick={connectGHL} className="flex items-center gap-2 px-4 py-2.5 bg-[#0E0061] text-white text-sm font-semibold rounded-xl hover:bg-[#0E0061]/90 transition-colors">
-                Connect <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-            {locationId && <p className="mt-2 text-xs text-gray-400">Location ID: <span className="font-mono">{locationId}</span></p>}
-          </div>
-
-          {/* Step 2: Stripe Connect */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#0E0061]/10 text-[#0E0061] flex items-center justify-center text-sm font-bold">2</div>
-                <h2 className="font-semibold text-gray-900">Stripe Account</h2>
+                <div className="w-10 h-10 rounded-xl bg-[#0E0061]/10 flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-[#0E0061]" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">Stripe Account</p>
+                  <p className="text-sm font-mono text-gray-600 mt-0.5">{stripeStatus?.stripeAccountId || '—'}</p>
+                </div>
               </div>
               {loading ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
                 : isFullyOnboarded ? <span className="flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full"><CheckCircle className="w-3 h-3" />Active</span>
                 : stripeStatus?.connected ? <span className="flex items-center gap-1 text-xs font-semibold text-yellow-700 bg-yellow-100 px-2.5 py-1 rounded-full"><AlertCircle className="w-3 h-3" />Incomplete</span>
-                : <span className="flex items-center gap-1 text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full"><WifiOff className="w-3 h-3" />Not connected</span>
-              }
+                : <span className="flex items-center gap-1 text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full"><WifiOff className="w-3 h-3" />Not connected</span>}
             </div>
-
-            {!stripeStatus?.connected && (
-              <div className="space-y-3">
-                <div className="flex gap-3 flex-wrap">
-                  <button onClick={connectStripe} disabled={!locationId || loading} className="flex items-center gap-2 px-4 py-2.5 bg-[#0E0061] text-white text-sm font-semibold rounded-xl hover:bg-[#0E0061]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                    <Zap className="w-4 h-4" />Connect with Stripe OAuth
-                  </button>
-                  <button onClick={() => { setShowDirect(v => !v); setError(''); }} disabled={loading} className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors">
-                    Connect Existing Account
-                  </button>
-                </div>
-                {showDirect && (
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                    <p className="text-xs text-gray-500 mb-3">Enter the Stripe Account ID of an already-onboarded connected account.</p>
-                    <div className="flex gap-3">
-                      <input type="text" placeholder="acct_1ABC..." value={directId} onChange={(e) => setDirectId(e.target.value)} className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#0E0061]" />
-                      <button onClick={connectDirect} disabled={!directId || loading} className="px-4 py-2 bg-[#0E0061] text-white text-sm font-semibold rounded-lg hover:bg-[#0E0061]/90 disabled:opacity-50 transition-colors">
-                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Connect'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {stripeStatus?.connected && (
-              <div className="space-y-4">
-                {/* Account info */}
-                <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex flex-wrap gap-6">
-                  <div><p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Name</p><p className="font-semibold text-sm">{stripeStatus.displayName || '—'}</p></div>
-                  <div><p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Email</p><p className="text-sm">{stripeStatus.email || '—'}</p></div>
-                  <div><p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Account ID</p><p className="text-xs font-mono text-gray-500">{stripeStatus.stripeAccountId}</p></div>
-                  <div><p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Country</p><p className="text-sm">{stripeStatus.country?.toUpperCase() || '—'}</p></div>
-                  <div className="ml-auto self-center"><Badge status={stripeStatus.livemode ? 'live' : 'test'} /></div>
-                </div>
-                {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[
-                    { label: 'Available Balance', value: currency(stripeStatus.availableBalance, stripeStatus.balanceCurrency) },
-                    { label: 'Pending Balance',   value: currency(stripeStatus.pendingBalance,   stripeStatus.balanceCurrency) },
-                    { label: 'Succeeded',         value: `${stripeStatus.succeededTxCount ?? 0} payments${stripeStatus.hasMore ? '+' : ''}` },
-                    { label: 'Status', value: (
-                      <div className="flex gap-1 flex-wrap">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${stripeStatus.chargesEnabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{stripeStatus.chargesEnabled ? 'Charges ✓' : 'Charges ✗'}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${stripeStatus.payoutsEnabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{stripeStatus.payoutsEnabled ? 'Payouts ✓' : 'Payouts ✗'}</span>
-                      </div>
-                    )},
-                  ].map(({ label, value }) => (
-                    <div key={label} className="bg-gray-50 rounded-xl p-4">
-                      <p className="text-xs text-gray-400 mb-1">{label}</p>
-                      <div className="font-bold text-gray-900 text-sm">{value}</div>
-                    </div>
-                  ))}
-                </div>
-                {/* Actions */}
-                <div className="flex gap-3 flex-wrap">
-                  {!isFullyOnboarded && (
-                    <button onClick={startOnboarding} disabled={loading} className="flex items-center gap-2 px-4 py-2.5 bg-[#0E0061] text-white text-sm font-semibold rounded-xl hover:bg-[#0E0061]/90 disabled:opacity-50 transition-colors">
-                      <ExternalLink className="w-4 h-4" />Complete Stripe Onboarding
-                    </button>
-                  )}
-                  <button onClick={disconnectStripe} disabled={loading} className="flex items-center gap-2 px-4 py-2.5 bg-red-50 text-red-700 text-sm font-semibold rounded-xl hover:bg-red-100 disabled:opacity-50 transition-colors">
-                    <Unplug className="w-4 h-4" />Disconnect Stripe
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Integration URLs */}
-          {isFullyOnboarded && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-600" />Integration Active</h2>
-              <p className="text-sm text-gray-500 mb-3">GHL will use these endpoints for payment processing:</p>
-              <div className="space-y-2">
-                <div><p className="text-xs text-gray-400 mb-1">Checkout URL</p><code className="block text-xs bg-gray-50 border border-gray-100 rounded-lg p-2.5 font-mono text-gray-600">{(typeof window !== 'undefined' ? window.location.origin : '')}/payment-provider/checkout</code></div>
-                <div><p className="text-xs text-gray-400 mb-1">Query URL</p><code className="block text-xs bg-gray-50 border border-gray-100 rounded-lg p-2.5 font-mono text-gray-600">{(typeof window !== 'undefined' ? window.location.origin : '')}/api/payment-provider/payments/status</code></div>
+          {/* Stripe Account Details — shown when connected */}
+          {stripeStatus?.connected && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+              <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex flex-wrap gap-6">
+                <div><p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Name</p><p className="font-semibold text-sm">{stripeStatus.displayName || '—'}</p></div>
+                <div><p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Email</p><p className="text-sm">{stripeStatus.email || '—'}</p></div>
+                <div><p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Account ID</p><p className="text-xs font-mono text-gray-500">{stripeStatus.stripeAccountId}</p></div>
+                <div><p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Country</p><p className="text-sm">{stripeStatus.country?.toUpperCase() || '—'}</p></div>
+                <div className="ml-auto self-center"><Badge status={stripeStatus.livemode ? 'live' : 'test'} /></div>
               </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: 'Available Balance', value: currency(stripeStatus.availableBalance, stripeStatus.balanceCurrency) },
+                  { label: 'Pending Balance',   value: currency(stripeStatus.pendingBalance,   stripeStatus.balanceCurrency) },
+                  { label: 'Succeeded',         value: `${stripeStatus.succeededTxCount ?? 0} payments${stripeStatus.hasMore ? '+' : ''}` },
+                  { label: 'Status', value: (
+                    <div className="flex gap-1 flex-wrap">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${stripeStatus.chargesEnabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{stripeStatus.chargesEnabled ? 'Charges ✓' : 'Charges ✗'}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${stripeStatus.payoutsEnabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{stripeStatus.payoutsEnabled ? 'Payouts ✓' : 'Payouts ✗'}</span>
+                    </div>
+                  )},
+                ].map(({ label, value }) => (
+                  <div key={label} className="bg-gray-50 rounded-xl p-4">
+                    <p className="text-xs text-gray-400 mb-1">{label}</p>
+                    <div className="font-bold text-gray-900 text-sm">{value}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-3 flex-wrap">
+                {!isFullyOnboarded && (
+                  <button onClick={startOnboarding} disabled={loading} className="flex items-center gap-2 px-4 py-2.5 bg-[#0E0061] text-white text-sm font-semibold rounded-xl hover:bg-[#0E0061]/90 disabled:opacity-50 transition-colors">
+                    <ExternalLink className="w-4 h-4" />Complete Stripe Onboarding
+                  </button>
+                )}
+                <button onClick={disconnectStripe} disabled={loading} className="flex items-center gap-2 px-4 py-2.5 bg-red-50 text-red-700 text-sm font-semibold rounded-xl hover:bg-red-100 disabled:opacity-50 transition-colors">
+                  <Unplug className="w-4 h-4" />Disconnect Stripe
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Provider activation status */}
+          {providerLoading && (
+            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-center gap-3 text-blue-700 text-sm font-medium">
+              <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />Activating payment provider in GHL…
+            </div>
+          )}
+          {providerResult?.connect?.ok && (
+            <div className="bg-green-50 border border-green-100 rounded-2xl p-4 flex items-center gap-3 text-green-700 text-sm font-medium">
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />Payment provider is active in GHL.
             </div>
           )}
         </div>
