@@ -289,6 +289,13 @@ export default function PaymentProviderPage() {
 
   const isFullyOnboarded = stripeStatus?.connected && stripeStatus?.chargesEnabled && stripeStatus?.detailsSubmitted;
 
+  // ── Auto-activate provider when location + Stripe are both ready ──────────
+  useEffect(() => {
+    if (locationId && isFullyOnboarded && !providerLoading && !providerResult) {
+      registerProviderFor(locationId);
+    }
+  }, [locationId, isFullyOnboarded]);
+
   const TABS = [
     { key: 'dashboard',    label: 'Dashboard',    icon: BarChart2  },
     { key: 'transactions', label: 'Transactions', icon: CreditCard },
