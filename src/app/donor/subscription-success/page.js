@@ -53,7 +53,7 @@ export default function SubscriptionSuccessPage() {
         // Redirect to dashboard after 3 seconds
         setTimeout(() => {
           console.log('ðŸ”„ Redirecting to dashboard now...');
-          router.push('/donor/dashboard');
+          router.push('/donor/dashboard/subscriptions');
         }, 3000);
       } else {
         setStatus('error');
@@ -144,7 +144,7 @@ export default function SubscriptionSuccessPage() {
                   console.log('ðŸ”„ Manual redirect to dashboard clicked');
                   const token = localStorage.getItem('token');
                   if (token) {
-                    router.push('/donor/dashboard');
+                    router.push('/donor/dashboard/subscriptions');
                   } else {
                     console.log('âŒ No token found, redirecting to login');
                     router.push('/donor/login');
@@ -173,7 +173,7 @@ export default function SubscriptionSuccessPage() {
                 Try Again
               </button>
               <button
-                onClick={() => router.push('/donor/dashboard')}
+                onClick={() => router.push('/donor/dashboard/subscriptions')}
                 className="w-full px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
               >
                 Back to Dashboard
