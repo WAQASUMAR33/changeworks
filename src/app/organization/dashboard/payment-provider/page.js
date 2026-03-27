@@ -41,6 +41,7 @@ export default function PaymentProviderPage() {
   const [tab,            setTab]            = useState('dashboard');
   const [directId,       setDirectId]       = useState('');
   const [showDirect,     setShowDirect]     = useState(false);
+  const [autoConnecting, setAutoConnecting] = useState(false);
   const [providerResult, setProviderResult] = useState(null);
   const [providerLoading,setProviderLoading]= useState(false);
 
@@ -64,7 +65,7 @@ export default function PaymentProviderPage() {
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncResult,  setSyncResult]  = useState(null);
 
-  // ── Init: read org's ghlId from sessionStorage ───────────────────────────
+  // ── Init: read org's ghlId + stripeAccountId from sessionStorage ─────────
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
     const locFromUrl = sp.get('locationId') ?? '';
@@ -79,10 +80,13 @@ export default function PaymentProviderPage() {
       if (sp.get('error')) setError(`Error: ${sp.get('error')}`);
       window.history.replaceState({}, '', `/organization/dashboard/payment-provider?locationId=${locFromUrl}`);
     } else {
-      // Fall back to the org's ghlId
+      // Fall back to the org's ghlId + auto-connect Stripe from DB
       try {
         const orgUser = JSON.parse(sessionStorage.getItem('orgUser') ?? '{}');
         if (orgUser.ghlId) setLocationId(orgUser.ghlId);
+        if (orgUser.ghlId && orgUser.stripeAccountId) {
+          autoConnectStripe(orgUser.ghlId, orgUser.stripeAccountId);
+        }
       } catch {}
     }
   }, []);
@@ -149,6 +153,24 @@ export default function PaymentProviderPage() {
   }, [tab, locationId, fetchProducts]);
 
   // ── Actions ───────────────────────────────────────────────────────────────
+  // ── Auto-connect Stripe account from DB ──────────────────────────────────
+  async function autoConnectStripe(locId, stripeAccId) {
+    setAutoConnecting(true);
+    try {
+      const r = await fetch('/api/payment-provider/connect/direct', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locationId: locId, stripeAccountId: stripeAccId }),
+      });
+      const d = await r.json();
+      if (r.ok) {
+        setStripeStatus({ ...d });
+        setStatusMsg(`Stripe account auto-connected: ${d.stripeAccountId}`);
+      }
+    } catch {}
+    finally { setAutoConnecting(false); }
+  }
+
   const GHL_INSTALL_URL = 'https://marketplace.gohighlevel.com/oauth/chooselocation?response_type=code&redirect_uri=https%3A%2F%2Fapp.changeworksfund.org%2Fapi%2Fpayment-provider%2Fauth%2Fghl%2Fcallback&client_id=69b31e9781d1b32fb138a905-mmnx34cp&scope=locations.readonly+products.readonly+products.write+products%2Fprices.readonly+products%2Fprices.write+products%2Fcollection.readonly+products%2Fcollection.write+payments%2Forders.readonly+payments%2Forders.write+payments%2Forders.collectPayment+payments%2Fintegration.readonly+payments%2Fintegration.write+payments%2Ftransactions.readonly+payments%2Fsubscriptions.readonly+payments%2Fcustom-provider.readonly+payments%2Fcustom-provider.write&version_id=69ba8c44d4a5d66b35362625';
 
   function connectGHL() {

@@ -91,7 +91,7 @@ export default function OrganizationDashboard() {
     useEffect(() => {
         if (organization) {
             const orgUser = JSON.parse(sessionStorage.getItem('orgUser') || '{}');
-            const updatedOrgUser = { ...orgUser, imageUrl: organization.imageUrl };
+            const updatedOrgUser = { ...orgUser, imageUrl: organization.imageUrl, stripeAccountId: organization.stripeAccountId ?? orgUser.stripeAccountId };
             sessionStorage.setItem('orgUser', JSON.stringify(updatedOrgUser));
 
             // Dispatch custom event to notify header of update
