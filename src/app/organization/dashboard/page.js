@@ -213,7 +213,7 @@ export default function OrganizationDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100"
+            className="min-h-screen bg-white"
         >
             <div className="space-y-8 p-6">
                 {/* Modern Header Section */}
