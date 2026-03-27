@@ -56,6 +56,16 @@ export async function GET(request) {
     });
   } catch (err) {
     console.error('[connect/account]', err.message);
-    return NextResponse.json({ connected: false, error: err.message }, { status: 500 });
+    // Still show as connected if we have a stored account — API key issue shouldn't hide connection
+    return NextResponse.json({
+      connected:        true,
+      stripeAccountId:  stored.stripeAccountId,
+      livemode:         stored.livemode,
+      chargesEnabled:   false,
+      payoutsEnabled:   false,
+      detailsSubmitted: false,
+      displayName:      '',
+      error:            err.message,
+    });
   }
 }

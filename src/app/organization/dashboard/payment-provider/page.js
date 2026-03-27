@@ -178,7 +178,8 @@ export default function PaymentProviderPage() {
       const d = await r.json();
       if (r.ok) {
         setStripeStatus({ ...d });
-        setStatusMsg(`Stripe account auto-connected: ${d.stripeAccountId}`);
+        // Re-fetch full status after connection is saved
+        await fetchStripeStatus(locId);
       }
     } catch {}
     finally { setAutoConnecting(false); }
