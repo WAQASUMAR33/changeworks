@@ -53,10 +53,25 @@ export async function saveStripeAccount(locationId, data) {
     await prisma.ghlStripeConnection.deleteMany({ where: { locationId } });
     return;
   }
-  // Remove any conflicting row that already owns this stripeAccountId under a different locationId
-  await prisma.ghlStripeConnection.deleteMany({
-    where: { stripeAccountId: data.stripeAccountId, NOT: { locationId } },
+  // If this stripeAccountId already exists under a different locationId, update it in place
+  const existing = await prisma.ghlStripeConnection.findUnique({
+    where: { stripeAccountId: data.stripeAccountId },
   });
+  if (existing && existing.locationId !== locationId) {
+    await prisma.ghlStripeConnection.update({
+      where: { stripeAccountId: data.stripeAccountId },
+      data: {
+        locationId,
+        accessToken:    data.accessToken,
+        refreshToken:   data.refreshToken   ?? null,
+        publishableKey: data.publishableKey,
+        livemode:       data.livemode       ?? false,
+        tokenType:      data.tokenType      ?? null,
+        scope:          data.scope          ?? null,
+      },
+    });
+    return;
+  }
   await prisma.ghlStripeConnection.upsert({
     where:  { locationId },
     create: {
