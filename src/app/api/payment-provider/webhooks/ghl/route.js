@@ -14,13 +14,21 @@ import {
 const GHL_CLIENT_SECRET = process.env.GHL_CLIENT_SECRET;
 
 function verifyGHLWebhook(rawBody, signature) {
+  if (!signature) return false;
   const expected = createHmac('sha256', GHL_CLIENT_SECRET).update(rawBody).digest('hex');
-  return expected === signature;
+  // Handle bare hex or "sha256=<hex>" prefix
+  const cleaned = signature.startsWith('sha256=') ? signature.slice(7) : signature;
+  return expected === cleaned;
 }
 
 export async function POST(request) {
-  const rawBody   = Buffer.from(await request.arrayBuffer());
-  const signature = request.headers.get('x-ghl-signature');
+  const rawBody = Buffer.from(await request.arrayBuffer());
+  // GHL may send signature under different header names
+  const signature =
+    request.headers.get('x-ghl-signature') ||
+    request.headers.get('x-wl-signature')  ||
+    request.headers.get('x-hub-signature-256') ||
+    null;
 
   let rawType = '';
   try { rawType = JSON.parse(rawBody.toString('utf-8'))?.type ?? ''; } catch {}
