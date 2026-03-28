@@ -23,22 +23,16 @@ export async function GET(request) {
 
   if (!stored) {
     try {
-      const rows = await prisma.$queryRaw`
-        SELECT o.stripe_account_id
-        FROM organizations o
-        WHERE o.ghl_id = ${locationId}
-          AND o.stripe_account_id IS NOT NULL
-          AND o.stripe_account_id != ''
-        UNION
-        SELECT o.stripe_account_id
-        FROM organizations o
-        INNER JOIN ghl_accounts ga ON ga.organization_id = o.id
-        WHERE ga.ghl_location_id = ${locationId}
-          AND o.stripe_account_id IS NOT NULL
-          AND o.stripe_account_id != ''
-        LIMIT 1
-      `;
-      const stripeAccountId = rows?.[0]?.stripe_account_id ?? null;
+      const org = await prisma.organization.findFirst({
+        where: {
+          OR: [
+            { ghlId: locationId },
+            { ghlAccounts: { some: { ghl_location_id: locationId } } },
+          ],
+        },
+        select: { stripeAccountId: true },
+      });
+      const stripeAccountId = org?.stripeAccountId ?? null;
       console.log(`[connect/account] Auto-connect org lookup for ${locationId}: stripeAccountId=${stripeAccountId}`);
 
       if (stripeAccountId) {
