@@ -2,7 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getConnectedAccount } from '@/app/lib/payment-provider/stripe';
-import { getStripeAccount } from '@/app/lib/payment-provider/tokenStore';
+import { getStripeAccount, saveStripeAccount } from '@/app/lib/payment-provider/tokenStore';
+import { prisma } from '@/app/lib/prisma';
 import Stripe from 'stripe';
 
 function getStripe() {
@@ -17,7 +18,53 @@ export async function GET(request) {
     return NextResponse.json({ error: 'locationId is required' }, { status: 400 });
   }
 
-  const stored = await getStripeAccount(locationId);
+  let stored = await getStripeAccount(locationId);
+  console.log(`[connect/account] getStripeAccount(${locationId}):`, stored ? `found ${stored.stripeAccountId}` : 'null — attempting auto-connect');
+
+  if (!stored) {
+    try {
+      const rows = await prisma.$queryRaw`
+        SELECT o.stripe_account_id
+        FROM organizations o
+        WHERE o.ghl_id = ${locationId}
+          AND o.stripe_account_id IS NOT NULL
+          AND o.stripe_account_id != ''
+        UNION
+        SELECT o.stripe_account_id
+        FROM organizations o
+        INNER JOIN ghl_accounts ga ON ga.organization_id = o.id
+        WHERE ga.ghl_location_id = ${locationId}
+          AND o.stripe_account_id IS NOT NULL
+          AND o.stripe_account_id != ''
+        LIMIT 1
+      `;
+      const stripeAccountId = rows?.[0]?.stripe_account_id ?? null;
+      console.log(`[connect/account] Auto-connect org lookup for ${locationId}: stripeAccountId=${stripeAccountId}`);
+
+      if (stripeAccountId) {
+        try {
+          await saveStripeAccount(locationId, {
+            stripeAccountId,
+            accessToken:    'direct',
+            refreshToken:   null,
+            publishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? '',
+            livemode:       true,
+            tokenType:      'direct',
+            scope:          null,
+          });
+          stored = await getStripeAccount(locationId);
+          console.log(`[connect/account] Auto-connected Stripe ${stripeAccountId} for location ${locationId}`);
+        } catch (saveErr) {
+          console.error(`[connect/account] saveStripeAccount failed (code=${saveErr.code}):`, saveErr.message);
+        }
+      } else {
+        console.warn(`[connect/account] No org with stripeAccountId found for locationId=${locationId}`);
+      }
+    } catch (err) {
+      console.warn('[connect/account] Auto-connect fallback failed:', err.message);
+    }
+  }
+
   if (!stored) {
     return NextResponse.json({ connected: false });
   }

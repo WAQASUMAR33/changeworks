@@ -43,6 +43,8 @@ export async function POST(request) {
   }
 
   let stripeAccount = await getStripeAccount(locationId);
+  console.log(`[create-intent] getStripeAccount(${locationId}):`, stripeAccount ? `found ${stripeAccount.stripeAccountId}` : 'null — attempting auto-connect');
+
   if (!stripeAccount) {
     // Fallback: auto-connect from org's stripeAccountId
     try {
@@ -55,18 +57,25 @@ export async function POST(request) {
         },
         select: { stripeAccountId: true },
       });
+      console.log(`[create-intent] Auto-connect org lookup for ${locationId}: stripeAccountId=${org?.stripeAccountId ?? null}`);
       if (org?.stripeAccountId) {
-        await saveStripeAccount(locationId, {
-          stripeAccountId: org.stripeAccountId,
-          accessToken:     'direct',
-          refreshToken:    null,
-          publishableKey:  '',
-          livemode:        true,
-          tokenType:       'direct',
-          scope:           null,
-        });
-        stripeAccount = await getStripeAccount(locationId);
-        console.log(`[create-intent] Auto-connected Stripe ${org.stripeAccountId} for location ${locationId}`);
+        try {
+          await saveStripeAccount(locationId, {
+            stripeAccountId: org.stripeAccountId,
+            accessToken:     'direct',
+            refreshToken:    null,
+            publishableKey:  process.env.STRIPE_PUBLISHABLE_KEY ?? '',
+            livemode:        true,
+            tokenType:       'direct',
+            scope:           null,
+          });
+          stripeAccount = await getStripeAccount(locationId);
+          console.log(`[create-intent] Auto-connected Stripe ${org.stripeAccountId} for location ${locationId}`);
+        } catch (saveErr) {
+          console.error(`[create-intent] saveStripeAccount failed (code=${saveErr.code}):`, saveErr.message);
+        }
+      } else {
+        console.warn(`[create-intent] No org with stripeAccountId found for locationId=${locationId}`);
       }
     } catch (err) {
       console.warn('[create-intent] Auto-connect fallback failed:', err.message);
