@@ -4,9 +4,11 @@ import { NextResponse } from 'next/server';
 import {
   createPaymentIntent, createCustomer, createSubscription,
   createInlineSubscription, updatePaymentIntentMetadata, getPrice,
+  getConnectedAccount,
 } from '@/app/lib/payment-provider/stripe';
-import { getStripeAccount, upsertPaymentEvent, getPriceSync } from '@/app/lib/payment-provider/tokenStore';
+import { getStripeAccount, saveStripeAccount, upsertPaymentEvent, getPriceSync } from '@/app/lib/payment-provider/tokenStore';
 import { getTransaction } from '@/app/lib/payment-provider/ghl';
+import { prisma } from '@/app/lib/prisma';
 
 export async function POST(request) {
   let body;
@@ -41,7 +43,36 @@ export async function POST(request) {
     }
   }
 
-  const stripeAccount = await getStripeAccount(locationId);
+  let stripeAccount = await getStripeAccount(locationId);
+  if (!stripeAccount) {
+    // Fallback: auto-connect from org's stripeAccountId
+    try {
+      const org = await prisma.organization.findFirst({
+        where: {
+          OR: [
+            { ghlId: locationId },
+            { ghlAccounts: { some: { ghl_location_id: locationId } } },
+          ],
+        },
+        select: { stripeAccountId: true },
+      });
+      if (org?.stripeAccountId) {
+        const account = await getConnectedAccount(org.stripeAccountId);
+        await saveStripeAccount(locationId, {
+          stripeAccountId: account.id,
+          accessToken:     'direct',
+          refreshToken:    null,
+          publishableKey:  '',
+          livemode:        account.livemode ?? false,
+          tokenType:       'direct',
+          scope:           null,
+        });
+        stripeAccount = await getStripeAccount(locationId);
+      }
+    } catch (err) {
+      console.warn('[create-intent] Auto-connect fallback failed:', err.message);
+    }
+  }
   if (!stripeAccount) {
     return NextResponse.json({ error: 'This location has not connected a Stripe account yet' }, { status: 404 });
   }
