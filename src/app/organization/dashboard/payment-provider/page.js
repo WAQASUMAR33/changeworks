@@ -42,6 +42,7 @@ export default function PaymentProviderPage() {
   const [directId,       setDirectId]       = useState('');
   const [showDirect,     setShowDirect]     = useState(false);
   const [autoConnecting, setAutoConnecting] = useState(false);
+  const [orgStripeAccountId, setOrgStripeAccountId] = useState('');
   const [providerResult, setProviderResult] = useState(null);
   const [providerLoading,setProviderLoading]= useState(false);
 
@@ -93,6 +94,7 @@ export default function PaymentProviderPage() {
               if (d.success) {
                 const locId = d.ghlLocationId || orgUser.ghlId || '';
                 if (locId) setLocationId(locId);
+                if (d.orgStripeAccountId) setOrgStripeAccountId(d.orgStripeAccountId);
                 if (locId && d.stripeAccountId) {
                   autoConnectStripe(locId, d.stripeAccountId);
                 }
@@ -185,7 +187,7 @@ export default function PaymentProviderPage() {
     finally { setAutoConnecting(false); }
   }
 
-  const GHL_INSTALL_URL = 'https://marketplace.gohighlevel.com/oauth/chooselocation?response_type=code&redirect_uri=https%3A%2F%2Fapp.changeworksfund.org%2Fapi%2Fpayment-provider%2Fauth%2Fghl%2Fcallback&client_id=69b31e9781d1b32fb138a905-mmnx34cp&scope=locations.readonly+products.readonly+products.write+products%2Fprices.readonly+products%2Fprices.write+products%2Fcollection.readonly+products%2Fcollection.write+payments%2Forders.readonly+payments%2Forders.write+payments%2Forders.collectPayment+payments%2Fintegration.readonly+payments%2Fintegration.write+payments%2Ftransactions.readonly+payments%2Fsubscriptions.readonly+payments%2Fcustom-provider.readonly+payments%2Fcustom-provider.write&version_id=69ba8c44d4a5d66b35362625';
+  const GHL_INSTALL_URL = 'https://marketplace.leadconnectorhq.com/oauth/chooselocation?response_type=code&redirect_uri=https%3A%2F%2Fapp.changeworksfund.org%2Fapi%2Fpayment-provider%2Fauth%2Fghl%2Fcallback&client_id=69b31e9781d1b32fb138a905-mmnx34cp&scope=locations.readonly+products.readonly+products.write+products%2Fprices.readonly+products%2Fprices.write+products%2Fcollection.readonly+products%2Fcollection.write+payments%2Forders.readonly+payments%2Forders.write+payments%2Forders.collectPayment+payments%2Fintegration.readonly+payments%2Fintegration.write+payments%2Ftransactions.readonly+payments%2Fsubscriptions.readonly+payments%2Fcustom-provider.readonly+payments%2Fcustom-provider.write&version_id=69ba8c44d4a5d66b35362625';
 
   function connectGHL() {
     window.open(GHL_INSTALL_URL, '_blank');
@@ -416,16 +418,27 @@ export default function PaymentProviderPage() {
             </div>
           )}
 
-          {/* Connect Stripe — shown when not connected */}
-          {!stripeStatus?.connected && !loading && !autoConnecting && locationId && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-gray-900 mb-1">Connect Stripe Account</p>
-                <p className="text-sm text-gray-500">Link your Stripe account to start accepting payments.</p>
+          {/* Connect — shown when not connected */}
+          {!stripeStatus?.connected && !loading && !autoConnecting && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-3">
+              {orgStripeAccountId && (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <CreditCard className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">Stripe Account (Organization)</p>
+                    <p className="text-xs font-mono text-gray-600 mt-0.5">{orgStripeAccountId}</p>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-gray-900 mb-1">Connect via GHL Marketplace</p>
+                  <p className="text-sm text-gray-500">Install the GHL app to automatically link your Stripe account.</p>
+                </div>
+                <button onClick={connectGHL} className="flex items-center gap-2 px-4 py-2.5 bg-[#0E0061] text-white text-sm font-semibold rounded-xl hover:bg-[#0E0061]/90 transition-colors whitespace-nowrap ml-4">
+                  <ExternalLink className="w-4 h-4" />Connect GHL
+                </button>
               </div>
-              <button onClick={connectStripe} className="flex items-center gap-2 px-4 py-2.5 bg-[#0E0061] text-white text-sm font-semibold rounded-xl hover:bg-[#0E0061]/90 transition-colors">
-                <ExternalLink className="w-4 h-4" />Connect Stripe
-              </button>
             </div>
           )}
 

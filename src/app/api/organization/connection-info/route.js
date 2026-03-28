@@ -17,6 +17,7 @@ export async function GET(request) {
       select: {
         id: true,
         ghlId: true,
+        stripeAccountId: true,
         ghlAccounts: {
           select: { ghl_location_id: true },
           where: { status: 'active' },
@@ -32,7 +33,7 @@ export async function GET(request) {
 
     const ghlLocationId = org.ghlAccounts?.[0]?.ghl_location_id || org.ghlId || null;
 
-    // Only return stripeAccountId if an active ghlStripeConnection exists for this location
+    // Active connection from ghlStripeConnection table
     let stripeAccountId = null;
     if (ghlLocationId) {
       const conn = await prisma.ghlStripeConnection.findUnique({ where: { locationId: ghlLocationId } });
@@ -42,6 +43,7 @@ export async function GET(request) {
     return NextResponse.json({
       success: true,
       stripeAccountId,
+      orgStripeAccountId: org.stripeAccountId || null,
       ghlLocationId,
     });
   } catch (error) {
