@@ -2,8 +2,10 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { exchangeGHLCode, connectGHLPaymentProvider } from '@/app/lib/payment-provider/ghl';
-import { saveGHLTokens } from '@/app/lib/payment-provider/tokenStore';
+import { saveGHLTokens, saveStripeAccount } from '@/app/lib/payment-provider/tokenStore';
 import { verifyStateToken } from '@/app/lib/payment-provider/crypto';
+import { getConnectedAccount } from '@/app/lib/payment-provider/stripe';
+import { prisma } from '@/app/lib/prisma';
 
 export async function GET(request) {
   const reqUrl  = new URL(request.url);
@@ -60,6 +62,34 @@ export async function GET(request) {
       await connectGHLPaymentProvider(locationId);
     } catch (err) {
       console.warn('[GHL callback] connectGHLPaymentProvider failed (non-fatal):', err.message);
+    }
+
+    // Auto-connect Stripe from org's stripeAccountId
+    try {
+      const org = await prisma.organization.findFirst({
+        where: {
+          OR: [
+            { ghlId: locationId },
+            { ghlAccounts: { some: { ghl_location_id: locationId } } },
+          ],
+        },
+        select: { stripeAccountId: true },
+      });
+      if (org?.stripeAccountId) {
+        const account = await getConnectedAccount(org.stripeAccountId);
+        await saveStripeAccount(locationId, {
+          stripeAccountId: account.id,
+          accessToken:     'direct',
+          refreshToken:    null,
+          publishableKey:  '',
+          livemode:        account.livemode ?? false,
+          tokenType:       'direct',
+          scope:           null,
+        });
+        console.log(`[GHL callback] Auto-connected Stripe account ${account.id} for location ${locationId}`);
+      }
+    } catch (err) {
+      console.warn('[GHL callback] Auto-connect Stripe failed (non-fatal):', err.message);
     }
 
     return NextResponse.redirect(`${dashboardUrl}?connected=ghl&locationId=${locationId}`);
