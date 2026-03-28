@@ -526,10 +526,10 @@ export default function DonorDashboard() {
                       </div>
                     </div>
                     <button
-                      onClick={() => window.location.href = '/donor/dashboard/subscriptions'}
+                      onClick={handleStripeSubscription}
                       className="w-full bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors duration-200 text-sm font-semibold mt-auto"
                     >
-                      Manage
+                      Make new Donation
                     </button>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none"></div>
