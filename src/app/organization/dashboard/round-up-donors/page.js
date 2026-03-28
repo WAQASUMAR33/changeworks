@@ -206,11 +206,6 @@ export default function RoundUpDonorsPage() {
                 onClick={() => toggleDonor(conn.id)}
               >
                 <div className="flex items-center gap-4">
-                  {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full bg-[#0E0061] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                    {conn.donor?.name?.charAt(0)?.toUpperCase() || '?'}
-                  </div>
-
                   {/* Institution Logo */}
                   {conn.institution_logo && (
                     <img
