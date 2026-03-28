@@ -473,7 +473,7 @@ export default function DonorDashboard() {
                 onClick={handleStripePayment}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="group relative overflow-hidden bg-gradient-to-br from-green-800 via-green-900 to-green-950 hover:from-green-900 hover:via-green-950 hover:to-black shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left h-full flex flex-col justify-between"
+                className="group relative overflow-hidden bg-gradient-to-br from-green-800 via-green-900 to-green-950 hover:from-green-900 hover:via-green-950 hover:to-black shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left h-full flex flex-col justify-between cursor-pointer"
               >
                 <div className="relative z-10 flex flex-col h-full w-full">
                   <div className="flex flex-col items-start gap-4 flex-1 w-full">
@@ -539,7 +539,7 @@ export default function DonorDashboard() {
                   onClick={handleStripeSubscription}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-green-800 hover:from-green-700 hover:via-green-800 hover:to-green-900 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left h-full flex flex-col justify-between"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-green-800 hover:from-green-700 hover:via-green-800 hover:to-green-900 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left h-full flex flex-col justify-between cursor-pointer"
                 >
                   <div className="relative z-10 flex flex-col h-full w-full">
                     <div className="flex flex-col items-start gap-4 flex-1 w-full">
@@ -622,7 +622,7 @@ export default function DonorDashboard() {
                   onClick={handlePlaidIntegration}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-green-400 via-green-500 to-green-600 hover:from-green-500 hover:via-green-600 hover:to-green-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left h-full flex flex-col justify-between"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-400 via-green-500 to-green-600 hover:from-green-500 hover:via-green-600 hover:to-green-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left h-full flex flex-col justify-between cursor-pointer"
                 >
                   <div className="relative z-10 flex flex-col h-full w-full">
                     <div className="flex flex-col items-start gap-4 flex-1 w-full">
