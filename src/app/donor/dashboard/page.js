@@ -505,7 +505,7 @@ export default function DonorDashboard() {
               ) : subscriptionStatus.hasActiveSubscription ? (
                 <motion.div
                   whileHover={{ scale: 1.05, y: -2 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-green-800 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 h-full flex flex-col justify-between"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-green-800 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 h-full flex flex-col justify-between cursor-pointer"
                 >
                   <div className="relative z-10 flex flex-col h-full w-full">
                     <div className="flex flex-col items-start gap-4 mb-4 flex-1 w-full">
@@ -572,7 +572,7 @@ export default function DonorDashboard() {
               ) : plaidConnectionStatus.isConnected ? (
                 <motion.div
                   whileHover={{ scale: 1.05, y: -2 }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-green-400 via-green-500 to-green-600 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 h-full flex flex-col justify-between"
+                  className="group relative overflow-hidden bg-gradient-to-br from-green-400 via-green-500 to-green-600 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 h-full flex flex-col justify-between cursor-pointer"
                 >
                   <div className="relative z-10 flex flex-col h-full w-full">
                     <div className="flex flex-col items-start gap-4 mb-4 flex-1 w-full">
