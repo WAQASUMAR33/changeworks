@@ -4,7 +4,6 @@ import { NextResponse } from 'next/server';
 import {
   createPaymentIntent, createCustomer, createSubscription,
   createInlineSubscription, updatePaymentIntentMetadata, getPrice,
-  getConnectedAccount,
 } from '@/app/lib/payment-provider/stripe';
 import { getStripeAccount, saveStripeAccount, upsertPaymentEvent, getPriceSync } from '@/app/lib/payment-provider/tokenStore';
 import { getTransaction } from '@/app/lib/payment-provider/ghl';
@@ -57,17 +56,17 @@ export async function POST(request) {
         select: { stripeAccountId: true },
       });
       if (org?.stripeAccountId) {
-        const account = await getConnectedAccount(org.stripeAccountId);
         await saveStripeAccount(locationId, {
-          stripeAccountId: account.id,
+          stripeAccountId: org.stripeAccountId,
           accessToken:     'direct',
           refreshToken:    null,
           publishableKey:  '',
-          livemode:        account.livemode ?? false,
+          livemode:        true,
           tokenType:       'direct',
           scope:           null,
         });
         stripeAccount = await getStripeAccount(locationId);
+        console.log(`[create-intent] Auto-connected Stripe ${org.stripeAccountId} for location ${locationId}`);
       }
     } catch (err) {
       console.warn('[create-intent] Auto-connect fallback failed:', err.message);
