@@ -95,8 +95,10 @@ export default function PaymentProviderPage() {
                 const locId = d.ghlLocationId || orgUser.ghlId || '';
                 if (locId) setLocationId(locId);
                 if (d.orgStripeAccountId) setOrgStripeAccountId(d.orgStripeAccountId);
-                if (locId && d.stripeAccountId) {
-                  autoConnectStripe(locId, d.stripeAccountId);
+                // Auto-connect: prefer already-connected account, fall back to org's stripeAccountId
+                const accountToConnect = d.stripeAccountId || d.orgStripeAccountId;
+                if (locId && accountToConnect) {
+                  autoConnectStripe(locId, accountToConnect);
                 }
               }
             })
