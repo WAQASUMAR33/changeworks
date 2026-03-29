@@ -48,7 +48,7 @@ export async function POST(request) {
   if (!stripeAccount) {
     // Fallback: auto-connect from org's stripeAccountId
     try {
-      const org = await prisma.organization.findFirst({
+      let org = await prisma.organization.findFirst({
         where: {
           OR: [
             { ghlId: locationId },
@@ -57,6 +57,22 @@ export async function POST(request) {
         },
         select: { stripeAccountId: true },
       });
+
+      // Fallback: look up via ghlAppInstallations (location_id → ghl_id → org.ghlId)
+      if (!org?.stripeAccountId) {
+        const install = await prisma.gHLAppInstallation.findUnique({
+          where: { location_id: locationId },
+          select: { ghl_id: true },
+        });
+        if (install?.ghl_id) {
+          console.log(`[create-intent] Found install ghl_id=${install.ghl_id} for locationId=${locationId}`);
+          org = await prisma.organization.findFirst({
+            where: { ghlId: install.ghl_id },
+            select: { stripeAccountId: true },
+          });
+        }
+      }
+
       console.log(`[create-intent] Auto-connect org lookup for ${locationId}: stripeAccountId=${org?.stripeAccountId ?? null}`);
       if (org?.stripeAccountId) {
         try {

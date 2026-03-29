@@ -116,6 +116,22 @@ export default function PaymentProviderPage() {
       const r = await fetch(`/api/payment-provider/connect/account?locationId=${locId}`);
       const d = await r.json();
       setStripeStatus(d);
+
+      // If still not connected, try to auto-connect using org's stripeAccountId
+      if (!d.connected) {
+        try {
+          const orgUser = JSON.parse(sessionStorage.getItem('orgUser') ?? '{}');
+          if (orgUser.id) {
+            const infoR = await fetch(`/api/organization/connection-info?organizationId=${orgUser.id}`);
+            const info  = await infoR.json();
+            const accountToConnect = info.stripeAccountId || info.orgStripeAccountId;
+            if (info.success && accountToConnect) {
+              if (info.orgStripeAccountId) setOrgStripeAccountId(info.orgStripeAccountId);
+              await autoConnectStripe(locId, accountToConnect);
+            }
+          }
+        } catch {}
+      }
     } catch (e) {
       setError(e.message);
     } finally {
