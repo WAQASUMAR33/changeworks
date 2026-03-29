@@ -66,7 +66,7 @@ export async function GET(request) {
 
     // Auto-connect Stripe from org's stripeAccountId
     try {
-      const org = await prisma.organization.findFirst({
+      let org = await prisma.organization.findFirst({
         where: {
           OR: [
             { ghlId: locationId },
@@ -75,6 +75,20 @@ export async function GET(request) {
         },
         select: { stripeAccountId: true },
       });
+      // Fallback: look up via ghlAppInstallations (location_id → ghl_id → org.ghlId)
+      if (!org?.stripeAccountId) {
+        const install = await prisma.gHLAppInstallation.findUnique({
+          where: { location_id: locationId },
+          select: { ghl_id: true },
+        });
+        if (install?.ghl_id) {
+          org = await prisma.organization.findFirst({
+            where: { ghlId: install.ghl_id },
+            select: { stripeAccountId: true },
+          });
+          console.log(`[GHL callback] Install lookup ghl_id=${install.ghl_id} → stripeAccountId=${org?.stripeAccountId ?? null}`);
+        }
+      }
       if (org?.stripeAccountId) {
         const account = await getConnectedAccount(org.stripeAccountId);
         await saveStripeAccount(locationId, {

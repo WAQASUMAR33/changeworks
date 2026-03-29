@@ -154,12 +154,13 @@ export async function createGHLPaymentProvider(locationId) {
 }
 
 export async function connectGHLPaymentProvider(locationId) {
-  const providerData = await createGHLPaymentProvider(locationId);
-  const apiKey       = process.env.GHL_CLIENT_SECRET;
-  const client       = await ghlClient(locationId);
+  const providerData    = await createGHLPaymentProvider(locationId);
+  const apiKey          = process.env.GHL_CLIENT_SECRET;
+  const publishableKey  = process.env.STRIPE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+  const client          = await ghlClient(locationId);
   const connectBody  = {
-    live: { liveMode: true,  apiKey, publishableKey: '', enabled: true },
-    test: { liveMode: false, apiKey, publishableKey: '', enabled: true },
+    live: { liveMode: true,  apiKey, publishableKey, enabled: true },
+    test: { liveMode: false, apiKey, publishableKey, enabled: true },
   };
   try {
     await client.post(`/payments/custom-provider/connect?locationId=${locationId}`, connectBody);

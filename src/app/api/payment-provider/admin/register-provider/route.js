@@ -46,17 +46,20 @@ export async function POST(request) {
 
   const stripeAccount  = await getStripeAccount(locationId);
   const apiKey         = process.env.GHL_CLIENT_SECRET;
-  const publishableKey = stripeAccount?.publishableKey || process.env.GHL_STRIPE_PUBLISHABLE_KEY;
+  const publishableKey = stripeAccount?.publishableKey
+    || process.env.STRIPE_PUBLISHABLE_KEY
+    || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+    || process.env.GHL_STRIPE_PUBLISHABLE_KEY;
 
   results.envCheck = {
     hasGhlClientSecret:    !!process.env.GHL_CLIENT_SECRET,
-    hasStripePublishable:  !!process.env.GHL_STRIPE_PUBLISHABLE_KEY,
+    hasStripePublishable:  !!(process.env.STRIPE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || process.env.GHL_STRIPE_PUBLISHABLE_KEY),
     hasStripeAccount:      !!stripeAccount,
     stripeAccountPkPrefix: stripeAccount?.publishableKey?.slice(0, 7) ?? null,
   };
 
   if (!publishableKey || !apiKey) {
-    results.connect = { ok: false, error: 'GHL_CLIENT_SECRET or GHL_STRIPE_PUBLISHABLE_KEY missing from env vars' };
+    results.connect = { ok: false, error: 'GHL_CLIENT_SECRET or STRIPE_PUBLISHABLE_KEY missing from env vars' };
     return NextResponse.json(results, { status: 200 });
   }
 
