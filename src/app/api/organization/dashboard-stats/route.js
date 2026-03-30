@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { getStripeConnectAccount } from "../../../lib/stripe-connect";
-import { getStripe } from "../../../lib/stripe";
+import { getStripe } from "../../../../lib/stripe";
 
 export async function GET(request) {
   try {
