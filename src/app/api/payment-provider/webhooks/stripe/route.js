@@ -56,10 +56,9 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
         name,
         email: customerEmail.toLowerCase().trim(),
         password: hashedPassword,
-        phone: customerPhone ?? '',
-        postal_code: '',
+        phone: customerPhone || null,
         country: 'US',
-        status: 1,
+        status: true,
         ...(organizationId ? { organization_id: organizationId } : {}),
       },
     });
@@ -92,7 +91,7 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
     console.log(`[donor-auto-create] Credentials email sent to ${customerEmail}`);
   } catch (err) {
     // Non-fatal — payment already succeeded
-    console.error('[donor-auto-create] Failed:', err.message);
+    console.error('[donor-auto-create] Failed:', err.message, err.stack);
   }
 }
 
