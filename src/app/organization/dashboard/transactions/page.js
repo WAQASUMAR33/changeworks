@@ -150,10 +150,10 @@ const TransactionsPage = () => {
   };
 
   const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = 
+    const matchesSearch =
       transaction.transaction_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.donor?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.donor?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.donor?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.donor?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       transaction.amount.toString().includes(searchTerm) ||
       transaction.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -396,11 +396,13 @@ const TransactionsPage = () => {
                       </div>
                       <div className="ml-3">
                         <div className="text-sm font-medium text-gray-900">
-                          {transaction.donor.name}
+                          {transaction.donor.name || transaction.donor.email || 'Unknown'}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {transaction.donor.email}
-                        </div>
+                        {transaction.donor.name && transaction.donor.email && (
+                          <div className="text-xs text-gray-500">
+                            {transaction.donor.email}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>

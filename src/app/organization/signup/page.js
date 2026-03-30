@@ -1116,7 +1116,7 @@ export default function OrganizationSignupPage() {
 
           <motion.h1
             variants={itemVariants}
-            className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-4"
+            className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-4 pb-1"
           >
             Join ChangeWorks
           </motion.h1>

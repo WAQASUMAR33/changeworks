@@ -52,8 +52,8 @@ export async function GET(request, { params }) {
       transaction_date: new Date(charge.created * 1000).toISOString(),
       description: charge.description || charge.statement_descriptor || 'Stripe Payment',
       donor: {
-          name: charge.billing_details?.name || charge.metadata?.donor_name || 'Plaid RoundUp',
-          email: charge.billing_details?.email || charge.receipt_email || charge.metadata?.donor_email || 'Unknown'
+          name: charge.billing_details?.name || charge.metadata?.donor_name || null,
+          email: charge.billing_details?.email || charge.receipt_email || charge.metadata?.donor_email || null
       },
       method: 'stripe',
       card_brand: charge.payment_method_details?.card?.brand || charge.source?.brand,
