@@ -36,31 +36,43 @@ export async function GET(request, { params }) {
 
     const stripe = getStripe();
     
-    // Fetch charges (payments) from the connected account
+    // Fetch charges (payments) from the connected account, expanding customer
     const charges = await stripe.charges.list(
-      { limit: 100 },
+      { limit: 100, expand: ['data.customer'] },
       { stripeAccount: organization.stripeAccountId }
     );
 
     // Map to a common format
-    const transactions = charges.data.map(charge => ({
-      id: charge.id,
-      transaction_id: charge.id, 
-      amount: charge.amount / 100, // Stripe uses cents
-      currency: charge.currency,
-      status: charge.status === 'succeeded' ? 'completed' : charge.status,
-      transaction_date: new Date(charge.created * 1000).toISOString(),
-      description: charge.description || charge.statement_descriptor || 'Stripe Payment',
-      donor: {
-          name: charge.billing_details?.name || charge.metadata?.donor_name || null,
-          email: charge.billing_details?.email || charge.receipt_email || charge.metadata?.donor_email || null
-      },
-      method: 'stripe',
-      card_brand: charge.payment_method_details?.card?.brand || charge.source?.brand,
-      card_last4: charge.payment_method_details?.card?.last4 || charge.source?.last4,
-      receipt_url: charge.receipt_url,
-      ghl_id: charge.metadata?.ghl_id
-    }));
+    const transactions = charges.data.map(charge => {
+      const customer = typeof charge.customer === 'object' ? charge.customer : null;
+      const donorName =
+        charge.billing_details?.name ||
+        charge.metadata?.donor_name ||
+        customer?.name ||
+        null;
+      const donorEmail =
+        charge.billing_details?.email ||
+        charge.receipt_email ||
+        charge.metadata?.donor_email ||
+        customer?.email ||
+        null;
+
+      return {
+        id: charge.id,
+        transaction_id: charge.id,
+        amount: charge.amount / 100,
+        currency: charge.currency,
+        status: charge.status === 'succeeded' ? 'completed' : charge.status,
+        transaction_date: new Date(charge.created * 1000).toISOString(),
+        description: charge.description || charge.statement_descriptor || 'Stripe Payment',
+        donor: { name: donorName, email: donorEmail },
+        method: 'stripe',
+        card_brand: charge.payment_method_details?.card?.brand || charge.source?.brand,
+        card_last4: charge.payment_method_details?.card?.last4 || charge.source?.last4,
+        receipt_url: charge.receipt_url,
+        ghl_id: charge.metadata?.ghl_id
+      };
+    });
 
     return NextResponse.json({
       success: true,
