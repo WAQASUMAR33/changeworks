@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { getStripeConnectAccount } from "../../../lib/stripe-connect";
+import { getStripe } from "../../../lib/stripe";
 
 export async function GET(request) {
   try {
@@ -61,147 +62,42 @@ export async function GET(request) {
         }
     }
 
-    // Get organization-specific statistics
-    const [
-      totalDonors,
-      totalDonations,
-      ghlAccountsCount,
-      thisMonthDonations,
-      lastMonthDonations,
-      lastMonthDonors,
-      thisMonthDonors,
-      lastMonthGhlAccounts,
-      thisMonthGhlAccounts
-    ] = await Promise.all([
-      // Total donors for this organization (Active donors via transactions)
-      prisma.saveTrRecord.groupBy({
-        by: ['trx_donor_id'],
-        where: {
-          trx_organization_id: orgId,
-          pay_status: 'completed'
+    // Fetch live totals from Stripe if connected
+    let totalDonationsAmount = 0;
+    let thisMonthAmount = 0;
+    let lastMonthAmount = 0;
+
+    if (organization.stripeAccountId) {
+      try {
+        const stripe = getStripe();
+        const paymentIntents = await stripe.paymentIntents.list(
+          { limit: 100, expand: ['data.latest_charge'] },
+          { stripeAccount: organization.stripeAccountId }
+        );
+
+        for (const pi of paymentIntents.data) {
+          if (pi.status !== 'succeeded') continue;
+          const amount = pi.amount / 100;
+          const created = new Date(pi.created * 1000);
+          totalDonationsAmount += amount;
+          if (created >= startOfMonth) thisMonthAmount += amount;
+          if (created >= startOfLastMonth && created < endOfLastMonth) lastMonthAmount += amount;
         }
-      }).then(res => res.length),
-
-      // Total donations amount for this organization
-      prisma.saveTrRecord.aggregate({
-        where: {
-          trx_organization_id: orgId,
-          pay_status: 'completed'
-        },
-        _sum: { trx_amount: true }
-      }),
-
-      // Total GHL accounts for this organization
-      prisma.gHLAccount.count({
-        where: {
-          organization_id: orgId,
-          status: 'active'
-        }
-      }),
-
-      // This month donations
-      prisma.saveTrRecord.aggregate({
-        where: {
-          trx_organization_id: orgId,
-          pay_status: 'completed',
-          trx_date: {
-            gte: startOfMonth
-          }
-        },
-        _sum: { trx_amount: true }
-      }),
-
-      // Last month donations for comparison
-      prisma.saveTrRecord.aggregate({
-        where: {
-          trx_organization_id: orgId,
-          pay_status: 'completed',
-          trx_date: {
-            gte: startOfLastMonth,
-            lt: endOfLastMonth
-          }
-        },
-        _sum: { trx_amount: true }
-      }),
-
-      // Donor growth comparison (Active donors in period)
-      prisma.saveTrRecord.groupBy({
-        by: ['trx_donor_id'],
-        where: {
-          trx_organization_id: orgId,
-          pay_status: 'completed',
-          created_at: {
-            gte: startOfLastMonth,
-            lt: endOfLastMonth
-          }
-        }
-      }).then(res => res.length),
-
-      prisma.saveTrRecord.groupBy({
-        by: ['trx_donor_id'],
-        where: {
-          trx_organization_id: orgId,
-          pay_status: 'completed',
-          created_at: {
-            gte: startOfMonth
-          }
-        }
-      }).then(res => res.length),
-
-      // GHL accounts growth comparison
-      prisma.gHLAccount.count({
-        where: {
-          organization_id: orgId,
-          status: 'active',
-          created_at: {
-            gte: startOfLastMonth,
-            lt: endOfLastMonth
-          }
-        }
-      }),
-
-      prisma.gHLAccount.count({
-        where: {
-          organization_id: orgId,
-          status: 'active',
-          created_at: {
-            gte: startOfMonth
-          }
-        }
-      })
-    ]);
-
-    // Calculate percentage changes
-    const calculateChange = (current, previous) => {
-      if (previous === 0) return current > 0 ? '+100%' : '0%';
-      const change = ((current - previous) / previous) * 100;
-      return `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
-    };
-
-    const totalDonationsAmount = totalDonations._sum.trx_amount || 0;
-    const thisMonthAmount = thisMonthDonations._sum.trx_amount || 0;
-    const lastMonthAmount = lastMonthDonations._sum.trx_amount || 0;
+      } catch (e) {
+        console.error('[dashboard-stats] Stripe fetch failed:', e.message);
+      }
+    }
 
     const stats = {
-      totalDonors: {
-        value: totalDonors.toLocaleString(),
-        change: calculateChange(thisMonthDonors, lastMonthDonors),
-        changeType: thisMonthDonors >= lastMonthDonors ? 'increase' : 'decrease'
-      },
       totalDonations: {
-        value: `$${totalDonationsAmount.toLocaleString()}`,
-        change: calculateChange(totalDonationsAmount, lastMonthAmount),
-        changeType: totalDonationsAmount >= lastMonthAmount ? 'increase' : 'decrease'
-      },
-      ghlAccounts: {
-        value: ghlAccountsCount.toLocaleString(),
-        change: calculateChange(thisMonthGhlAccounts, lastMonthGhlAccounts),
-        changeType: thisMonthGhlAccounts >= lastMonthGhlAccounts ? 'increase' : 'decrease'
+        value: `$${totalDonationsAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        change: '0%',
+        changeType: 'increase'
       },
       thisMonth: {
-        value: `$${thisMonthAmount.toLocaleString()}`,
-        change: calculateChange(thisMonthAmount, lastMonthAmount),
-        changeType: thisMonthAmount >= lastMonthAmount ? 'increase' : 'decrease'
+        value: `$${thisMonthAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        change: '0%',
+        changeType: 'increase'
       }
     };
 

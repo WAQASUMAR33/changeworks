@@ -622,7 +622,8 @@ Unsubscribe
       to: donor.email,
       subject: subject,
       html: html,
-      text: text
+      text: text,
+      from: `"${organization.name}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });
   }
 
@@ -733,7 +734,8 @@ Unsubscribe
       to: donor.email,
       subject: subject,
       html: html,
-      text: text
+      text: text,
+      from: `"${organization.name}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });
   }
 
@@ -808,7 +810,8 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
       to: donor.email,
       subject: subject,
       html: html,
-      text: text
+      text: text,
+      from: `"${organization.name}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });
   }
 
@@ -885,7 +888,8 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
       to: donor.email,
       subject: subject,
       html: html,
-      text: text
+      text: text,
+      from: `"${organization.name}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });
   }
 
@@ -952,7 +956,8 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
       to: donor.email,
       subject: subject,
       html: html,
-      text: text
+      text: text,
+      from: `"${organization.name}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });
   }
 
@@ -1019,7 +1024,8 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
       to: donor.email,
       subject: subject,
       html: html,
-      text: text
+      text: text,
+      from: `"${organization.name}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });
   }
 
@@ -1101,7 +1107,8 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
       to: donor.email,
       subject: subject,
       html: html,
-      text: text
+      text: text,
+      from: `"${orgName}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });
   }
 
