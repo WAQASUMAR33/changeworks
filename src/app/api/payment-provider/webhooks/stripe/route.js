@@ -16,17 +16,33 @@ import { emailService } from '@/app/lib/email-service';
  * After a successful payment, check if the customer email exists as a donor.
  * If not, create a donor account with an auto-generated password and send credentials by email.
  */
-async function maybeCreateDonorAccount({ customerEmail, customerName, customerPhone }) {
+async function maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId }) {
   if (!customerEmail) return;
 
   try {
     // Check if donor already exists
-    const existing = await prisma.$queryRaw`
-      SELECT id FROM donors WHERE email = ${customerEmail.toLowerCase()} LIMIT 1
-    `;
-    if (existing.length > 0) {
+    const existing = await prisma.donor.findFirst({
+      where: { email: customerEmail.toLowerCase() },
+      select: { id: true },
+    });
+    if (existing) {
       console.log(`[donor-auto-create] Donor already exists for ${customerEmail} — skipping`);
       return;
+    }
+
+    // Resolve organization from locationId
+    let organizationId = null;
+    if (locationId) {
+      const org = await prisma.organization.findFirst({
+        where: {
+          OR: [
+            { ghlId: locationId },
+            { ghlAccounts: { some: { ghl_location_id: locationId } } },
+          ],
+        },
+        select: { id: true },
+      });
+      if (org) organizationId = org.id;
     }
 
     // Generate a random password
@@ -35,22 +51,20 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
 
     const name = customerName?.trim() || customerEmail.split('@')[0];
 
-    await prisma.$queryRaw`
-      INSERT INTO donors (name, email, password, phone, postal_code, country, status, created_at, updated_at)
-      VALUES (
-        ${name},
-        ${customerEmail.toLowerCase().trim()},
-        ${hashedPassword},
-        ${customerPhone ?? ''},
-        ${''},
-        ${'US'},
-        1,
-        ${new Date()},
-        ${new Date()}
-      )
-    `;
+    await prisma.donor.create({
+      data: {
+        name,
+        email: customerEmail.toLowerCase().trim(),
+        password: hashedPassword,
+        phone: customerPhone ?? '',
+        postal_code: '',
+        country: 'US',
+        status: 1,
+        ...(organizationId ? { organization_id: organizationId } : {}),
+      },
+    });
 
-    console.log(`[donor-auto-create] Created donor account for ${customerEmail}`);
+    console.log(`[donor-auto-create] Created donor account for ${customerEmail} (org: ${organizationId ?? 'none'})`);
 
     // Send account credentials email
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
@@ -129,7 +143,7 @@ export async function POST(request) {
         });
 
         // Auto-create donor account if email is new
-        await maybeCreateDonorAccount({ customerEmail, customerName, customerPhone });
+        await maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId: locationId ?? intent.metadata?.locationId });
 
         if (locationId) {
           let chargeId = intent.id;
