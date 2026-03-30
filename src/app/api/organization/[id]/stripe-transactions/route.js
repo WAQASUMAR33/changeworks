@@ -36,25 +36,34 @@ export async function GET(request, { params }) {
 
     const stripe = getStripe();
     
-    // Fetch charges (payments) from the connected account, expanding customer
+    // Fetch charges (payments) from the connected account, expanding customer and payment_intent
     const charges = await stripe.charges.list(
-      { limit: 100, expand: ['data.customer'] },
+      { limit: 100, expand: ['data.customer', 'data.payment_intent'] },
       { stripeAccount: organization.stripeAccountId }
     );
 
+    // Helper: treat empty/whitespace strings as missing
+    const val = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+
     // Map to a common format
     const transactions = charges.data.map(charge => {
-      const customer = typeof charge.customer === 'object' ? charge.customer : null;
+      const customer = typeof charge.customer === 'object' && charge.customer ? charge.customer : null;
+      const pi       = typeof charge.payment_intent === 'object' && charge.payment_intent ? charge.payment_intent : null;
+      const piCustomer = typeof pi?.customer === 'object' && pi?.customer ? pi.customer : null;
+
       const donorName =
-        charge.billing_details?.name ||
-        charge.metadata?.donor_name ||
-        customer?.name ||
+        val(charge.billing_details?.name) ||
+        val(charge.metadata?.donor_name)  ||
+        val(customer?.name)               ||
+        val(piCustomer?.name)             ||
         null;
       const donorEmail =
-        charge.billing_details?.email ||
-        charge.receipt_email ||
-        charge.metadata?.donor_email ||
-        customer?.email ||
+        val(charge.billing_details?.email) ||
+        val(charge.receipt_email)          ||
+        val(charge.metadata?.donor_email)  ||
+        val(customer?.email)               ||
+        val(pi?.receipt_email)             ||
+        val(piCustomer?.email)             ||
         null;
 
       return {
