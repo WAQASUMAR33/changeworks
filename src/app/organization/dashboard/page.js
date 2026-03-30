@@ -349,13 +349,6 @@ export default function OrganizationDashboard() {
                                     <div className={`p-4 rounded-2xl bg-gradient-to-br ${colors.gradient} shadow-lg ${colors.shadow} group-hover:scale-110 transition-transform duration-300`}>
                                         <stat.icon className="w-7 h-7 text-white" />
                                     </div>
-                                    <div className={`flex items-center space-x-1.5 text-sm font-semibold px-3 py-1.5 rounded-full ${stat.changeType === 'increase'
-                                        ? 'bg-green-50 text-green-600 border border-green-100'
-                                        : 'bg-red-50 text-red-600 border border-red-100'
-                                        }`}>
-                                        <TrendingUp className={`w-3.5 h-3.5 ${stat.changeType === 'decrease' ? 'rotate-180' : ''}`} />
-                                        <span>{stat.change}</span>
-                                    </div>
                                 </div>
                                 
                                 <div className="relative z-10">
