@@ -1,7 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { createHmac } from 'crypto';
+import { createHmac, randomBytes } from 'crypto';
+import bcrypt from 'bcryptjs';
 import {
   createPaymentIntent, createRefund, createCustomer, createSubscription, getPrice,
   createProduct, createPrice, updateProduct, archivePrice, setProductDefaultPrice,
@@ -10,6 +11,75 @@ import {
   getStripeAccount, createWebhookLog, updateWebhookLog, upsertPaymentEvent,
   saveProductSync, getProductSync, deleteProductSync, savePriceSync, getPriceSync, deletePriceSync,
 } from '@/app/lib/payment-provider/tokenStore';
+import { prisma } from '@/app/lib/prisma';
+import { emailService } from '@/app/lib/email-service';
+
+async function maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId }) {
+  if (!customerEmail) return;
+  try {
+    const existing = await prisma.donor.findFirst({
+      where: { email: customerEmail.toLowerCase() },
+      select: { id: true },
+    });
+    if (existing) return;
+
+    let organizationId = null;
+    if (locationId) {
+      const org = await prisma.organization.findFirst({
+        where: {
+          OR: [
+            { ghlId: locationId },
+            { ghlAccounts: { some: { ghl_location_id: locationId } } },
+          ],
+        },
+        select: { id: true },
+      });
+      if (org) organizationId = org.id;
+    }
+
+    const rawPassword = randomBytes(8).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
+    const hashedPassword = await bcrypt.hash(rawPassword, 12);
+    const name = customerName?.trim() || customerEmail.split('@')[0];
+
+    await prisma.donor.create({
+      data: {
+        name,
+        email: customerEmail.toLowerCase().trim(),
+        password: hashedPassword,
+        phone: customerPhone || null,
+        country: 'US',
+        status: true,
+        ...(organizationId ? { organization_id: organizationId } : {}),
+      },
+    });
+
+    console.log(`[donor-auto-create] Created donor for ${customerEmail} (org: ${organizationId ?? 'none'})`);
+
+    const baseUrl = 'https://app.changeworksfund.org';
+    await emailService.sendEmail({
+      to: customerEmail,
+      subject: 'Your ChangeWorks Donor Account',
+      html: `
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;background:#fff;">
+          <h2 style="color:#0E0061;margin-bottom:8px;">Welcome to ChangeWorks!</h2>
+          <p style="color:#374151;margin-bottom:20px;">A donor account has been created for you after your payment. Use these credentials to log in and track your donations.</p>
+          <div style="background:#f3f4f6;border-radius:8px;padding:20px;margin-bottom:24px;">
+            <p style="margin:0 0 8px;color:#6b7280;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Your Login Details</p>
+            <p style="margin:0 0 6px;color:#111827;font-size:15px;"><strong>Email:</strong> ${customerEmail}</p>
+            <p style="margin:0;color:#111827;font-size:15px;"><strong>Password:</strong> ${rawPassword}</p>
+          </div>
+          <a href="${baseUrl}/donor/login" style="display:inline-block;background:#0E0061;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">Log In to Your Account</a>
+          <p style="margin-top:24px;color:#9ca3af;font-size:12px;">Please change your password after logging in. If you did not make a payment through ChangeWorks, please ignore this email.</p>
+        </div>
+      `,
+      text: `Welcome to ChangeWorks!\n\nEmail: ${customerEmail}\nPassword: ${rawPassword}\n\nLog in at: ${baseUrl}/donor/login`,
+    });
+
+    console.log(`[donor-auto-create] Credentials email sent to ${customerEmail}`);
+  } catch (err) {
+    console.error('[donor-auto-create] Failed:', err.message, err.stack);
+  }
+}
 
 const GHL_CLIENT_SECRET = process.env.GHL_CLIENT_SECRET;
 
@@ -103,6 +173,8 @@ export async function POST(request) {
             await updateWebhookLog(eventId, 'FAILED', 'Subscription created but no payment intent available');
             return NextResponse.json({ error: 'Subscription payment not required yet' }, { status: 422 });
           }
+          // Auto-create donor account (non-blocking)
+          maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId }).catch(() => {});
           await updateWebhookLog(eventId, 'PROCESSED');
           return NextResponse.json({ clientSecret: paymentIntent.client_secret, publishableKey: stripeAccount.publishableKey });
         }
@@ -111,6 +183,8 @@ export async function POST(request) {
         try {
           await upsertPaymentEvent({ locationId, stripeAccountId: stripeAccount.stripeAccountId, paymentIntentId: intent.id, entityId: data.entityId ?? null, entityType: data.entityType ?? 'invoice', amount: data.amount, currency: data.currency ?? 'usd', status: 'PENDING', customerName, customerEmail, customerPhone });
         } catch {}
+        // Auto-create donor account (non-blocking)
+        maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId }).catch(() => {});
         await updateWebhookLog(eventId, 'PROCESSED');
         return NextResponse.json({ clientSecret: intent.client_secret, publishableKey: stripeAccount.publishableKey });
       }

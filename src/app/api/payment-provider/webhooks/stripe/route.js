@@ -66,8 +66,7 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
     console.log(`[donor-auto-create] Created donor account for ${customerEmail} (org: ${organizationId ?? 'none'})`);
 
     // Send account credentials email
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
-    const loginUrl = `${baseUrl}/donor/login`;
+    const loginUrl = 'https://app.changeworksfund.org/donor/login';
 
     await emailService.sendEmail({
       to: customerEmail,
