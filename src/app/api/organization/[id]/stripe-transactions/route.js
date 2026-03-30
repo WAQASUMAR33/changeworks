@@ -35,53 +35,60 @@ export async function GET(request, { params }) {
     }
 
     const stripe = getStripe();
-    
-    // Fetch charges (payments) from the connected account, expanding customer and payment_intent
-    const charges = await stripe.charges.list(
-      { limit: 100, expand: ['data.customer', 'data.payment_intent'] },
-      { stripeAccount: organization.stripeAccountId }
-    );
 
     // Helper: treat empty/whitespace strings as missing
     const val = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 
-    // Map to a common format
-    const transactions = charges.data.map(charge => {
-      const customer = typeof charge.customer === 'object' && charge.customer ? charge.customer : null;
-      const pi       = typeof charge.payment_intent === 'object' && charge.payment_intent ? charge.payment_intent : null;
-      const piCustomer = typeof pi?.customer === 'object' && pi?.customer ? pi.customer : null;
+    // Use paymentIntents.list so py_/Link payments are fully represented
+    const paymentIntents = await stripe.paymentIntents.list(
+      { limit: 100, expand: ['data.customer', 'data.latest_charge'] },
+      { stripeAccount: organization.stripeAccountId }
+    );
 
-      const donorName =
-        val(charge.billing_details?.name) ||
-        val(charge.metadata?.donor_name)  ||
-        val(customer?.name)               ||
-        val(piCustomer?.name)             ||
-        null;
-      const donorEmail =
-        val(charge.billing_details?.email) ||
-        val(charge.receipt_email)          ||
-        val(charge.metadata?.donor_email)  ||
-        val(customer?.email)               ||
-        val(pi?.receipt_email)             ||
-        val(piCustomer?.email)             ||
-        null;
+    const transactions = paymentIntents.data
+      .filter(pi => pi.status !== 'canceled')
+      .map(pi => {
+        const customer = typeof pi.customer === 'object' && pi.customer ? pi.customer : null;
+        const charge   = typeof pi.latest_charge === 'object' && pi.latest_charge ? pi.latest_charge : null;
+        const billing  = charge?.billing_details ?? {};
 
-      return {
-        id: charge.id,
-        transaction_id: charge.id,
-        amount: charge.amount / 100,
-        currency: charge.currency,
-        status: charge.status === 'succeeded' ? 'completed' : charge.status,
-        transaction_date: new Date(charge.created * 1000).toISOString(),
-        description: charge.description || charge.statement_descriptor || 'Stripe Payment',
-        donor: { name: donorName, email: donorEmail },
-        method: 'stripe',
-        card_brand: charge.payment_method_details?.card?.brand || charge.source?.brand,
-        card_last4: charge.payment_method_details?.card?.last4 || charge.source?.last4,
-        receipt_url: charge.receipt_url,
-        ghl_id: charge.metadata?.ghl_id
-      };
-    });
+        const donorName =
+          val(billing.name)                  ||
+          val(pi.metadata?.customerName)     ||
+          val(pi.metadata?.donor_name)       ||
+          val(customer?.name)                ||
+          null;
+
+        const donorEmail =
+          val(billing.email)                 ||
+          val(charge?.receipt_email)         ||
+          val(pi.receipt_email)              ||
+          val(pi.metadata?.customerEmail)    ||
+          val(pi.metadata?.donor_email)      ||
+          val(customer?.email)               ||
+          null;
+
+        const status = pi.status === 'succeeded' ? 'completed'
+          : pi.status === 'requires_payment_method' ? 'failed'
+          : pi.status === 'processing' ? 'pending'
+          : pi.status;
+
+        return {
+          id: pi.id,
+          transaction_id: charge?.id || pi.id,
+          amount: pi.amount / 100,
+          currency: pi.currency,
+          status,
+          transaction_date: new Date(pi.created * 1000).toISOString(),
+          description: pi.description || charge?.description || charge?.statement_descriptor || 'Stripe Payment',
+          donor: { name: donorName, email: donorEmail },
+          method: 'stripe',
+          card_brand: charge?.payment_method_details?.card?.brand,
+          card_last4: charge?.payment_method_details?.card?.last4,
+          receipt_url: charge?.receipt_url,
+          ghl_id: pi.metadata?.ghl_id,
+        };
+      });
 
     return NextResponse.json({
       success: true,
