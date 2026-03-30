@@ -173,8 +173,8 @@ export async function POST(request) {
             await updateWebhookLog(eventId, 'FAILED', 'Subscription created but no payment intent available');
             return NextResponse.json({ error: 'Subscription payment not required yet' }, { status: 422 });
           }
-          // Auto-create donor account (non-blocking)
-          maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId }).catch(() => {});
+          // Auto-create donor account
+          await maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId });
           await updateWebhookLog(eventId, 'PROCESSED');
           return NextResponse.json({ clientSecret: paymentIntent.client_secret, publishableKey: stripeAccount.publishableKey });
         }
@@ -183,8 +183,8 @@ export async function POST(request) {
         try {
           await upsertPaymentEvent({ locationId, stripeAccountId: stripeAccount.stripeAccountId, paymentIntentId: intent.id, entityId: data.entityId ?? null, entityType: data.entityType ?? 'invoice', amount: data.amount, currency: data.currency ?? 'usd', status: 'PENDING', customerName, customerEmail, customerPhone });
         } catch {}
-        // Auto-create donor account (non-blocking)
-        maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId }).catch(() => {});
+        // Auto-create donor account
+        await maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId });
         await updateWebhookLog(eventId, 'PROCESSED');
         return NextResponse.json({ clientSecret: intent.client_secret, publishableKey: stripeAccount.publishableKey });
       }

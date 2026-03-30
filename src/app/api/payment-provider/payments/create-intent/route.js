@@ -175,12 +175,12 @@ export async function POST(request) {
 
   const sharedMeta = { locationId, entityId: finalEntityId, entityType: finalEntityType, ...metadata };
 
-  // Auto-create donor account for GHL payments (non-blocking — runs after response)
+  // Auto-create donor account for GHL payments
   const customerEmail = metadata?.customerEmail ?? metadata?.email ?? null;
   const customerName  = metadata?.customerName  ?? metadata?.name  ?? null;
   const customerPhone = metadata?.customerPhone ?? metadata?.phone ?? null;
   if (customerEmail) {
-    maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId }).catch(() => {});
+    await maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId });
   }
 
   if (priceId) {
