@@ -87,10 +87,13 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
+  // 90% goes to the connected Stripe account; 10% covers Stripe processing fee + platform fee
+  const PLATFORM_FEE_RATE = 0.10;
+
   const {
     locationId, amount, currency = 'usd', priceId, entityId, entityType,
     interval, isRecurring: isRecurringFlag, ghlSubscriptionId,
-    applicationFeeRate = 0, metadata = {},
+    metadata = {},
   } = body;
 
   if (!locationId) return NextResponse.json({ error: 'locationId is required' }, { status: 400 });
@@ -204,7 +207,7 @@ export async function POST(request) {
         phone: metadata.customerPhone ?? null,
         metadata: { locationId, entityId: finalEntityId },
       });
-      const applicationFeePercent = applicationFeeRate > 0 ? applicationFeeRate * 100 : undefined;
+      const applicationFeePercent = PLATFORM_FEE_RATE * 100; // 10%
       const subscription = await createSubscription({
         stripeAccountId: stripeAccount.stripeAccountId, customerId: customer.id, priceId,
         applicationFeePercent, metadata: { ...sharedMeta, entityType: 'subscription' },
@@ -222,7 +225,7 @@ export async function POST(request) {
 
     const priceAmount  = price.unit_amount ?? amount;
     const priceCurrency = price.currency ?? currency;
-    const applicationFeeAmount = applicationFeeRate > 0 ? Math.round(priceAmount * applicationFeeRate) : 0;
+    const applicationFeeAmount = Math.round(priceAmount * PLATFORM_FEE_RATE); // 10%
     const intent = await createPaymentIntent({
       amount: priceAmount, currency: priceCurrency, stripeAccountId: stripeAccount.stripeAccountId,
       applicationFeeAmount: applicationFeeAmount || undefined, metadata: sharedMeta,
@@ -245,6 +248,7 @@ export async function POST(request) {
     const subscription = await createInlineSubscription({
       stripeAccountId: stripeAccount.stripeAccountId, customerId: customer.id,
       amount, currency, interval: resolvedInterval, productName: 'Subscription',
+      applicationFeePercent: PLATFORM_FEE_RATE * 100, // 10%
       metadata: { ...sharedMeta, entityType: 'subscription', ghlSubscriptionId: ghlSubscriptionId ?? null },
     });
     const paymentIntent = subscription.latest_invoice?.payment_intent;
@@ -263,7 +267,7 @@ export async function POST(request) {
     });
   }
 
-  const applicationFeeAmount = applicationFeeRate > 0 ? Math.round(amount * applicationFeeRate) : 0;
+  const applicationFeeAmount = Math.round(amount * PLATFORM_FEE_RATE); // 10%
   let intent;
   try {
     intent = await createPaymentIntent({
