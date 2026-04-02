@@ -30,6 +30,21 @@ export async function POST(request) {
             title: true,
             imageUrl: true
           }
+        },
+        subscriptions: {
+          select: {
+            organization: {
+              select: {
+                name: true,
+                firstName: true,
+                lastName: true,
+                title: true,
+                imageUrl: true
+              }
+            }
+          },
+          take: 1,
+          orderBy: { created_at: 'desc' }
         }
       }
     });
@@ -73,6 +88,10 @@ export async function POST(request) {
 
       console.log('📧 Sending password reset email via service...');
       
+      const organization = donor.organization
+        || donor.subscriptions?.[0]?.organization
+        || null;
+
       const emailResult = await emailService.sendPasswordResetEmail({
         donor: {
           name: donor.name,
@@ -80,9 +99,7 @@ export async function POST(request) {
         },
         resetToken,
         resetLink: resetUrl,
-        organization: donor.organization || { 
-          name: 'ChangeWorks Fund'
-        }
+        organization,
       });
 
       if (emailResult.success) {

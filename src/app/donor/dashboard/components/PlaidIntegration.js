@@ -402,14 +402,10 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                             <span className="text-white text-sm font-bold">i</span>
                           </div>
                           <div className="text-sm text-blue-800 space-y-3">
-                            <p className="font-semibold text-lg mb-4">Disclaimer:</p>
-                            <p>To process your round-up donations securely, ChangeWorks uses Plaid to connect your bank account and Stripe to handle payment processing.</p>
-                            <p>Plaid is used by thousands of companies such as AMEX, Acorns, and Venmo. Stripe is used by over 300,000 companies such as Amazon, DoorDash, and Shopify.</p>
-                            <div className="bg-blue-100 border border-blue-300 rounded-lg p-4 mt-4">
-                              <p className="font-semibold text-blue-900 text-base">
-                                Your banking information is collected <u>only for verification</u> and transaction purposes and is never shared with ChangeWorks or your chosen charity.
-                              </p>
-                            </div>
+                            <p>We let you effortlessly support by rounding up your everyday purchases and donating the spare change.</p>
+                            <p>To get started, you&apos;ll securely connect your bank account and a funding source (like a debit or credit card). We use read-only access to calculate your round-ups by linking your financial institutions—meaning we can&apos;t move money or see sensitive details, and your banking data is never stored.</p>
+                            <p>Your financial information is never visible to anyone; we rely on trusted partners like Stripe and Plaid to keep everything safe and secure.</p>
+                            <p>Not into round-ups? You can also set up a simple monthly donation in just a few clicks on your main dashboard.</p>
                           </div>
                         </div>
                       </div>

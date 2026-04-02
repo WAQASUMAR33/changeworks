@@ -95,27 +95,28 @@ export async function POST(request) {
     }
 
     // Create donor
-    // Workaround for broken Prisma Client - insert without organization_id since column is missing
     await prisma.$queryRaw`
       INSERT INTO donors (
-        name, 
-        email, 
-        password, 
-        phone, 
-        postal_code, 
-        country, 
-        status, 
-        created_at, 
+        name,
+        email,
+        password,
+        phone,
+        postal_code,
+        country,
+        organization_id,
+        status,
+        created_at,
         updated_at
       ) VALUES (
-        ${name.trim()}, 
-        ${email.toLowerCase().trim()}, 
-        ${hashedPassword}, 
-        ${phone.trim()}, 
-        ${String(postal_code).trim()}, 
-        ${country}, 
-        0, 
-        ${new Date()}, 
+        ${name.trim()},
+        ${email.toLowerCase().trim()},
+        ${hashedPassword},
+        ${phone.trim()},
+        ${String(postal_code).trim()},
+        ${country},
+        ${validOrganizationId},
+        0,
+        ${new Date()},
         ${new Date()}
       )
     `;
@@ -139,8 +140,6 @@ export async function POST(request) {
       LIMIT 1
     `;
     const donor = donors[0];
-
-    // Note: organization connection skipped because organization_id column is missing in DB
 
     // Store verification token
     await prisma.donorVerificationToken.create({

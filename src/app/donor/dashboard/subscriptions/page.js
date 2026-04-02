@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   CreditCard,
   Calendar,
@@ -17,7 +18,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { buildOrgLogoUrl } from '@/lib/image-utils';
 import StripeSubscriptionModal from '../components/StripeSubscriptionModal';
 
@@ -531,10 +531,10 @@ export default function DonorSubscriptionsPage() {
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Subscriptions Found</h3>
             <p className="text-gray-600 mb-4">You don&apos;t have any active subscriptions yet.</p>
             <button
-              onClick={() => setShowSubscriptionModal(true)}
+              onClick={() => router.push('/donor/dashboard')}
               className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200"
             >
-              Create Your First Subscription
+              Create Your First Donation
             </button>
           </div>
         )}

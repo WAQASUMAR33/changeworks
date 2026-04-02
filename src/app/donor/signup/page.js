@@ -3,14 +3,17 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Loader2, CheckCircle, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Eye, EyeOff, Loader2, CheckCircle, AlertCircle, ArrowRight, ArrowLeft, Building2, Search, Heart } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchCountries } from '@/lib/countries-api';
 import { PhoneInput } from 'react-international-phone';
 import 'react-international-phone/style.css';
+import { buildOrgLogoUrl } from '@/lib/image-utils';
 
 export default function DonorSignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const organizationId = searchParams.get('org');
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
@@ -20,9 +23,11 @@ export default function DonorSignupPage() {
     postal_code: '',
     password: '',
     confirmPassword: '',
-    // organization_id removed
   });
-  // Organizations state removed
+  const [organizations, setOrganizations] = useState([]);
+  const [loadingOrgs, setLoadingOrgs] = useState(false);
+  const [selectedOrganization, setSelectedOrganization] = useState(null);
+  const [orgSearchTerm, setOrgSearchTerm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -72,7 +77,29 @@ export default function DonorSignupPage() {
     };
   }, []);
 
-  // Organization fetching effect removed
+  // Fetch organizations
+  useEffect(() => {
+    const fetchOrgs = async () => {
+      try {
+        setLoadingOrgs(true);
+        const res = await fetch('/api/organizations/list');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.organizations)) {
+          setOrganizations(data.organizations);
+          // Pre-select if org param in URL
+          if (organizationId) {
+            const preSelected = data.organizations.find(o => o.id === Number(organizationId));
+            if (preSelected) setSelectedOrganization(preSelected);
+          }
+        }
+      } catch {
+        // non-fatal
+      } finally {
+        setLoadingOrgs(false);
+      }
+    };
+    fetchOrgs();
+  }, [organizationId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -109,7 +136,11 @@ export default function DonorSignupPage() {
       if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     }
 
-    // Step 4 is now Review, no validation needed
+    if (step === 4) {
+      if (!selectedOrganization) newErrors.organization = 'Please select an organization';
+    }
+
+    // Step 5 is Review, no validation needed
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -118,7 +149,7 @@ export default function DonorSignupPage() {
   const goNext = () => {
     if (validateStep(currentStep)) {
       setError('');
-      setCurrentStep(prev => Math.min(prev + 1, 4));
+      setCurrentStep(prev => Math.min(prev + 1, 5));
     }
   };
 
@@ -130,7 +161,7 @@ export default function DonorSignupPage() {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    if (currentStep < 4) {
+    if (currentStep < 5) {
       goNext();
     }
   };
@@ -154,6 +185,7 @@ export default function DonorSignupPage() {
           phone: formData.phone.trim(),
           postal_code: formData.postal_code.trim(),
           country: formData.country,
+          organization_id: selectedOrganization?.id ?? (organizationId ? Number(organizationId) : undefined),
         })
       });
 
@@ -196,7 +228,8 @@ export default function DonorSignupPage() {
     { id: 1, title: 'Personal Info' },
     { id: 2, title: 'Location' },
     { id: 3, title: 'Security' },
-    { id: 4, title: 'Review' }
+    { id: 4, title: 'Organization' },
+    { id: 5, title: 'Review' },
   ];
 
   return (
@@ -739,8 +772,106 @@ export default function DonorSignupPage() {
 
 
 
-                {/* Step 4: Review */}
+                {/* Step 4: Organization */}
                 {currentStep === 4 && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Select Organization *
+                      </label>
+                      <p className="text-sm text-gray-500 mb-3">Choose the organization you want to support with your donations.</p>
+
+                      {/* Search */}
+                      <div className="relative mb-3">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Search organizations..."
+                          value={orgSearchTerm}
+                          onChange={(e) => setOrgSearchTerm(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                        />
+                      </div>
+
+                      {/* List */}
+                      <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                        {loadingOrgs ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="w-6 h-6 animate-spin text-blue-600 mr-2" />
+                            <span className="text-gray-500 text-sm">Loading organizations...</span>
+                          </div>
+                        ) : organizations.filter(o =>
+                            o.name.toLowerCase().includes(orgSearchTerm.toLowerCase())
+                          ).length > 0 ? (
+                          organizations
+                            .filter(o => o.name.toLowerCase().includes(orgSearchTerm.toLowerCase()))
+                            .map((org) => (
+                              <button
+                                key={org.id}
+                                type="button"
+                                onClick={() => setSelectedOrganization(org)}
+                                className={`w-full p-3 rounded-xl border-2 text-left transition-all duration-200 flex items-center space-x-3 ${
+                                  selectedOrganization?.id === org.id
+                                    ? 'border-blue-500 bg-blue-50'
+                                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                }`}
+                              >
+                                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                  {org.imageUrl && (
+                                    <Image
+                                      src={buildOrgLogoUrl(org.imageUrl)}
+                                      alt={org.name}
+                                      width={40}
+                                      height={40}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                    />
+                                  )}
+                                  <div className={`w-full h-full bg-blue-100 rounded-lg flex items-center justify-center ${org.imageUrl ? 'hidden' : 'flex'}`}>
+                                    <Heart className="w-5 h-5 text-blue-600" />
+                                  </div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-gray-900 truncate">{org.name}</p>
+                                  {org.email && <p className="text-xs text-gray-500 truncate">{org.email}</p>}
+                                </div>
+                                {selectedOrganization?.id === org.id && (
+                                  <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                                )}
+                              </button>
+                            ))
+                        ) : (
+                          <div className="text-center py-8">
+                            <Building2 className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                            <p className="text-gray-500 text-sm">No organizations found</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <AnimatePresence>
+                        {errors.organization && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                          >
+                            <AlertCircle className="w-3 h-3" />
+                            <span>{errors.organization}</span>
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Step 5: Review */}
+                {currentStep === 5 && (
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -783,6 +914,31 @@ export default function DonorSignupPage() {
                           <span className="font-medium text-gray-700">Postal Code:</span>
                           <p className="text-black">{formData.postal_code}</p>
                         </div>
+                        <div className="md:col-span-2">
+                          <span className="font-medium text-gray-700">Organization:</span>
+                          {selectedOrganization ? (
+                            <div className="flex items-center space-x-2 mt-1">
+                              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                                {selectedOrganization.imageUrl && (
+                                  <Image
+                                    src={buildOrgLogoUrl(selectedOrganization.imageUrl)}
+                                    alt={selectedOrganization.name}
+                                    width={32}
+                                    height={32}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                  />
+                                )}
+                                <div className={`w-full h-full bg-blue-100 rounded-lg flex items-center justify-center ${selectedOrganization.imageUrl ? 'hidden' : 'flex'}`}>
+                                  <Heart className="w-4 h-4 text-blue-600" />
+                                </div>
+                              </div>
+                              <p className="text-black font-medium">{selectedOrganization.name}</p>
+                            </div>
+                          ) : (
+                            <p className="text-gray-400 italic text-sm">None selected</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -805,7 +961,7 @@ export default function DonorSignupPage() {
                     <div />
                   )}
 
-                  {currentStep < 4 ? (
+                  {currentStep < 5 ? (
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
