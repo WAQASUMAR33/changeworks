@@ -99,7 +99,7 @@ export default function StripePaymentForm({
 
       // Confirm payment with Stripe
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(
-        data.client_secret,
+        data.clientSecret,
         {
           payment_method: {
             card: elements.getElement(CardElement),

@@ -321,9 +321,11 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       clientSecret: paymentIntent.client_secret,
+      client_secret: paymentIntent.client_secret,
+      livemode: paymentIntent.livemode,
       paymentIntentId: paymentIntent.id,
       transactionId: transaction.id,
-      accountId: destinationAccountId 
+      accountId: destinationAccountId
     });
 
   } catch (error) {
