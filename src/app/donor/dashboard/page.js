@@ -631,7 +631,7 @@ export default function DonorDashboard() {
                       </div>
                       <div className="flex-1 w-full">
                         <h4 className="text-lg font-bold text-white leading-tight">Join Our Round-Up Program</h4>
-                        <p className="text-sm text-green-100 mt-1">Connect your bank account</p>
+                        <p className="text-sm text-green-100 mt-1">Donate your spare change from every day purchases</p>
                       </div>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute top-0 right-0">
                         <div className="w-3 h-3 bg-white/30 rounded-full"></div>
