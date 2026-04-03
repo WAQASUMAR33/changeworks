@@ -3,7 +3,6 @@ import { prisma } from "../../../lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { emailService } from "../../../lib/email-service";
-import GHLClient from "../../../lib/ghl-client";
 
 // POST /api/donor/signup - Create a new donor account
 export async function POST(request) {
@@ -189,128 +188,6 @@ export async function POST(request) {
       console.error('❌ Verification email sending failed:', emailErr.message);
     }
 
-    // Create GHL contact if organization has GHL account AND organization is selected
-    let ghlContactResult = null;
-    let ghlContactError = null;
-
-    try {
-      if (validOrganizationId) {
-        // Get organization's GHL details directly from organization table
-        const organization = await prisma.organization.findUnique({
-          where: { id: validOrganizationId },
-          select: {
-            ghlId: true,
-            ghlApiKey: true,
-            name: true
-          }
-        });
-
-        if (organization && organization.ghlId && organization.ghlApiKey) {
-          console.log(`🔗 Creating GHL contact for donor ${donor.name} in location ${organization.ghlId}`);
-
-          // Initialize GHL client with organization's API key
-          const ghlClient = new GHLClient(organization.ghlApiKey);
-
-          // Prepare contact data
-          const contactData = {
-            firstName: donor.name.split(' ')[0] || donor.name,
-            lastName: donor.name.split(' ').slice(1).join(' ') || '',
-            email: donor.email,
-            phone: donor.phone,
-            address: donor.address,
-            city: donor.city,
-            country: donor.country,
-            postalCode: donor.postal_code,
-            tags: ['donor', 'signup'],
-            source: 'website'
-          };
-
-          // Create GHL contact
-          ghlContactResult = await ghlClient.createContact(
-            organization.ghlId,
-            contactData
-          );
-
-          if (ghlContactResult.success) {
-            console.log(`✅ GHL contact created successfully: ${ghlContactResult.contactId}`);
-
-            // Create GHL User for the donor (using Agency API Key)
-            try {
-              const ghlAgencyKey = process.env.GHL_AGENCY_API_KEY || process.env.GHL_API_KEY;
-              
-              if (ghlAgencyKey) {
-                console.log(`🔗 Creating GHL User for donor ${donor.email} in location ${organization.ghlId}`);
-                const agencyGhlClient = new GHLClient(ghlAgencyKey);
-                const companyId = process.env.GHL_COMPANY_ID || 'BWID4bp77xwMfmzh1iud'; // Default company ID if not set
-
-                const userData = {
-                  companyId: companyId,
-                  firstName: donor.name.split(' ')[0] || donor.name,
-                  lastName: donor.name.split(' ').slice(1).join(' ') || 'Donor',
-                  email: donor.email,
-                  password: password, // Use the donor's password
-                  phone: donor.phone,
-                  type: 'account',
-                  role: 'user',
-                  locationId: organization.ghlId,
-                  permissions: {
-                    // Basic permissions for a donor user
-                    conversationsEnabled: true,
-                    conversationsReadOnly: false,
-                    settingsEnabled: false,
-                    settingsReadOnly: true,
-                    // Disable most admin features
-                    campaignsEnabled: false,
-                    contactsEnabled: false,
-                    funnelsEnabled: false,
-                    triggersEnabled: false,
-                    opportunitiesEnabled: false,
-                    onlineListingsEnabled: false,
-                    marketingEnabled: false,
-                    agentReportingEnabled: false,
-                    botServiceEnabled: false,
-                    socialPlannerEnabled: false,
-                    bloggingEnabled: false,
-                    invoiceEnabled: false,
-                    affiliateManagerEnabled: false,
-                    contentAiEnabled: false,
-                    refundsEnabled: false,
-                    recordPaymentEnabled: false,
-                    cancelSubscriptionEnabled: false
-                  }
-                };
-
-                const userResult = await agencyGhlClient.createUser(userData);
-                
-                if (userResult.success) {
-                  console.log(`✅ GHL user created successfully: ${userResult.userId}`);
-                } else {
-                  console.error(`❌ GHL user creation failed: ${userResult.error}`);
-                  // Log details if available
-                  if (userResult.details) {
-                    console.error('User creation details:', JSON.stringify(userResult.details));
-                  }
-                }
-              } else {
-                console.log('ℹ️ No GHL Agency Key found, skipping GHL User creation');
-              }
-            } catch (userErr) {
-              console.error(`❌ GHL user creation exception: ${userErr.message}`);
-            }
-
-          } else {
-            ghlContactError = ghlContactResult.error || 'Failed to create GHL contact';
-            console.error(`❌ GHL contact creation failed: ${ghlContactError}`);
-          }
-        } else {
-          console.log(`ℹ️ No GHL integration found for organization ${validOrganizationId}, skipping GHL contact creation`);
-        }
-      }
-    } catch (ghlErr) {
-      ghlContactError = ghlErr.message;
-      console.error(`❌ GHL contact creation error: ${ghlErr.message}`);
-    }
-
     console.log(`New donor created: ${email}`);
 
     return NextResponse.json({
@@ -323,11 +200,6 @@ export async function POST(request) {
         sent: emailSent,
         error: emailError,
         verification_token: emailSent ? undefined : verificationToken // Include token if email failed
-      },
-      ghl_contact_status: {
-        created: ghlContactResult?.success || false,
-        contact_id: ghlContactResult?.contactId || null,
-        error: ghlContactError
       }
     });
 

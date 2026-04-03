@@ -111,7 +111,7 @@ export default function DonorSubscriptionsPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage(`Subscription ${action}ed successfully!`);
+        setMessage(`Donation ${action}ed successfully!`);
         fetchSubscriptions(); // Refresh the list
         setTimeout(() => setMessage(''), 3000);
       } else {
@@ -157,7 +157,7 @@ export default function DonorSubscriptionsPage() {
         const data = await response.json();
 
         if (response.ok) {
-          setMessage(data.message || 'Subscription canceled successfully!');
+          setMessage(data.message || 'Donation canceled successfully!');
           fetchSubscriptions(); // Refresh the list
           setTimeout(() => setMessage(''), 3000);
         } else {
@@ -281,7 +281,7 @@ export default function DonorSubscriptionsPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading subscriptions</p>
+          <p className="text-gray-600">Loading donations</p>
         </div>
       </div>
     );
@@ -406,7 +406,7 @@ export default function DonorSubscriptionsPage() {
         {error ? (
           <div className="p-8 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Subscriptions</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Donations</h3>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={fetchSubscriptions}
@@ -509,7 +509,7 @@ export default function DonorSubscriptionsPage() {
                             onClick={() => handleCancelClick(subscription)}
                             disabled={actionLoading === subscription.id}
                             className="px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200 disabled:opacity-50 border border-red-200"
-                            title="Cancel Subscription"
+                            title="Cancel Donation"
                           >
                             {actionLoading === subscription.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -528,8 +528,8 @@ export default function DonorSubscriptionsPage() {
         ) : (
           <div className="p-8 text-center">
             <CreditCard className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Subscriptions Found</h3>
-            <p className="text-gray-600 mb-4">You don&apos;t have any active subscriptions yet.</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Monthly Donations Found</h3>
+            <p className="text-gray-600 mb-4">You don&apos;t have any active monthly donations yet.</p>
             <button
               onClick={() => router.push('/donor/dashboard')}
               className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200"
@@ -570,14 +570,14 @@ export default function DonorSubscriptionsPage() {
                   <AlertCircle className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Cancel Subscription</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Cancel Donation</h3>
                   <p className="text-sm text-gray-600">This action cannot be undone</p>
                 </div>
               </div>
 
               <div className="mb-6">
                 <p className="text-gray-700 mb-3">
-                  Do you really want to cancel the subscription?
+                  Do you really want to cancel the donation?
                 </p>
                 {subscriptionToCancel && (
                   <div className="bg-gray-50 rounded-lg p-3 mb-4">
@@ -623,7 +623,7 @@ export default function DonorSubscriptionsPage() {
                       className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
                     />
                     <label htmlFor="cancel-immediately" className="text-sm text-gray-700">
-                      <strong>Cancel immediately</strong> - Stop subscription right now
+                      <strong>Cancel immediately</strong> - Stop donation right now
                     </label>
                   </div>
                 </div>
@@ -634,7 +634,7 @@ export default function DonorSubscriptionsPage() {
                   onClick={handleCancelCancel}
                   className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
                 >
-                  Keep Subscription
+                  Keep Donation
                 </button>
                 <button
                   onClick={handleCancelConfirm}
