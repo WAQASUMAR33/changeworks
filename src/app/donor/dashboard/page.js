@@ -428,7 +428,7 @@ export default function DonorDashboard() {
             <div className="flex-1 min-w-0">
               <h2 className="text-xl sm:text-2xl font-bold mb-2">Your Impact Dashboard</h2>
               <p className="text-blue-100 text-sm sm:text-base">
-                Track your donations, manage subscriptions, and see the difference you&apos;re making
+                Track your donations, manage Donations, and see the difference you&apos;re making
               </p>
             </div>
 
@@ -499,7 +499,7 @@ export default function DonorDashboard() {
                   </div>
                   <div className="flex-1 w-full">
                     <h4 className="text-lg font-bold text-gray-700 leading-tight">Checking Status...</h4>
-                    <p className="text-sm text-gray-500">Loading subscription status</p>
+                    <p className="text-sm text-gray-500">Loading donation status</p>
                   </div>
                 </div>
               ) : subscriptionStatus.hasActiveSubscription ? (
@@ -516,7 +516,7 @@ export default function DonorDashboard() {
                         <h4 className="text-lg font-bold text-white leading-tight">Start and Manage your Monthly Donations</h4>
                         <p className="text-sm text-green-100 mt-1">
                           {subscriptionStatus.subscriptions.length > 0
-                            ? `${subscriptionStatus.subscriptions.length} active subscription${subscriptionStatus.subscriptions.length > 1 ? 's' : ''}`
+                            ? `${subscriptionStatus.subscriptions.length} active donation${subscriptionStatus.subscriptions.length > 1 ? 's' : ''}`
                             : 'Recurring donations active'
                           }
                         </p>

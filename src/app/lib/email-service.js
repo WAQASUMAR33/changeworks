@@ -1453,7 +1453,8 @@ Unsubscribe
       to: organization.email,
       subject: subject,
       html: html,
-      text: text
+      text: text,
+      from: `"ChangeWorks" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`
     });
   }
 
@@ -1529,7 +1530,106 @@ Your trusted platform partner for charitable giving
       to: organization.email,
       subject: subject,
       html: html,
-      text: text
+      text: text,
+      from: `"ChangeWorks" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`
+    });
+  }
+
+  // Send monthly donation summary email to donor (last day of month)
+  async sendMonthlyDonationSummaryEmail({ donor, organization, month, totalAmount, donations, dashboardLink }) {
+    const orgName = organization?.name || 'ChangeWorks';
+    const subject = `Your ${month} Donation Summary – ${orgName}`;
+
+    // Build donation rows HTML
+    const donationRows = donations.map((d, i) => {
+      const date = new Date(d.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      const amount = parseFloat(d.amount).toFixed(2);
+      const bg = i % 2 === 0 ? '#ffffff' : '#f8f9fa';
+      return `
+        <tr style="background-color: ${bg};">
+          <td style="padding: 12px 16px; font-size: 14px; color: #333; border-bottom: 1px solid #e9ecef;">${date}</td>
+          <td style="padding: 12px 16px; font-size: 14px; color: #333; border-bottom: 1px solid #e9ecef;">${d.type || 'Donation'}</td>
+          <td style="padding: 12px 16px; font-size: 14px; color: #333; border-bottom: 1px solid #e9ecef;">${d.description || '—'}</td>
+          <td style="padding: 12px 16px; font-size: 14px; color: #333; border-bottom: 1px solid #e9ecef; text-align: right; font-weight: 600;">$${amount}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const content = `
+      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 8px;">Dear ${donor.name},</p>
+
+      <p style="color: #495057; margin-bottom: 28px;">Here is a summary of your donations to <strong>${orgName}</strong> for the month of <strong>${month}</strong>. Thank you for your continued generosity and support.</p>
+
+      <!-- Monthly Total Banner -->
+      <div style="background: linear-gradient(135deg, #302E56 0%, #4A487A 100%); color: white; padding: 28px 32px; border-radius: 12px; margin: 24px 0; text-align: center; box-shadow: 0 6px 20px rgba(48,46,86,0.25);">
+        <p style="margin: 0 0 6px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85;">Total Donated in ${month}</p>
+        <div style="font-size: 42px; font-weight: 700; letter-spacing: -1px;">$${parseFloat(totalAmount).toFixed(2)}</div>
+        <p style="margin: 8px 0 0 0; font-size: 14px; opacity: 0.8;">${donations.length} donation${donations.length !== 1 ? 's' : ''} this month</p>
+      </div>
+
+      <!-- Donation Table -->
+      <h3 style="color: #302E56; font-size: 16px; font-weight: 700; margin: 28px 0 12px 0; border-bottom: 2px solid #302E56; padding-bottom: 8px;">Donation Breakdown</h3>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: 1px solid #e9ecef; border-radius: 8px; overflow: hidden;">
+        <thead>
+          <tr style="background-color: #302E56;">
+            <th style="padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px;">Date</th>
+            <th style="padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px;">Type</th>
+            <th style="padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px;">Description</th>
+            <th style="padding: 12px 16px; text-align: right; font-size: 12px; font-weight: 600; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${donationRows}
+          <tr style="background-color: #f1f0fb;">
+            <td colspan="3" style="padding: 14px 16px; font-size: 15px; font-weight: 700; color: #302E56;">Total</td>
+            <td style="padding: 14px 16px; font-size: 15px; font-weight: 700; color: #302E56; text-align: right;">$${parseFloat(totalAmount).toFixed(2)}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="margin-top: 28px; color: #495057;">You can view your full giving history, download records, and manage your donations anytime from your Donor Portal.</p>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${dashboardLink}" class="button">View My Donor Portal</a>
+      </div>
+
+      <div style="margin-top: 28px; color: #495057; font-style: italic; border-top: 1px solid #e9ecef; padding-top: 20px;">
+        <p>With gratitude,<br><strong>${orgName} Team</strong></p>
+      </div>
+
+      ${this.getFooterHtml()}
+    `;
+
+    // Plain text fallback
+    const donationLines = donations.map((d, i) => {
+      const date = new Date(d.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      return `  ${i + 1}. ${date} | ${d.type || 'Donation'} | ${d.description || 'N/A'} | $${parseFloat(d.amount).toFixed(2)}`;
+    }).join('\n');
+
+    const text = `
+Your ${month} Donation Summary – ${orgName}
+
+Dear ${donor.name},
+
+Here is a summary of your donations to ${orgName} for ${month}.
+
+Total Donated: $${parseFloat(totalAmount).toFixed(2)}
+
+Donation Breakdown:
+${donationLines}
+
+View your full history: ${dashboardLink}
+
+With gratitude,
+${orgName} Team
+    `.trim();
+
+    return await this.sendEmail({
+      to: donor.email,
+      subject,
+      html: this.generateEmailHtml(content, organization, subject, true, false),
+      text,
+      from: `"${orgName}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });
   }
 }
