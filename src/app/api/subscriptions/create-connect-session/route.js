@@ -84,6 +84,15 @@ export async function POST(request) {
             );
         }
 
+        // Fee Formula:
+        // - 90% goes to the organization
+        // - 10% bucket = Stripe processing fee (~2.9%) + platform fee (~7.1%)
+        // - application_fee_percent = 7.1% (10% − 2.9%) → org nets ~90% after Stripe's fixed 30¢
+        // Special (frankie@vallartacares.com): 0% — full amount goes to org
+        const SPECIAL_ORG_EMAIL = 'frankie@vallartacares.com';
+        const isSpecialOrg = organization.email?.toLowerCase() === SPECIAL_ORG_EMAIL.toLowerCase();
+        const applicationFeePercent = isSpecialOrg ? 0 : 7.1;
+
         // Create Stripe checkout session for subscription on connected account
         try {
             const checkoutSession = await stripe.checkout.sessions.create({
@@ -97,7 +106,7 @@ export async function POST(request) {
                 ],
                 mode: 'subscription',
                 subscription_data: {
-                    application_fee_percent: 6.8, // 6.8% platform fee
+                    application_fee_percent: applicationFeePercent,
                     metadata: {
                         donor_id: donor_id.toString(),
                         organization_id: organization_id.toString(),

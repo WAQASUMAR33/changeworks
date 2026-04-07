@@ -119,21 +119,15 @@ export async function POST(request) {
     const isSpecialOrg = organization.email?.toLowerCase() === SPECIAL_ORG_EMAIL.toLowerCase();
     const feeStrategy = isSpecialOrg ? 'special' : 'standard';
 
-    // Calculate Platform Fee
-    // Standard Formula: Donation = 90% Org + Stripe + Platform
-    // Therefore: Platform = Donation - 90% Org - Stripe
-    //            Platform = (Donation * 10%) - Stripe
-    // Special (Frankie): 0% Platform Fee (Only Stripe fees deducted from connected account)
-    
+    // Fee Formula:
+    // - 90% goes to the organization
+    // - 10% bucket = Stripe processing fee + platform fee
+    // - application_fee = 10% − Stripe fee → org nets exactly 90%
+    // Special (frankie@vallartacares.com): 0% — full amount goes to org
     let applicationFeeAmount = 0;
-    
-    if (isSpecialOrg) {
-      applicationFeeAmount = 0;
-    } else {
-      const platformBudget = Math.round(amountInCents * 0.10); // 10% of total
-      const estimatedStripeFee = Math.round(amountInCents * 0.029) + 30; // 2.9% + 30c
-      
-      // Platform fee is the remainder of the 10% slice after paying Stripe
+    if (!isSpecialOrg) {
+      const platformBudget = Math.round(amountInCents * 0.10);
+      const estimatedStripeFee = Math.round(amountInCents * 0.029) + 30;
       applicationFeeAmount = Math.max(0, platformBudget - estimatedStripeFee);
     }
 

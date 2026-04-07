@@ -87,8 +87,15 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  // 90% goes to the connected Stripe account; 10% covers Stripe processing fee + platform fee
+  // Fee Formula:
+  // - 90% goes to the organization
+  // - 10% bucket = Stripe processing fee (~2.9%) + platform fee (~7.1%)
+  // - One-time:     application_fee = (amount × 10%) − estimated Stripe fee → org nets exactly 90%
+  // - Subscription: application_fee_percent = 7.1% (10% − 2.9%) → org nets ~90%
+  // Special (frankie@vallartacares.com): 0% — full amount goes to org
+  const SPECIAL_ORG_EMAIL = 'frankie@vallartacares.com';
   const PLATFORM_FEE_RATE = 0.10;
+  const SUBSCRIPTION_FEE_PERCENT = 7.1; // 10% − Stripe's 2.9%
 
   const {
     locationId, amount, currency = 'usd', priceId, entityId, entityType,
@@ -130,7 +137,7 @@ export async function POST(request) {
             { ghlAccounts: { some: { ghl_location_id: locationId } } },
           ],
         },
-        select: { stripeAccountId: true },
+        select: { stripeAccountId: true, email: true },
       });
 
       // Fallback: look up via ghlAppInstallations (location_id → ghl_id → org.ghlId)
@@ -143,7 +150,7 @@ export async function POST(request) {
           console.log(`[create-intent] Found install ghl_id=${install.ghl_id} for locationId=${locationId}`);
           org = await prisma.organization.findFirst({
             where: { ghlId: install.ghl_id },
-            select: { stripeAccountId: true },
+            select: { stripeAccountId: true, email: true },
           });
         }
       }
@@ -176,6 +183,23 @@ export async function POST(request) {
     return NextResponse.json({ error: 'This location has not connected a Stripe account yet' }, { status: 404 });
   }
 
+  // Resolve org email for special-org fee check
+  let orgEmail = null;
+  try {
+    const orgRow = await prisma.organization.findFirst({
+      where: {
+        OR: [
+          { ghlId: locationId },
+          { ghlAccounts: { some: { ghl_location_id: locationId } } },
+          { stripeAccountId: stripeAccount.stripeAccountId },
+        ],
+      },
+      select: { email: true },
+    });
+    orgEmail = orgRow?.email ?? null;
+  } catch {}
+  const isSpecialOrg = orgEmail?.toLowerCase() === SPECIAL_ORG_EMAIL.toLowerCase();
+
   const sharedMeta = { locationId, entityId: finalEntityId, entityType: finalEntityType, ...metadata };
 
   // Auto-create donor account for GHL payments
@@ -207,7 +231,7 @@ export async function POST(request) {
         phone: metadata.customerPhone ?? null,
         metadata: { locationId, entityId: finalEntityId },
       });
-      const applicationFeePercent = PLATFORM_FEE_RATE * 100; // 10%
+      const applicationFeePercent = isSpecialOrg ? 0 : SUBSCRIPTION_FEE_PERCENT;
       const subscription = await createSubscription({
         stripeAccountId: stripeAccount.stripeAccountId, customerId: customer.id, priceId,
         applicationFeePercent, metadata: { ...sharedMeta, entityType: 'subscription' },
@@ -225,10 +249,21 @@ export async function POST(request) {
 
     const priceAmount  = price.unit_amount ?? amount;
     const priceCurrency = price.currency ?? currency;
-    const applicationFeeAmount = Math.round(priceAmount * PLATFORM_FEE_RATE); // 10%
+    const applicationFeeAmount = isSpecialOrg ? 0 : Math.max(0, Math.round(priceAmount * PLATFORM_FEE_RATE) - Math.round(priceAmount * 0.029) - 30);
+    let oneTimeCustomerId;
+    if (metadata.customerEmail) {
+      const customer = await createCustomer({
+        stripeAccountId: stripeAccount.stripeAccountId,
+        email: metadata.customerEmail, name: metadata.customerName ?? null,
+        phone: metadata.customerPhone ?? null,
+        metadata: { locationId, entityId: finalEntityId },
+      });
+      oneTimeCustomerId = customer.id;
+    }
     const intent = await createPaymentIntent({
       amount: priceAmount, currency: priceCurrency, stripeAccountId: stripeAccount.stripeAccountId,
       applicationFeeAmount: applicationFeeAmount || undefined, metadata: sharedMeta,
+      customerId: oneTimeCustomerId,
     });
     return NextResponse.json({
       clientSecret: intent.client_secret, paymentIntentId: intent.id,
@@ -248,7 +283,7 @@ export async function POST(request) {
     const subscription = await createInlineSubscription({
       stripeAccountId: stripeAccount.stripeAccountId, customerId: customer.id,
       amount, currency, interval: resolvedInterval, productName: 'Subscription',
-      applicationFeePercent: PLATFORM_FEE_RATE * 100, // 10%
+      applicationFeePercent: isSpecialOrg ? 0 : SUBSCRIPTION_FEE_PERCENT,
       metadata: { ...sharedMeta, entityType: 'subscription', ghlSubscriptionId: ghlSubscriptionId ?? null },
     });
     const paymentIntent = subscription.latest_invoice?.payment_intent;
@@ -267,12 +302,27 @@ export async function POST(request) {
     });
   }
 
-  const applicationFeeAmount = Math.round(amount * PLATFORM_FEE_RATE); // 10%
+  const applicationFeeAmount = isSpecialOrg ? 0 : Math.max(0, Math.round(amount * PLATFORM_FEE_RATE) - Math.round(amount * 0.029) - 30);
+  let directCustomerId;
+  if (metadata.customerEmail) {
+    try {
+      const customer = await createCustomer({
+        stripeAccountId: stripeAccount.stripeAccountId,
+        email: metadata.customerEmail, name: metadata.customerName ?? null,
+        phone: metadata.customerPhone ?? null,
+        metadata: { locationId, entityId: finalEntityId },
+      });
+      directCustomerId = customer.id;
+    } catch (custErr) {
+      console.warn('[create-intent] Could not create Stripe customer (non-fatal):', custErr.message);
+    }
+  }
   let intent;
   try {
     intent = await createPaymentIntent({
       amount, currency, stripeAccountId: stripeAccount.stripeAccountId,
       applicationFeeAmount: applicationFeeAmount || undefined, metadata: sharedMeta,
+      customerId: directCustomerId,
     });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });

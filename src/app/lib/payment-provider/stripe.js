@@ -43,9 +43,13 @@ export async function deauthorizeStripeAccount(stripeAccountId) {
 
 // ─── Payment Intents ──────────────────────────────────────────────────────────
 
-export async function createPaymentIntent({ amount, currency, stripeAccountId, applicationFeeAmount, metadata = {} }) {
+export async function createPaymentIntent({ amount, currency, stripeAccountId, applicationFeeAmount, metadata = {}, customerId }) {
   return getStripe().paymentIntents.create(
-    { amount, currency, automatic_payment_methods: { enabled: true }, application_fee_amount: applicationFeeAmount, metadata },
+    {
+      amount, currency, automatic_payment_methods: { enabled: true },
+      application_fee_amount: applicationFeeAmount, metadata,
+      ...(customerId ? { customer: customerId } : {}),
+    },
     { stripeAccount: stripeAccountId }
   );
 }
