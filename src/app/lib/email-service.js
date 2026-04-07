@@ -223,7 +223,7 @@ class EmailService {
                 </tr>
               </table>
               
-              ${showFooter ? this.getFooterHtml() : ''}
+              ${showFooter ? `<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="margin: 0 auto;"><tr><td style="padding: 0 40px;">${this.getFooterHtml()}</td></tr></table>` : ''}
             </td>
           </tr>
         </table>
