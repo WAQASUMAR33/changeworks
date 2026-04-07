@@ -60,9 +60,10 @@ export async function POST(request) {
       }
     });
 
-    // Create reset URL
+    // Create reset URL — admin users get the admin reset page, donors get the standard one
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
-    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+    const resetPath = user ? '/changeworksadmin/reset-password' : '/reset-password';
+    const resetUrl = `${baseUrl}${resetPath}?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
     // Check if email configuration is available
     const hasEmailConfig = process.env.EMAIL_SERVER_HOST &&
@@ -85,11 +86,11 @@ export async function POST(request) {
             organization,
           });
         } else {
-          // Org admin reset — use email service admin method
-          await emailService.sendAdminVerificationEmail({
+          // Admin password reset email with ChangeWorks branding
+          await emailService.sendAdminPasswordResetEmail({
             email,
             name: user.name || 'Admin',
-            verificationLink: resetUrl,
+            resetLink: resetUrl,
           });
         }
 

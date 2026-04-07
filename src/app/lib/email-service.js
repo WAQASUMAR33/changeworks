@@ -305,6 +305,63 @@ Unsubscribe
     });
   }
 
+  // Send admin password reset email
+  async sendAdminPasswordResetEmail({ email, name, resetLink }) {
+    const subject = 'Reset your ChangeWorks Admin Password';
+
+    const changeWorksLogoUrl = this.getChangeWorksLogoUrl();
+
+    const content = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        <img src="${changeWorksLogoUrl}" alt="ChangeWorks" style="max-height: 80px; max-width: 220px; height: auto; border: 0; display: inline-block; margin-bottom: 12px;">
+        <h2 style="color: #302E56; margin: 0; font-size: 22px; font-weight: 700;">ChangeWorks</h2>
+      </div>
+
+      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello ${name || 'Admin'},</p>
+
+      <p>We received a request to reset the password for your ChangeWorks admin account associated with <strong>${email}</strong>.</p>
+
+      <p>Click the button below to set a new password. This link will expire in <strong>1 hour</strong> for security reasons.</p>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${resetLink}" class="button">Reset My Password</a>
+      </div>
+
+      <p style="font-size: 14px; color: #6c757d;">If you did not request a password reset, you can safely ignore this email — your password will remain unchanged.</p>
+
+      <div style="margin-top: 30px; font-style: italic; color: #495057;">
+        <p>Best regards,<br><strong>The ChangeWorks Team</strong></p>
+      </div>
+    `;
+
+    const brandingOrg = { name: 'ChangeWorks', imageUrl: '/imgs/changeworks.png' };
+    const html = this.generateEmailHtml(content, brandingOrg, subject, false);
+
+    const text = `
+Reset your ChangeWorks Admin Password
+
+Hello ${name || 'Admin'},
+
+We received a request to reset the password for your ChangeWorks admin account (${email}).
+
+Click the link below to set a new password (expires in 1 hour):
+${resetLink}
+
+If you did not request this, you can safely ignore this email.
+
+Best regards,
+The ChangeWorks Team
+    `;
+
+    return await this.sendEmail({
+      to: email,
+      subject,
+      html,
+      text,
+      from: `"ChangeWorks" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
+    });
+  }
+
   // Send admin verification email
   async sendAdminVerificationEmail({ email, name, verificationLink }) {
     const subject = 'Verify your ChangeWorks Admin Email';
