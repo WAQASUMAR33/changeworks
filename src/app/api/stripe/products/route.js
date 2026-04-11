@@ -1,21 +1,10 @@
 import { NextResponse } from "next/server";
 import { createStripeClient } from '@/app/lib/payment-mode';
-import { createStripeClient } from '@/app/lib/payment-mode';
-
-// Initialize Stripe with proper error handling
-try {
-  } else {
-    });
-  }
-} catch (error) {
-  console.error('Failed to initialize Stripe:', error);
-}
 
 // GET /api/stripe/products - Get all Stripe products
 export async function GET(request) {
   const stripe = await createStripeClient();
   try {
-    const stripe = await createStripeClient();
     // Check if Stripe is properly initialized
     if (!stripe) {
       return NextResponse.json({
@@ -143,7 +132,6 @@ export async function GET(request) {
 export async function POST(request) {
   const stripe = await createStripeClient();
   try {
-    const stripe = await createStripeClient();
     // Check if Stripe is properly initialized
     if (!stripe) {
       return NextResponse.json({

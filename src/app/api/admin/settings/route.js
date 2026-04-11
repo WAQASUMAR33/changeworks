@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { verifyAdminToken } from '../../../lib/admin-auth';
-import { clearPaymentModeCache } from '../../lib/payment-mode';
+import { clearPaymentModeCache } from '@/app/lib/payment-mode';
 
 // Default settings seeded when not in DB yet
 const DEFAULTS = {

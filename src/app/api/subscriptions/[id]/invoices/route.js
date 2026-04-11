@@ -1,22 +1,11 @@
 import { NextResponse } from "next/server";
 import { createStripeClient } from '@/app/lib/payment-mode';
-import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../../lib/prisma";
-
-// Initialize Stripe with proper error handling
-try {
-  } else {
-    });
-  }
-} catch (error) {
-  console.error('Failed to initialize Stripe:', error);
-}
 
 // GET - Get subscription invoices
 export async function GET(request, { params }) {
   const stripe = await createStripeClient();
   try {
-    const stripe = await createStripeClient();
     const subscriptionId = parseInt(params.id);
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit')) || 10;
@@ -129,7 +118,6 @@ export async function GET(request, { params }) {
 export async function POST(request, { params }) {
   const stripe = await createStripeClient();
   try {
-    const stripe = await createStripeClient();
     const subscriptionId = parseInt(params.id);
 
     if (!stripe) {
