@@ -1,9 +1,6 @@
 import { prisma } from '../../../../lib/prisma';
 import { createStripeClient } from '@/app/lib/payment-mode';
 
-  apiVersion: '2023-10-16',
-});
-
 /**
  * GHL Marketplace – Server-side Payment (no checkout form)
  *
@@ -26,11 +23,12 @@ import { createStripeClient } from '@/app/lib/payment-mode';
 export async function POST(req) {
   let body;
   try {
-    const stripe = await createStripeClient();
     body = await req.json();
   } catch {
     return Response.json({ success: false, message: 'Invalid JSON body' }, { status: 400 });
   }
+
+  const stripe = await createStripeClient();
 
   const { ghl_id, amount, product_id, type, donor_email, donor_name } = body;
 
@@ -170,7 +168,6 @@ export async function POST(req) {
 
   // ── 4. Has saved payment method → charge server-side, no form ───────────────
   try {
-    const stripe = await createStripeClient();
     if (type === 'one_time') {
       return await chargeOneTimeOffSession({
         stripe, stripeAccountId, amountInCents, product_id,
