@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
-import Stripe from 'stripe';
+import { createStripeClient } from '@/app/lib/payment-mode';
+import { createStripeClient } from '@/app/lib/payment-mode';
 
 // Initialize Stripe with proper error handling
-let stripe;
 try {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    console.warn('STRIPE_SECRET_KEY environment variable is not set');
   } else {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2023-10-16',
     });
   }
 } catch (error) {
@@ -17,7 +13,9 @@ try {
 
 // GET /api/stripe/prices - Get all Stripe prices
 export async function GET(request) {
+  const stripe = await createStripeClient();
   try {
+    const stripe = await createStripeClient();
     // Check if Stripe is properly initialized
     if (!stripe) {
       return NextResponse.json({
@@ -159,7 +157,9 @@ export async function GET(request) {
 
 // POST /api/stripe/prices - Create a new Stripe price
 export async function POST(request) {
+  const stripe = await createStripeClient();
   try {
+    const stripe = await createStripeClient();
     // Check if Stripe is properly initialized
     if (!stripe) {
       return NextResponse.json({

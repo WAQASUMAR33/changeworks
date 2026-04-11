@@ -9,7 +9,7 @@ import { prisma } from '@/app/lib/prisma';
 
 export async function GET(request) {
   const reqUrl  = new URL(request.url);
-  const baseUrl = process.env.GHL_APP_URL || process.env.NEXT_PUBLIC_APP_URL || `${reqUrl.protocol}//${reqUrl.host}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${reqUrl.protocol}//${reqUrl.host}`;
   const successUrl  = `${baseUrl}/payment-provider/ghl-connected`;
   const dashboardUrl = `${baseUrl}/organization/dashboard/payment-provider`;
 

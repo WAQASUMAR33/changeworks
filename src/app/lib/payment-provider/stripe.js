@@ -1,29 +1,19 @@
 /**
  * lib/payment-provider/stripe.js
- * Stripe SDK singleton + helper utilities for Stripe Connect (payment provider).
+ * Stripe SDK helpers for the GHL payment provider (Stripe Connect).
+ * Uses payment-mode.js so sandbox/live keys are switched automatically.
  */
 
-import Stripe from 'stripe';
-
-let _stripe = null;
-
-function getStripe() {
-  if (!_stripe) {
-    _stripe = new Stripe(process.env.GHL_STRIPE_SECRET_KEY || 'sk_test_placeholder', {
-      apiVersion: '2024-06-20',
-    });
-  }
-  return _stripe;
-}
+import { createStripeClient, getStripeConnectWebhookSecret } from '@/app/lib/payment-mode';
 
 // ─── Connect OAuth ────────────────────────────────────────────────────────────
 
 export function buildStripeConnectOAuthUrl(state, email) {
   const params = new URLSearchParams({
     response_type: 'code',
-    client_id:     process.env.GHL_STRIPE_CLIENT_ID,
+    client_id:     process.env.STRIPE_CONNECT_CLIENT_ID,
     scope:         'read_write',
-    redirect_uri:  process.env.GHL_STRIPE_CONNECT_REDIRECT_URI,
+    redirect_uri:  process.env.STRIPE_CONNECT_REDIRECT_URI,
     state,
     ...(email ? { 'stripe_user[email]': email } : {}),
   });
@@ -31,12 +21,14 @@ export function buildStripeConnectOAuthUrl(state, email) {
 }
 
 export async function exchangeStripeCode(code) {
-  return getStripe().oauth.token({ grant_type: 'authorization_code', code });
+  const stripe = await createStripeClient();
+  return stripe.oauth.token({ grant_type: 'authorization_code', code });
 }
 
 export async function deauthorizeStripeAccount(stripeAccountId) {
-  await getStripe().oauth.deauthorize({
-    client_id:      process.env.GHL_STRIPE_CLIENT_ID,
+  const stripe = await createStripeClient();
+  await stripe.oauth.deauthorize({
+    client_id:      process.env.STRIPE_CONNECT_CLIENT_ID,
     stripe_user_id: stripeAccountId,
   });
 }
@@ -44,7 +36,8 @@ export async function deauthorizeStripeAccount(stripeAccountId) {
 // ─── Payment Intents ──────────────────────────────────────────────────────────
 
 export async function createPaymentIntent({ amount, currency, stripeAccountId, applicationFeeAmount, metadata = {}, customerId }) {
-  return getStripe().paymentIntents.create(
+  const stripe = await createStripeClient();
+  return stripe.paymentIntents.create(
     {
       amount, currency, automatic_payment_methods: { enabled: true },
       application_fee_amount: applicationFeeAmount, metadata,
@@ -55,15 +48,18 @@ export async function createPaymentIntent({ amount, currency, stripeAccountId, a
 }
 
 export async function getPaymentIntent(paymentIntentId, stripeAccountId) {
-  return getStripe().paymentIntents.retrieve(paymentIntentId, { stripeAccount: stripeAccountId });
+  const stripe = await createStripeClient();
+  return stripe.paymentIntents.retrieve(paymentIntentId, { stripeAccount: stripeAccountId });
 }
 
 export async function updatePaymentIntentMetadata(paymentIntentId, metadata, stripeAccountId) {
-  return getStripe().paymentIntents.update(paymentIntentId, { metadata }, { stripeAccount: stripeAccountId });
+  const stripe = await createStripeClient();
+  return stripe.paymentIntents.update(paymentIntentId, { metadata }, { stripeAccount: stripeAccountId });
 }
 
 export async function getPaymentIntentWithCharge(paymentIntentId, stripeAccountId) {
-  return getStripe().paymentIntents.retrieve(
+  const stripe = await createStripeClient();
+  return stripe.paymentIntents.retrieve(
     paymentIntentId,
     { expand: ['latest_charge'] },
     { stripeAccount: stripeAccountId }
@@ -71,14 +67,16 @@ export async function getPaymentIntentWithCharge(paymentIntentId, stripeAccountI
 }
 
 export async function createRefund({ paymentIntentId, stripeAccountId, amount, reason }) {
-  return getStripe().refunds.create(
+  const stripe = await createStripeClient();
+  return stripe.refunds.create(
     { payment_intent: paymentIntentId, ...(amount ? { amount } : {}), ...(reason ? { reason } : {}) },
     { stripeAccount: stripeAccountId }
   );
 }
 
 export async function createAccountLink(stripeAccountId, returnUrl, refreshUrl) {
-  return getStripe().accountLinks.create({
+  const stripe = await createStripeClient();
+  return stripe.accountLinks.create({
     account:     stripeAccountId,
     return_url:  returnUrl,
     refresh_url: refreshUrl,
@@ -87,20 +85,23 @@ export async function createAccountLink(stripeAccountId, returnUrl, refreshUrl) 
 }
 
 export async function getConnectedAccount(stripeAccountId) {
-  return getStripe().accounts.retrieve(stripeAccountId);
+  const stripe = await createStripeClient();
+  return stripe.accounts.retrieve(stripeAccountId);
 }
 
 // ─── Customers & Subscriptions ────────────────────────────────────────────────
 
 export async function createCustomer({ stripeAccountId, email, name, phone, metadata = {} }) {
-  return getStripe().customers.create(
+  const stripe = await createStripeClient();
+  return stripe.customers.create(
     { ...(email ? { email } : {}), ...(name ? { name } : {}), ...(phone ? { phone } : {}), metadata },
     { stripeAccount: stripeAccountId }
   );
 }
 
 export async function createSubscription({ stripeAccountId, customerId, priceId, applicationFeePercent, metadata = {} }) {
-  return getStripe().subscriptions.create(
+  const stripe = await createStripeClient();
+  return stripe.subscriptions.create(
     {
       customer:         customerId,
       items:            [{ price: priceId }],
@@ -114,8 +115,9 @@ export async function createSubscription({ stripeAccountId, customerId, priceId,
 }
 
 export async function createInlineSubscription({ stripeAccountId, customerId, amount, currency, interval = 'month', productName = 'Subscription', applicationFeePercent, metadata = {} }) {
-  const product = await getStripe().products.create({ name: productName }, { stripeAccount: stripeAccountId });
-  return getStripe().subscriptions.create(
+  const stripe = await createStripeClient();
+  const product = await stripe.products.create({ name: productName }, { stripeAccount: stripeAccountId });
+  return stripe.subscriptions.create(
     {
       customer:         customerId,
       items: [{ price_data: { currency, product: product.id, unit_amount: amount, recurring: { interval } } }],
@@ -129,20 +131,23 @@ export async function createInlineSubscription({ stripeAccountId, customerId, am
 }
 
 export async function getPrice(priceId, stripeAccountId) {
-  return getStripe().prices.retrieve(priceId, { stripeAccount: stripeAccountId });
+  const stripe = await createStripeClient();
+  return stripe.prices.retrieve(priceId, { stripeAccount: stripeAccountId });
 }
 
 // ─── Products & Prices ────────────────────────────────────────────────────────
 
 export async function createProduct({ stripeAccountId, name, description, images }) {
-  return getStripe().products.create(
+  const stripe = await createStripeClient();
+  return stripe.products.create(
     { name, ...(description ? { description } : {}), ...(images?.length ? { images } : {}) },
     { stripeAccount: stripeAccountId }
   );
 }
 
 export async function updateProduct(stripeAccountId, productId, { name, description, active }) {
-  return getStripe().products.update(
+  const stripe = await createStripeClient();
+  return stripe.products.update(
     productId,
     { ...(name !== undefined ? { name } : {}), ...(description !== undefined ? { description } : {}), ...(active !== undefined ? { active } : {}) },
     { stripeAccount: stripeAccountId }
@@ -150,14 +155,16 @@ export async function updateProduct(stripeAccountId, productId, { name, descript
 }
 
 export async function listProducts(stripeAccountId, { limit = 20, startingAfter } = {}) {
-  return getStripe().products.list(
+  const stripe = await createStripeClient();
+  return stripe.products.list(
     { limit, active: true, expand: ['data.default_price'], ...(startingAfter ? { starting_after: startingAfter } : {}) },
     { stripeAccount: stripeAccountId }
   );
 }
 
 export async function createPrice({ stripeAccountId, productId, amount, currency, recurring }) {
-  return getStripe().prices.create(
+  const stripe = await createStripeClient();
+  return stripe.prices.create(
     {
       product:     productId,
       unit_amount: amount,
@@ -169,19 +176,24 @@ export async function createPrice({ stripeAccountId, productId, amount, currency
 }
 
 export async function listPrices(stripeAccountId, productId) {
-  return getStripe().prices.list({ product: productId, active: true, limit: 10 }, { stripeAccount: stripeAccountId });
+  const stripe = await createStripeClient();
+  return stripe.prices.list({ product: productId, active: true, limit: 10 }, { stripeAccount: stripeAccountId });
 }
 
 export async function archivePrice(stripeAccountId, priceId) {
-  return getStripe().prices.update(priceId, { active: false }, { stripeAccount: stripeAccountId });
+  const stripe = await createStripeClient();
+  return stripe.prices.update(priceId, { active: false }, { stripeAccount: stripeAccountId });
 }
 
 export async function setProductDefaultPrice(stripeAccountId, productId, priceId) {
-  return getStripe().products.update(productId, { default_price: priceId }, { stripeAccount: stripeAccountId });
+  const stripe = await createStripeClient();
+  return stripe.products.update(productId, { default_price: priceId }, { stripeAccount: stripeAccountId });
 }
 
 // ─── Webhook Verification ─────────────────────────────────────────────────────
 
-export function constructWebhookEvent(rawBody, signature) {
-  return getStripe().webhooks.constructEvent(rawBody, signature, process.env.GHL_STRIPE_WEBHOOK_SECRET);
+export async function constructWebhookEvent(rawBody, signature) {
+  const stripe = await createStripeClient();
+  const secret = await getStripeConnectWebhookSecret();
+  return stripe.webhooks.constructEvent(rawBody, signature, secret);
 }

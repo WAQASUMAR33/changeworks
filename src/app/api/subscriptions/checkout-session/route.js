@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
-import Stripe from "stripe";
 import { emailService } from "../../../lib/email-service";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function POST(request) {
   try {
+    const stripe = await createStripeClient();
     const body = await request.json();
     const { session_id, org_id } = body;
 

@@ -1,7 +1,6 @@
-import Stripe from 'stripe';
 import { headers } from 'next/headers';
+import { createStripeClient } from '@/app/lib/payment-mode';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 /**
  * GHL Marketplace - Custom Payment Provider Webhook
@@ -20,6 +19,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export async function POST(req) {
   let body;
   try {
+    const stripe = await createStripeClient();
     body = await req.json();
   } catch {
     return Response.json({ success: false, message: 'Invalid JSON body' }, { status: 400 });
@@ -44,6 +44,7 @@ export async function POST(req) {
   }
 
   try {
+    const stripe = await createStripeClient();
     switch (type) {
       case 'PAYMENT_INITIATED': {
         const paymentIntent = await stripe.paymentIntents.create(

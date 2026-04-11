@@ -21,15 +21,11 @@ export async function POST(request) {
     }
 
     // Check if Stripe is configured
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    const { getStripeSecretKey, getPaymentMode } = await import('@/app/lib/payment-mode');
+    const stripeSecretKey = await getStripeSecretKey();
     if (!stripeSecretKey) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Stripe not configured',
-          details: 'Please set STRIPE_SECRET_KEY in your environment variables',
-          keyFormat: 'Should start with sk_test_ for test mode or sk_live_ for live mode'
-        },
+        { success: false, error: 'Stripe not configured', details: 'No Stripe secret key set for current payment mode' },
         { status: 503 }
       );
     }
@@ -169,10 +165,12 @@ export async function POST(request) {
 
 // GET endpoint to show test instructions
 export async function GET() {
-  const stripeConfigured = !!process.env.STRIPE_SECRET_KEY;
+  const { getStripeSecretKey, getPaymentMode } = await import('@/app/lib/payment-mode');
+  const [stripeSecretKey, mode] = await Promise.all([getStripeSecretKey(), getPaymentMode()]);
+  const stripeConfigured = !!stripeSecretKey;
   const emailConfigured = !!(
-    process.env.EMAIL_SERVER_HOST && 
-    process.env.EMAIL_SERVER_USER && 
+    process.env.EMAIL_SERVER_HOST &&
+    process.env.EMAIL_SERVER_USER &&
     process.env.EMAIL_SERVER_PASSWORD
   );
 
@@ -181,10 +179,11 @@ export async function GET() {
     configuration: {
       stripe: {
         configured: stripeConfigured,
-        keyType: process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_') ? 'TEST MODE' : 
-                 process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_') ? 'LIVE MODE' : 
+        mode,
+        keyType: stripeSecretKey?.startsWith('sk_test_') ? 'TEST MODE' :
+                 stripeSecretKey?.startsWith('sk_live_') ? 'LIVE MODE' :
                  'NOT SET',
-        keyLength: process.env.STRIPE_SECRET_KEY?.length || 0
+        keyLength: stripeSecretKey?.length || 0
       },
       email: {
         configured: emailConfigured,

@@ -17,7 +17,7 @@ export async function createStripeConnectAccount(organization) {
       throw new Error('Stripe is not configured');
     }
 
-    const stripe = getStripe();
+    const stripe = await getStripe();
 
     // Map business type to Stripe's business_type
     const businessTypeMap = {
@@ -104,7 +104,7 @@ export async function getStripeAccountOnboardingLink(accountId) {
       throw new Error('Stripe is not configured');
     }
 
-    const stripe = getStripe();
+    const stripe = await getStripe();
 
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
@@ -131,7 +131,7 @@ export async function getStripeConnectAccount(accountId) {
       throw new Error('Stripe is not configured');
     }
 
-    const stripe = getStripe();
+    const stripe = await getStripe();
     const account = await stripe.accounts.retrieve(accountId);
 
     return account;

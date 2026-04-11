@@ -4,11 +4,8 @@ import { NextResponse } from 'next/server';
 import { getConnectedAccount } from '@/app/lib/payment-provider/stripe';
 import { getStripeAccount, saveStripeAccount } from '@/app/lib/payment-provider/tokenStore';
 import { prisma } from '@/app/lib/prisma';
-import Stripe from 'stripe';
-
-function getStripe() {
-  return new Stripe(process.env.GHL_STRIPE_SECRET_KEY || 'sk_test_placeholder', { apiVersion: '2024-06-20' });
-}
+import { createStripeClient } from '@/app/lib/payment-mode';
+const getStripe = () => createStripeClient();
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);

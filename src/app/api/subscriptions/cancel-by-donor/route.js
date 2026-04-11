@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
-import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // POST /api/subscriptions/cancel-by-donor - Cancel subscription by donor ID
 export async function POST(request) {
   try {
+    const stripe = await createStripeClient();
     const body = await request.json();
     const { donor_id, subscription_id, cancel_immediately = false } = body;
 
@@ -319,6 +319,7 @@ export async function POST(request) {
 // GET /api/subscriptions/cancel-by-donor - Get cancellation status by donor ID
 export async function GET(request) {
   try {
+    const stripe = await createStripeClient();
     const { searchParams } = new URL(request.url);
     const donorId = searchParams.get('donor_id');
 

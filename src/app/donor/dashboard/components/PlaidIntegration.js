@@ -9,7 +9,11 @@ import { Target, X, Loader2, CheckCircle, AlertCircle, Building2, Search, Heart,
 import { buildOrgLogoUrl } from '@/lib/image-utils';
 import Image from 'next/image';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+// Stripe promise loaded dynamically from /api/config/payment-mode (mode-aware)
+let stripePromise = fetch('/api/config/payment-mode')
+  .then((r) => r.json())
+  .then(({ stripePublishableKey }) => stripePublishableKey?.startsWith('pk_') ? loadStripe(stripePublishableKey) : null)
+  .catch(() => null);
 
 // ─── Card collection form ─────────────────────────────────────────────────────
 const CardForm = ({ onSaved, onError, token, organizationId }) => {

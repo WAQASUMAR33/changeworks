@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
-import Stripe from 'stripe';
+import { createStripeClient } from '@/app/lib/payment-mode';
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../../lib/prisma";
 
 // Initialize Stripe with proper error handling
-let stripe;
 try {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    console.warn('STRIPE_SECRET_KEY environment variable is not set');
   } else {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2023-10-16',
     });
   }
 } catch (error) {
@@ -18,7 +14,9 @@ try {
 
 // GET - Get subscription invoices
 export async function GET(request, { params }) {
+  const stripe = await createStripeClient();
   try {
+    const stripe = await createStripeClient();
     const subscriptionId = parseInt(params.id);
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit')) || 10;
@@ -129,7 +127,9 @@ export async function GET(request, { params }) {
 
 // POST - Create upcoming invoice preview
 export async function POST(request, { params }) {
+  const stripe = await createStripeClient();
   try {
+    const stripe = await createStripeClient();
     const subscriptionId = parseInt(params.id);
 
     if (!stripe) {

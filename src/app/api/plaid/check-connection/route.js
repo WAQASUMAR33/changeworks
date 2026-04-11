@@ -1,37 +1,23 @@
 import { NextResponse } from "next/server";
+import { createStripeClient, getPlaidConfig } from '@/app/lib/payment-mode';
 import { prisma } from "@/app/lib/prisma";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
 
 export const dynamic = 'force-dynamic';
 
-const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
-const PLAID_SECRET_KEY = process.env.PLAID_SECRET_KEY;
-const PLAID_ENV = (process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox').toLowerCase();
-
-function getPlaidBaseUrl(env) {
-  switch (env) {
-    case 'production': return 'https://production.plaid.com';
-    case 'development': return 'https://development.plaid.com';
-    default: return 'https://sandbox.plaid.com';
-  }
-}
-
-const PLAID_BASE_URL = getPlaidBaseUrl(PLAID_ENV);
-
 async function verifyPlaidConnection(accessToken) {
+  const plaid = await getPlaidConfig();
   try {
-    const response = await fetch(`${PLAID_BASE_URL}/accounts/get`, {
+    const stripe = await createStripeClient();
+    const response = await fetch(`${plaid.baseUrl}/accounts/get`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-        'PLAID-SECRET': PLAID_SECRET_KEY,
+        'PLAID-CLIENT-ID': plaid.clientId,
+        'PLAID-SECRET': plaid.secretKey,
       },
       body: JSON.stringify({
-        client_id: PLAID_CLIENT_ID,
-        secret: PLAID_SECRET_KEY,
+        client_id: plaid.clientId,
+        secret: plaid.secretKey,
         access_token: accessToken,
       }),
       signal: AbortSignal.timeout(15000),
@@ -54,17 +40,19 @@ async function verifyPlaidConnection(accessToken) {
 
 // Check if ACH routing numbers are available (confirms funding source is ready)
 async function checkFundingSource(accessToken) {
+  const plaid = await getPlaidConfig();
   try {
-    const response = await fetch(`${PLAID_BASE_URL}/auth/get`, {
+    const stripe = await createStripeClient();
+    const response = await fetch(`${plaid.baseUrl}/auth/get`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-        'PLAID-SECRET': PLAID_SECRET_KEY,
+        'PLAID-CLIENT-ID': plaid.clientId,
+        'PLAID-SECRET': plaid.secretKey,
       },
       body: JSON.stringify({
-        client_id: PLAID_CLIENT_ID,
-        secret: PLAID_SECRET_KEY,
+        client_id: plaid.clientId,
+        secret: plaid.secretKey,
         access_token: accessToken,
       }),
       signal: AbortSignal.timeout(15000),
@@ -94,6 +82,7 @@ async function checkFundingSource(accessToken) {
 
 export async function GET(request) {
   try {
+    const stripe = await createStripeClient();
     const { searchParams } = new URL(request.url);
     const donorIdParam = searchParams.get('donor_id');
 

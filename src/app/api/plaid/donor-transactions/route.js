@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
+import { getPlaidConfig } from '@/app/lib/payment-mode';
 import { prisma } from '../../../lib/prisma';
 import jwt from 'jsonwebtoken';
 
-const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
-const PLAID_SECRET_KEY = process.env.PLAID_SECRET_KEY;
-const PLAID_ENV = (process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox').toLowerCase();
 
 function getPlaidBaseUrl(env) {
   switch (env) {
@@ -14,22 +12,21 @@ function getPlaidBaseUrl(env) {
   }
 }
 
-const PLAID_BASE_URL = getPlaidBaseUrl(PLAID_ENV);
 
 export const dynamic = 'force-dynamic';
 
 async function fetchPlaidAccounts(accessToken) {
   try {
-    const response = await fetch(`${PLAID_BASE_URL}/accounts/get`, {
+    const response = await fetch(`${plaid.baseUrl}/accounts/get`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-        'PLAID-SECRET': PLAID_SECRET_KEY,
+        'PLAID-CLIENT-ID': plaid.clientId,
+        'PLAID-SECRET': plaid.secretKey,
       },
       body: JSON.stringify({
-        client_id: PLAID_CLIENT_ID,
-        secret: PLAID_SECRET_KEY,
+        client_id: plaid.clientId,
+        secret: plaid.secretKey,
         access_token: accessToken,
       }),
       signal: AbortSignal.timeout(15000),
@@ -51,16 +48,16 @@ async function fetchPlaidAccounts(accessToken) {
 async function fetchPlaidInstitution(institutionId) {
   if (!institutionId) return null;
   try {
-    const response = await fetch(`${PLAID_BASE_URL}/institutions/get_by_id`, {
+    const response = await fetch(`${plaid.baseUrl}/institutions/get_by_id`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-        'PLAID-SECRET': PLAID_SECRET_KEY,
+        'PLAID-CLIENT-ID': plaid.clientId,
+        'PLAID-SECRET': plaid.secretKey,
       },
       body: JSON.stringify({
-        client_id: PLAID_CLIENT_ID,
-        secret: PLAID_SECRET_KEY,
+        client_id: plaid.clientId,
+        secret: plaid.secretKey,
         institution_id: institutionId,
         country_codes: ['US'],
         options: { include_optional_metadata: true },
@@ -77,16 +74,16 @@ async function fetchPlaidInstitution(institutionId) {
 
 async function fetchPlaidTransactions(accessToken, startDate, endDate) {
   try {
-    const response = await fetch(`${PLAID_BASE_URL}/transactions/get`, {
+    const response = await fetch(`${plaid.baseUrl}/transactions/get`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-        'PLAID-SECRET': PLAID_SECRET_KEY,
+        'PLAID-CLIENT-ID': plaid.clientId,
+        'PLAID-SECRET': plaid.secretKey,
       },
       body: JSON.stringify({
-        client_id: PLAID_CLIENT_ID,
-        secret: PLAID_SECRET_KEY,
+        client_id: plaid.clientId,
+        secret: plaid.secretKey,
         access_token: accessToken,
         start_date: startDate,
         end_date: endDate,
@@ -107,6 +104,7 @@ async function fetchPlaidTransactions(accessToken, startDate, endDate) {
 }
 
 export async function GET(req) {
+  const plaid = await getPlaidConfig();
   try {
     // Verify donor JWT
     const authHeader = req.headers.get('authorization');

@@ -64,7 +64,7 @@ export async function POST(request) {
     console.log('✅ Reset token created and stored');
 
     // Create reset URL - organization-specific reset page
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
     const resetUrl = `${baseUrl}/organization/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
     console.log('🔍 Reset URL created:', resetUrl);

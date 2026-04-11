@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
-import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // GET /api/subscriptions/billing - Get billing information for a subscription
 export async function GET(request) {
   try {
+    const stripe = await createStripeClient();
     const { searchParams } = new URL(request.url);
     const subscriptionId = searchParams.get('subscription_id');
     const donorId = searchParams.get('donor_id');
@@ -163,6 +163,7 @@ export async function GET(request) {
 // PUT /api/subscriptions/billing - Update billing information
 export async function PUT(request) {
   try {
+    const stripe = await createStripeClient();
     const body = await request.json();
     const {
       subscription_id,

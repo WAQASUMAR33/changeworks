@@ -49,7 +49,7 @@ export async function GET(request) {
     const monthLabel = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
 
     const appBase = (() => {
-      let base = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+      let base = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
       if (!/^https?:\/\//i.test(base)) base = `https://${base}`;
       return base.replace(/\/$/, '');
     })();

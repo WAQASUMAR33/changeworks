@@ -8,7 +8,7 @@ export async function POST(request) {
   const { locationId } = await request.json();
   if (!locationId) return NextResponse.json({ error: 'locationId required' }, { status: 400 });
 
-  const appUrl = process.env.GHL_APP_URL || process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   const results = {};
 
   try {
@@ -49,11 +49,11 @@ export async function POST(request) {
   const publishableKey = stripeAccount?.publishableKey
     || process.env.STRIPE_PUBLISHABLE_KEY
     || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-    || process.env.GHL_STRIPE_PUBLISHABLE_KEY;
+    || process.env.STRIPE_PUBLISHABLE_KEY;
 
   results.envCheck = {
     hasGhlClientSecret:    !!process.env.GHL_CLIENT_SECRET,
-    hasStripePublishable:  !!(process.env.STRIPE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || process.env.GHL_STRIPE_PUBLISHABLE_KEY),
+    hasStripePublishable:  !!(process.env.STRIPE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
     hasStripeAccount:      !!stripeAccount,
     stripeAccountPkPrefix: stripeAccount?.publishableKey?.slice(0, 7) ?? null,
   };

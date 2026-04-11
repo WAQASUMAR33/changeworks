@@ -1,28 +1,17 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import Stripe from 'stripe';
 import { prisma } from "../../../lib/prisma";
 import emailService from "../../../lib/email-service";
 
-// Initialize Stripe
-let stripe;
-try {
-  if (process.env.STRIPE_SECRET_KEY) {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
-  }
-} catch (e) {
-  console.error('Stripe init error:', e);
-}
+import { createStripeClient } from '@/app/lib/payment-mode';
 
 const schema = z.object({
   payment_intent_id: z.string().min(1),
 });
 
 export async function POST(request) {
+  const stripe = await createStripeClient();
   try {
-    if (!stripe) {
-      return NextResponse.json({ success: false, error: 'Stripe not configured' }, { status: 503 });
-    }
 
     const body = await request.json();
     const { payment_intent_id } = schema.parse(body);
@@ -163,7 +152,7 @@ export async function POST(request) {
 
             if (donor && organization) {
                 // Generate dashboard link - FORCE login URL for donor dashboard access
-                let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+                let appBase = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
                 if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
                 const dashboardLink = `${appBase}/donor/login`;
                 

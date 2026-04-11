@@ -46,7 +46,7 @@ export async function POST(request) {
       amount: 50.00,
       startDate: new Date(),
       transactionId: `test_sub_${Date.now()}`,
-      dashboardLink: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/login`,
+      dashboardLink: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org'}/donor/login`,
       campaignName: "Test Campaign",
       paymentMethod: "Card ending in 4242",
       receiptNumber: `REC-${Date.now()}`

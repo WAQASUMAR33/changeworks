@@ -3,7 +3,7 @@ import axios from 'axios';
 class GHLClient {
   constructor(customToken) {
     // Use the correct GHL API endpoint from documentation
-    const baseURL = process.env.GHL_BASE_URL || 'https://rest.gohighlevel.com/v1';
+    const baseURL = process.env.GHL_API_BASE || 'https://rest.gohighlevel.com/v1';
     
     // Validate that customToken is provided
     if (!customToken) {
@@ -35,7 +35,7 @@ class GHLClient {
       console.log('Location ID:', locationId);
       
       const tokenEndpoint = 'https://services.leadconnectorhq.com/oauth/locationToken';
-      const agencyToken = process.env.GHL_AGENCY_API_KEY || process.env.GHL_API_KEY;
+      const agencyToken = process.env.GHL_AGENCY_API_KEY;
       
       console.log('Token Endpoint:', tokenEndpoint);
       console.log('Using Agency Token:', agencyToken ? `${agencyToken.substring(0, 20)}...` : 'NOT SET');

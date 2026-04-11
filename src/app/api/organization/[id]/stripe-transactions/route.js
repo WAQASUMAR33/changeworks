@@ -34,7 +34,7 @@ export async function GET(request, { params }) {
       });
     }
 
-    const stripe = getStripe();
+    const stripe = await getStripe();
 
     // Helper: treat empty/whitespace strings as missing
     const val = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);

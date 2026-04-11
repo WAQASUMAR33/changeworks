@@ -132,7 +132,7 @@ export async function listPaymentIntegrations(locationId) {
 }
 
 export async function createGHLPaymentProvider(locationId) {
-  const appUrl = process.env.GHL_APP_URL || process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   const client = await ghlClient(locationId);
   try {
     const { data } = await client.post(`/payments/custom-provider/provider?locationId=${locationId}`, {

@@ -13,7 +13,7 @@ export async function POST(request) {
   if (!stored) {
     return NextResponse.json({ error: 'Stripe account not connected. Complete OAuth first.' }, { status: 404 });
   }
-  const baseUrl    = process.env.GHL_APP_URL || process.env.NEXT_PUBLIC_APP_URL || '';
+  const baseUrl    = process.env.NEXT_PUBLIC_APP_URL || '';
   const returnUrl  = `${baseUrl}/organization/dashboard/payment-provider?locationId=${locationId}&onboarding=complete`;
   const refreshUrl = `${baseUrl}/api/payment-provider/connect/onboard/refresh?locationId=${locationId}`;
   try {

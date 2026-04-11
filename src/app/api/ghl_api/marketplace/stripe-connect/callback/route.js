@@ -1,6 +1,4 @@
-import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 /**
  * Stripe Connect Onboarding - Return / Callback
@@ -26,6 +24,7 @@ export async function GET(req) {
   }
 
   try {
+    const stripe = await createStripeClient();
     const account = await stripe.accounts.retrieve(stripeAccountId);
 
     const isComplete =

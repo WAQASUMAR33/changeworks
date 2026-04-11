@@ -4,59 +4,47 @@ import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 
-// Get the Stripe publishable key from environment variables
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+let _cachedPromise = null;
+let _cachedKey = null;
 
-// Initialize global promise for platform account (optimization)
-let platformStripePromise = null;
-if (stripePublishableKey && stripePublishableKey.trim().startsWith('pk_')) {
-  platformStripePromise = loadStripe(stripePublishableKey);
+async function loadStripeForMode(stripeAccount) {
+  const res = await fetch('/api/config/payment-mode');
+  const { stripePublishableKey } = await res.json();
+  if (!stripePublishableKey?.startsWith('pk_')) return null;
+
+  if (stripeAccount) {
+    return loadStripe(stripePublishableKey, { stripeAccount });
+  }
+  // Reuse platform promise if key hasn't changed
+  if (_cachedKey !== stripePublishableKey) {
+    _cachedKey = stripePublishableKey;
+    _cachedPromise = loadStripe(stripePublishableKey);
+  }
+  return _cachedPromise;
 }
 
 export default function StripeProvider({ children, stripeAccount }) {
-  // Initialize state based on the initial prop to avoid race conditions
-  const [stripePromise, setStripePromise] = useState(() => {
-    if (stripeAccount && stripePublishableKey && stripePublishableKey.trim().startsWith('pk_')) {
-      console.log(`🏦 Initializing Stripe for connected account (Sync): ${stripeAccount}`);
-      return loadStripe(stripePublishableKey, { stripeAccount });
-    }
-    return platformStripePromise;
-  });
+  const [stripePromise, setStripePromise] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!stripePublishableKey || !stripePublishableKey.trim().startsWith('pk_')) return;
-
-    if (stripeAccount) {
-      console.log(`🏦 Switching Stripe to connected account: ${stripeAccount}`);
-      const connectedPromise = loadStripe(stripePublishableKey, { stripeAccount });
-      setStripePromise(connectedPromise);
-    } else {
-      console.log('🏦 Switching Stripe to platform account');
-      setStripePromise(platformStripePromise);
-    }
+    loadStripeForMode(stripeAccount)
+      .then((p) => {
+        if (!p) setError('Stripe publishable key not configured');
+        else setStripePromise(p);
+      })
+      .catch(() => setError('Failed to load payment configuration'));
   }, [stripeAccount]);
 
-  // Handle missing key
-  if (!stripePublishableKey || !stripePublishableKey.trim()) {
+  if (error) {
     return (
       <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
         <p className="text-red-700 font-semibold mb-2">Payment system not configured.</p>
-        <p className="text-red-600 text-sm">Stripe publishable key is missing.</p>
+        <p className="text-red-600 text-sm">{error}</p>
       </div>
     );
   }
 
-  // Handle invalid key format
-  if (!stripePublishableKey.trim().startsWith('pk_')) {
-    return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
-        <p className="text-red-700 font-semibold mb-2">Invalid Configuration.</p>
-        <p className="text-red-600 text-sm">Stripe publishable key must start with 'pk_'.</p>
-      </div>
-    );
-  }
-
-  // Handle loading/failure
   if (!stripePromise) {
     return (
       <div className="p-4 flex flex-col items-center justify-center min-h-[100px]">

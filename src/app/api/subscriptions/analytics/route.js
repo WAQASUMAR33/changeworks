@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
-import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // GET /api/subscriptions/analytics - Get subscription analytics and metrics
 export async function GET(request) {
   try {
+    const stripe = await createStripeClient();
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get('organization_id');
     const donorId = searchParams.get('donor_id');
@@ -199,6 +199,7 @@ export async function GET(request) {
 // Helper function to get revenue metrics
 async function getRevenueMetrics(where) {
   try {
+    const stripe = await createStripeClient();
     const [
       totalRevenue,
       successfulPayments,
@@ -262,6 +263,7 @@ async function getRevenueMetrics(where) {
 // Helper function to get subscription growth
 async function getSubscriptionGrowth(where, start, end) {
   try {
+    const stripe = await createStripeClient();
     // Get subscriptions created in the period
     const newSubscriptions = await prisma.subscription.count({
       where: {
@@ -309,6 +311,7 @@ async function getSubscriptionGrowth(where, start, end) {
 // Helper function to get churn metrics
 async function getChurnMetrics(where, start, end) {
   try {
+    const stripe = await createStripeClient();
     // Get canceled subscriptions in the period
     const canceledSubscriptions = await prisma.subscription.count({
       where: {

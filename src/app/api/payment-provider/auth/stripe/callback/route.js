@@ -12,7 +12,7 @@ export async function GET(request) {
   const state = searchParams.get('state');
   const error = searchParams.get('error');
 
-  const baseUrl     = process.env.GHL_APP_URL || process.env.NEXT_PUBLIC_APP_URL || '';
+  const baseUrl     = process.env.NEXT_PUBLIC_APP_URL || '';
   const dashboardUrl = `${baseUrl}/organization/dashboard/payment-provider`;
 
   if (error) {

@@ -74,7 +74,7 @@ class EmailService {
     // Check if it's a static asset (starts with /imgs/)
     // If so, use the app base URL
     if (organization.imageUrl.startsWith('/imgs/')) {
-      let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+      let appBase = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
       if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
       const cleanBase = appBase.endsWith('/') ? appBase.slice(0, -1) : appBase;
       return `${cleanBase}${organization.imageUrl}`;
@@ -89,7 +89,7 @@ class EmailService {
     }
 
     // Fallback to app URL if image back URL is not set
-    let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
     if (!/^https?:\/\//i.test(baseUrl)) {
       baseUrl = `https://${baseUrl}`;
     }
@@ -101,7 +101,7 @@ class EmailService {
 
   // Helper to resolve ChangeWorks logo URL
   getChangeWorksLogoUrl() {
-    let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+    let appBase = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
     if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
     const cleanBase = appBase.endsWith('/') ? appBase.slice(0, -1) : appBase;
     return `${cleanBase}/imgs/changeworks.png`;

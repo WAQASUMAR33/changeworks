@@ -1,21 +1,8 @@
 ﻿﻿﻿﻿import { NextResponse } from "next/server";
 import { z } from "zod";
-import Stripe from 'stripe';
 import { prisma } from "../../../lib/prisma";
 
-// Initialize Stripe with proper error handling
-let stripe;
-try {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    console.warn('STRIPE_SECRET_KEY environment variable is not set');
-  } else {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2023-10-16',
-    });
-  }
-} catch (error) {
-  console.error('Failed to initialize Stripe:', error);
-}
+import { createStripeClient } from '@/app/lib/payment-mode';
 
 // Validation schema for payment intent creation
 // NOTE: amount is expected in CENTS per latest contract
@@ -29,15 +16,8 @@ const paymentIntentSchema = z.object({
 });
 
 export async function POST(request) {
+  const stripe = await createStripeClient();
   try {
-    // Check if Stripe is properly initialized
-    if (!stripe) {
-      return NextResponse.json({
-        success: false,
-        error: "Payment service not available",
-        details: "Stripe configuration is missing"
-      }, { status: 503 });
-    }
 
     // DEBUG: Identify the Platform Account (The one making the API calls)
     try {
@@ -167,9 +147,9 @@ export async function POST(request) {
       
       let errorMessage = stripeError.message;
       if (stripeError.code === 'account_invalid') {
-        errorMessage = `The organization's Stripe account (${destinationAccountId}) is invalid or not connected in ${process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'Live' : 'Test'} mode.`;
+        errorMessage = `The organization's Stripe account (${destinationAccountId}) is invalid or not connected.`;
       } else if (errorMessage.includes('Only Stripe Connect platforms can work with other accounts')) {
-        errorMessage = `The Stripe ${process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'Live' : 'Test'} Secret Key configured in .env belongs to a Standard Stripe account, but a Connect Platform account is required to process donations for organizations. Please enable "Connect" in your Stripe Dashboard.`;
+        errorMessage = `The Stripe secret key belongs to a Standard account, but a Connect Platform account is required. Please enable "Connect" in your Stripe Dashboard.`;
       }
 
       return NextResponse.json({

@@ -12,7 +12,7 @@ export async function GET(request, { params }) {
       }, { status: 503 });
     }
 
-    const stripe = getStripe();
+    const stripe = await getStripe();
     const subscriptionId = params.id;
 
     const subscription = await prisma.subscription.findUnique({
@@ -108,7 +108,7 @@ export async function PUT(request, { params }) {
       }, { status: 503 });
     }
 
-    const stripe = getStripe();
+    const stripe = await getStripe();
     const subscriptionId = params.id;
     const body = await request.json();
     const { action, ...updateData } = body;
@@ -287,7 +287,7 @@ export async function DELETE(request, { params }) {
       }, { status: 503 });
     }
 
-    const stripe = getStripe();
+    const stripe = await getStripe();
     const subscriptionId = params.id;
     const { searchParams } = new URL(request.url);
     const cancelImmediately = searchParams.get('immediate') === 'true';

@@ -1,21 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import Stripe from "stripe";
 import { prisma } from "../../../lib/prisma";
 
-// Initialize Stripe
-let stripe;
-try {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    console.warn("STRIPE_SECRET_KEY environment variable is not set");
-  } else {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2023-10-16",
-    });
-  }
-} catch (error) {
-  console.error("Failed to initialize Stripe:", error);
-}
+import { createStripeClient } from '@/app/lib/payment-mode';
 
 // Validation schema
 // amount is expected in cents
@@ -27,6 +14,7 @@ const schema = z.object({
 });
 
 export async function POST(request) {
+  const stripe = await createStripeClient();
   try {
     if (!stripe) {
       return NextResponse.json(

@@ -4,6 +4,7 @@
  * instead of using the Stripe SDK
  */
 import { Buffer } from 'buffer';
+import { getStripeSecretKey } from '@/app/lib/payment-mode';
 
 /**
  * Create a Stripe Express account using direct API call
@@ -12,10 +13,10 @@ import { Buffer } from 'buffer';
  */
 export async function createStripeAccountDirect(country) {
   try {
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    const stripeSecretKey = await getStripeSecretKey();
 
     if (!stripeSecretKey) {
-      throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+      throw new Error('Stripe secret key is not configured');
     }
 
     // Prepare form data
@@ -79,10 +80,10 @@ export async function createStripeAccountDirect(country) {
  */
 export async function createStripeAccountLinkDirect(accountId, refreshUrl, returnUrl) {
   try {
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    const stripeSecretKey = await getStripeSecretKey();
 
     if (!stripeSecretKey) {
-      throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+      throw new Error('Stripe secret key is not configured');
     }
 
     if (!accountId) {
@@ -147,10 +148,10 @@ export async function createStripeAccountLinkDirect(accountId, refreshUrl, retur
  */
 export async function createStripeProductDirect(stripeAccountId, name, description) {
   try {
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    const stripeSecretKey = await getStripeSecretKey();
 
     if (!stripeSecretKey) {
-      throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+      throw new Error('Stripe secret key is not configured');
     }
 
     if (!stripeAccountId) {
@@ -206,10 +207,10 @@ export async function createStripeProductDirect(stripeAccountId, name, descripti
  */
 export async function createStripePriceDirect(stripeAccountId, productId, amount, currency = 'usd', interval = null) {
   try {
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    const stripeSecretKey = await getStripeSecretKey();
 
     if (!stripeSecretKey) {
-      throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+      throw new Error('Stripe secret key is not configured');
     }
 
     if (!stripeAccountId) {

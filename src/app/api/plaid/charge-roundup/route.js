@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
+import { getPlaidConfig } from '@/app/lib/payment-mode';
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { z } from 'zod';
-import Stripe from 'stripe';
 import { prisma } from '../../../lib/prisma';
 import jwt from 'jsonwebtoken';
 
-const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
-const PLAID_SECRET_KEY = process.env.PLAID_SECRET_KEY;
-const PLAID_ENV = (process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox').toLowerCase();
 
 function getPlaidBaseUrl(env) {
   switch (env) {
@@ -16,9 +14,7 @@ function getPlaidBaseUrl(env) {
   }
 }
 
-const PLAID_BASE_URL = getPlaidBaseUrl(PLAID_ENV);
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
 
 const schema = z.object({
   account_id:          z.string().min(1, 'account_id is required'),  // Plaid account_id (spending source)
@@ -36,16 +32,16 @@ function calcRoundUp(amount) {
 
 // Fetch transactions from Plaid (spending source — used only for round-up calculation)
 async function fetchTransactions(accessToken, startDate, endDate) {
-  const response = await fetch(`${PLAID_BASE_URL}/transactions/get`, {
+  const response = await fetch(`${plaid.baseUrl}/transactions/get`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-      'PLAID-SECRET': PLAID_SECRET_KEY,
+      'PLAID-CLIENT-ID': plaid.clientId,
+      'PLAID-SECRET': plaid.secretKey,
     },
     body: JSON.stringify({
-      client_id: PLAID_CLIENT_ID,
-      secret: PLAID_SECRET_KEY,
+      client_id: plaid.clientId,
+      secret: plaid.secretKey,
       access_token: accessToken,
       start_date: startDate,
       end_date: endDate,
@@ -64,7 +60,9 @@ async function fetchTransactions(accessToken, startDate, endDate) {
 }
 
 export async function POST(req) {
+  const plaid = await getPlaidConfig();
   try {
+    const stripe = await createStripeClient();
     if (!stripe) {
       return NextResponse.json({ success: false, error: 'Stripe not configured' }, { status: 503 });
     }

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma.jsx";
-import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // GET /api/subscriptions/membership-status - Get comprehensive membership status and payment records
 export async function GET(request) {
   try {
+    const stripe = await createStripeClient();
     const { searchParams } = new URL(request.url);
     const donorId = searchParams.get('donor_id');
     const customerEmail = searchParams.get('customer_email');
@@ -277,6 +277,7 @@ export async function GET(request) {
 // POST /api/subscriptions/membership-status - Get membership status with filters
 export async function POST(request) {
   try {
+    const stripe = await createStripeClient();
     const body = await request.json();
     const { 
       donor_id, 

@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from '../../../lib/prisma';
 import { verifyAdminToken } from '../../../lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
 
 export async function GET(req) {
   try {
+    const stripe = await createStripeClient();
     const authHeader = req.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });

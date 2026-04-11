@@ -69,7 +69,7 @@ export async function GET(request) {
 
     if (organization.stripeAccountId) {
       try {
-        const stripe = getStripe();
+        const stripe = await getStripe();
         const paymentIntents = await stripe.paymentIntents.list(
           { limit: 100, expand: ['data.latest_charge'] },
           { stripeAccount: organization.stripeAccountId }

@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
+import { getPlaidConfig } from '@/app/lib/payment-mode';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 // Plaid configuration
-const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
-const PLAID_SECRET_KEY = process.env.PLAID_SECRET_KEY;
-const PLAID_ENV = (process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox').toLowerCase();
 
 function getPlaidBaseUrl(env) {
   switch (env) {
@@ -20,6 +18,7 @@ function getPlaidBaseUrl(env) {
 }
 
 export async function POST(request) {
+  const plaid = await getPlaidConfig();
   try {
     const { donor_id } = await request.json();
 
@@ -64,14 +63,14 @@ export async function POST(request) {
     for (const connection of connections) {
       try {
         // Call Plaid API to remove the item (invalidates the access token)
-        const plaidResponse = await fetch(`${getPlaidBaseUrl(PLAID_ENV)}/item/remove`, {
+        const plaidResponse = await fetch(`${plaid.baseUrl}/item/remove`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            client_id: PLAID_CLIENT_ID,
-            secret: PLAID_SECRET_KEY,
+            client_id: plaid.clientId,
+            secret: plaid.secretKey,
             access_token: connection.access_token
           }),
           signal: AbortSignal.timeout(15000) // 15 second timeout

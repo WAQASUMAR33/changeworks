@@ -61,7 +61,7 @@ export async function POST(request) {
     }
 
     // Generate dashboard link - FORCE login URL as per requirements
-    let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+    let appBase = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
     if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
     // Force login URL, ignoring provided dashboard_link to ensure consistency
     const dashboardLink = `${appBase}/donor/login`;

@@ -1,6 +1,4 @@
-import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 /**
  * Stripe Connect Onboarding - Initiate
@@ -13,6 +11,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export async function POST(req) {
   let body;
   try {
+    const stripe = await createStripeClient();
     body = await req.json();
   } catch {
     return Response.json({ success: false, message: 'Invalid JSON body' }, { status: 400 });
@@ -28,6 +27,7 @@ export async function POST(req) {
   }
 
   try {
+    const stripe = await createStripeClient();
     // TODO: check if a Stripe account already exists for this locationId in your DB
     let stripeAccountId = await getExistingStripeAccount(locationId);
 

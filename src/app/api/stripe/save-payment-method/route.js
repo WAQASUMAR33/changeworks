@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from '@/app/lib/prisma';
 import jwt from 'jsonwebtoken';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
 
 export async function POST(request) {
   try {
+    const stripe = await createStripeClient();
     // Verify JWT
     const token = request.headers.get('authorization')?.split(' ')[1];
     if (!token) {

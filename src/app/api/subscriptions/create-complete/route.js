@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
-import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // POST /api/subscriptions/create-complete - Create customer, subscription, and complete payment in one step
 export async function POST(request) {
   try {
+    const stripe = await createStripeClient();
     const body = await request.json();
     const {
       donor_id,

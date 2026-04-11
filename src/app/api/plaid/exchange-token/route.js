@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
+import { getPlaidConfig } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
 import jwt from "jsonwebtoken";
 import { emailService } from "@/app/lib/email-service";
 // Plaid configuration
-const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
-const PLAID_SECRET_KEY = process.env.PLAID_SECRET_KEY;
-const PLAID_ENV = (process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox').toLowerCase();
 
 function getPlaidBaseUrl(env) {
   switch (env) {
@@ -15,9 +13,9 @@ function getPlaidBaseUrl(env) {
   }
 }
 
-const PLAID_BASE_URL = getPlaidBaseUrl(PLAID_ENV);
 
 export async function POST(request) {
+  const plaid = await getPlaidConfig();
   try {
     // Verify JWT token
     const token = request.headers.get('authorization')?.split(' ')[1];
@@ -38,16 +36,16 @@ export async function POST(request) {
     }
 
     // Exchange public token for access token
-    const exchangeResponse = await fetch(`${PLAID_BASE_URL}/item/public_token/exchange`, {
+    const exchangeResponse = await fetch(`${plaid.baseUrl}/item/public_token/exchange`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-        'PLAID-SECRET': PLAID_SECRET_KEY,
+        'PLAID-CLIENT-ID': plaid.clientId,
+        'PLAID-SECRET': plaid.secretKey,
       },
       body: JSON.stringify({
-        client_id: PLAID_CLIENT_ID,
-        secret: PLAID_SECRET_KEY,
+        client_id: plaid.clientId,
+        secret: plaid.secretKey,
         public_token: public_token,
       }),
       signal: AbortSignal.timeout(30000), // 30 second timeout
@@ -67,16 +65,16 @@ export async function POST(request) {
     const { access_token, item_id } = exchangeData;
 
     // Get account information
-    const accountsResponse = await fetch(`${PLAID_BASE_URL}/accounts/get`, {
+    const accountsResponse = await fetch(`${plaid.baseUrl}/accounts/get`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-        'PLAID-SECRET': PLAID_SECRET_KEY,
+        'PLAID-CLIENT-ID': plaid.clientId,
+        'PLAID-SECRET': plaid.secretKey,
       },
       body: JSON.stringify({
-        client_id: PLAID_CLIENT_ID,
-        secret: PLAID_SECRET_KEY,
+        client_id: plaid.clientId,
+        secret: plaid.secretKey,
         access_token: access_token,
       }),
       signal: AbortSignal.timeout(30000), // 30 second timeout
@@ -158,7 +156,7 @@ export async function POST(request) {
       const organization = await prisma.organization.findUnique({ where: { id: organization_id } });
 
       if (donor && organization) {
-        let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+        let appBase = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
         if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
         const dashboardLink = `${appBase}/donor/login`;
         

@@ -7,7 +7,7 @@ import { getStripeAccount } from '@/app/lib/payment-provider/tokenStore';
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const locationId = searchParams.get('locationId');
-  const baseUrl    = process.env.GHL_APP_URL || process.env.NEXT_PUBLIC_APP_URL || '';
+  const baseUrl    = process.env.NEXT_PUBLIC_APP_URL || '';
   const dashboardUrl = `${baseUrl}/organization/dashboard/payment-provider`;
 
   if (!locationId) {

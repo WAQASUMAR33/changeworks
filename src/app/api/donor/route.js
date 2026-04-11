@@ -90,7 +90,7 @@ export async function POST(request) {
         
         // Use the specific GHL API configuration provided
         const ghlApiUrl = 'https://rest.gohighlevel.com/v1/contacts/';
-        const ghlApiKey = process.env.GHL_API_KEY;
+        const ghlApiKey = process.env.GHL_AGENCY_API_KEY;
         
         // Prepare contact data according to your GHL API specification
         const contactData = {

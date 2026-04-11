@@ -13,7 +13,7 @@ export async function POST(request, { params }) {
       }, { status: 503 });
     }
 
-    const stripe = getStripe();
+    const stripe = await getStripe();
 
     // Get token from Authorization header
     const authHeader = request.headers.get('authorization');

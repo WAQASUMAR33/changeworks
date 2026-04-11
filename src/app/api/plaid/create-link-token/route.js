@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
+import { getPlaidConfig } from '@/app/lib/payment-mode';
 import jwt from "jsonwebtoken";
 
 // Plaid configuration
-const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
-const PLAID_SECRET_KEY = process.env.PLAID_SECRET_KEY;
-const PLAID_ENV = (process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox').toLowerCase();
 
 function getPlaidBaseUrl(env) {
   switch (env) {
@@ -18,6 +16,7 @@ function getPlaidBaseUrl(env) {
 }
 
 export async function POST(request) {
+  const plaid = await getPlaidConfig();
   try {
     // Verify JWT token
     const token = request.headers.get('authorization')?.split(' ')[1];
@@ -36,17 +35,17 @@ export async function POST(request) {
 
     // Build webhook base URL without hardcoding localhost
     const requestOrigin = new URL(request.url).origin;
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || requestOrigin;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || requestOrigin;
 
     // Create link token using Plaid API (environment-aware)
-    const plaidResponse = await fetch(`${getPlaidBaseUrl(PLAID_ENV)}/link/token/create`, {
+    const plaidResponse = await fetch(`${plaid.baseUrl}/link/token/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        client_id: PLAID_CLIENT_ID,
-        secret: PLAID_SECRET_KEY,
+        client_id: plaid.clientId,
+        secret: plaid.secretKey,
         client_name: 'ChangeWorks Fund',
         products: ['transactions', 'auth'],
         country_codes: ['US'],
@@ -76,11 +75,11 @@ export async function POST(request) {
           success: false, 
           error: 'Failed to create link token', 
           details: errorData, 
-          env: PLAID_ENV,
+          env: plaid.env,
           diagnostics: {
-            client_id_present: Boolean(PLAID_CLIENT_ID),
-            client_id_length: PLAID_CLIENT_ID ? PLAID_CLIENT_ID.length : 0,
-            secret_present: Boolean(PLAID_SECRET_KEY)
+            client_id_present: Boolean(plaid.clientId),
+            client_id_length: plaid.clientId ? plaid.clientId.length : 0,
+            secret_present: Boolean(plaid.secretKey)
           }
         },
         { status: 500 }

@@ -1,30 +1,13 @@
 import { NextResponse } from "next/server";
+import { createStripeClient, getStripeWebhookSecret } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-let endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-if (endpointSecret) {
-  endpointSecret = endpointSecret.trim();
-}
 
 // POST /api/subscriptions/webhooks - Handle subscription-specific webhooks
 export async function POST(request) {
+  const stripe = await createStripeClient();
+  const endpointSecret = await getStripeWebhookSecret();
+
   try {
-    if (!stripe) {
-      console.error('Stripe not initialized - webhook cannot be processed');
-      return NextResponse.json({
-        error: 'Payment service not available'
-      }, { status: 503 });
-    }
-
-    if (!endpointSecret) {
-      console.error('Webhook secret not configured');
-      return NextResponse.json({
-        error: 'Webhook configuration missing'
-      }, { status: 503 });
-    }
-
     // Use arrayBuffer and Buffer to preserve raw body for signature verification
     const buf = await request.arrayBuffer();
     const body = Buffer.from(buf);
@@ -118,6 +101,7 @@ export async function POST(request) {
 // Handle subscription created
 async function handleSubscriptionCreated(subscription) {
   try {
+    const stripe = await createStripeClient();
     console.log('Processing donation created:', subscription.id);
 
     const metadata = subscription.metadata;
@@ -181,6 +165,7 @@ async function handleSubscriptionCreated(subscription) {
 // Handle subscription updated
 async function handleSubscriptionUpdated(subscription) {
   try {
+    const stripe = await createStripeClient();
     console.log('Processing donation updated:', subscription.id);
 
     const existingSubscription = await prisma.subscription.findFirst({
@@ -221,6 +206,7 @@ async function handleSubscriptionUpdated(subscription) {
 // Handle subscription deleted
 async function handleSubscriptionDeleted(subscription) {
   try {
+    const stripe = await createStripeClient();
     console.log('Processing donation deleted:', subscription.id);
 
     const existingSubscription = await prisma.subscription.findFirst({
@@ -256,6 +242,7 @@ async function handleSubscriptionDeleted(subscription) {
 // Handle invoice created
 async function handleInvoiceCreated(invoice) {
   try {
+    const stripe = await createStripeClient();
     console.log('Processing invoice created:', invoice.id);
 
     if (!invoice.subscription) {
@@ -283,6 +270,7 @@ async function handleInvoiceCreated(invoice) {
 // Handle invoice payment succeeded
 async function handleInvoicePaymentSucceeded(invoice) {
   try {
+    const stripe = await createStripeClient();
     console.log('Processing invoice payment succeeded:', invoice.id);
 
     if (!invoice.subscription) {
@@ -329,6 +317,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
 // Handle invoice payment failed
 async function handleInvoicePaymentFailed(invoice) {
   try {
+    const stripe = await createStripeClient();
     console.log('Processing invoice payment failed:', invoice.id);
 
     if (!invoice.subscription) {
@@ -376,6 +365,7 @@ async function handleInvoicePaymentFailed(invoice) {
 // Handle invoice finalized
 async function handleInvoiceFinalized(invoice) {
   try {
+    const stripe = await createStripeClient();
     console.log('Processing invoice finalized:', invoice.id);
     // Add any specific logic for finalized invoices
   } catch (error) {
@@ -386,6 +376,7 @@ async function handleInvoiceFinalized(invoice) {
 // Handle invoice payment action required
 async function handleInvoicePaymentActionRequired(invoice) {
   try {
+    const stripe = await createStripeClient();
     console.log('Processing invoice payment action required:', invoice.id);
     // Add any specific logic for payment action required
   } catch (error) {
@@ -396,6 +387,7 @@ async function handleInvoicePaymentActionRequired(invoice) {
 // Handle payment method attached
 async function handlePaymentMethodAttached(paymentMethod) {
   try {
+    const stripe = await createStripeClient();
     console.log('Processing payment method attached:', paymentMethod.id);
     // Add any specific logic for payment method attachment
   } catch (error) {
@@ -406,6 +398,7 @@ async function handlePaymentMethodAttached(paymentMethod) {
 // Handle payment method detached
 async function handlePaymentMethodDetached(paymentMethod) {
   try {
+    const stripe = await createStripeClient();
     console.log('Processing payment method detached:', paymentMethod.id);
     // Add any specific logic for payment method detachment
   } catch (error) {
@@ -416,6 +409,7 @@ async function handlePaymentMethodDetached(paymentMethod) {
 // Handle charge succeeded
 async function handleChargeSucceeded(charge) {
   try {
+    const stripe = await createStripeClient();
     console.log('Processing charge succeeded:', charge.id);
     // Add any specific logic for successful charges
   } catch (error) {
@@ -426,6 +420,7 @@ async function handleChargeSucceeded(charge) {
 // Handle charge failed
 async function handleChargeFailed(charge) {
   try {
+    const stripe = await createStripeClient();
     console.log('Processing charge failed:', charge.id);
     // Add any specific logic for failed charges
   } catch (error) {
@@ -436,6 +431,7 @@ async function handleChargeFailed(charge) {
 // Handle charge dispute created
 async function handleChargeDisputeCreated(dispute) {
   try {
+    const stripe = await createStripeClient();
     console.log('Processing charge dispute created:', dispute.id);
     // Add any specific logic for charge disputes
   } catch (error) {

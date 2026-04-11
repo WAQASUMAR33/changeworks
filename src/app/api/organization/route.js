@@ -135,7 +135,7 @@ export async function POST(req) {
     // Automatically create GHL account using organization information
     try {
       // Check if we have a valid GHL Agency API key
-      const ghlAgencyKey = process.env.GHL_AGENCY_API_KEY || process.env.GHL_API_KEY;
+      const ghlAgencyKey = process.env.GHL_AGENCY_API_KEY;
 
       if (!ghlAgencyKey || ghlAgencyKey.length < 30) {
         console.log('⚠️ GHL Agency API key not configured or too short. Skipping GHL account creation.');
@@ -458,11 +458,11 @@ export async function POST(req) {
 
     if (input.createStripeAccount) {
       try {
-        const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+        const { getStripeSecretKey } = await import('@/app/lib/payment-mode');
+        const stripeSecretKey = await getStripeSecretKey();
 
         if (!stripeSecretKey) {
           console.log('⚠️ Stripe not configured. Skipping Stripe Connect account creation.');
-          console.log('To enable Stripe integration, add STRIPE_SECRET_KEY to your environment variables.');
         } else {
           console.log('🔵 Creating Stripe Connect account for organization:', organization.id);
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, Database, Trash2, Shield, CheckCircle, XCircle, Settings, DollarSign, Loader2 } from 'lucide-react';
+import { AlertTriangle, Database, Trash2, Shield, CheckCircle, XCircle, Settings, DollarSign, Loader2, Zap, TestTube } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TwoFactorSetup from '@/app/components/TwoFactorSetup';
 
@@ -19,6 +19,12 @@ export default function AdminSettingsPage() {
   const [thresholdLoading, setThresholdLoading] = useState(true);
   const [thresholdSaving, setThresholdSaving] = useState(false);
   const [thresholdStatus, setThresholdStatus] = useState(null); // { type: 'success'|'error', message }
+
+  // Payment mode state
+  const [paymentMode, setPaymentMode] = useState('sandbox'); // 'sandbox' | 'live'
+  const [modeLoading, setModeLoading] = useState(true);
+  const [modeSaving, setModeSaving] = useState(false);
+  const [modeStatus, setModeStatus] = useState(null);
 
   const router = useRouter();
 
@@ -107,6 +113,8 @@ export default function AdminSettingsPage() {
         if (data.success) {
           const th = data.settings.find((s) => s.key === 'roundup_minimum_threshold');
           if (th) setThresholdValue(th.value);
+          const pm = data.settings.find((s) => s.key === 'payment_mode');
+          if (pm) setPaymentMode(pm.value);
         }
       } catch (err) {
         console.error('Failed to load settings:', err);
@@ -114,8 +122,32 @@ export default function AdminSettingsPage() {
         setThresholdLoading(false);
       }
     };
-    fetchSettings();
+    fetchSettings().finally(() => setModeLoading(false));
   }, []);
+
+  const handleSavePaymentMode = async (newMode) => {
+    setModeSaving(true);
+    setModeStatus(null);
+    try {
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'payment_mode', value: newMode }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPaymentMode(newMode);
+        setModeStatus({ type: 'success', message: `Switched to ${newMode === 'live' ? 'Live' : 'Sandbox'} mode` });
+      } else {
+        setModeStatus({ type: 'error', message: data.error || 'Failed to save' });
+      }
+    } catch {
+      setModeStatus({ type: 'error', message: 'Network error. Please try again.' });
+    } finally {
+      setModeSaving(false);
+    }
+  };
 
   const handleSaveThreshold = async () => {
     const num = parseFloat(thresholdValue);
@@ -245,6 +277,93 @@ export default function AdminSettingsPage() {
         {/* Two-Factor Authentication Section */}
         <div className="mb-8">
           <TwoFactorSetup userType="user" />
+        </div>
+
+        {/* Payment Mode Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex items-start space-x-4">
+            <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+              {paymentMode === 'live' ? <Zap className="w-6 h-6 text-indigo-600" /> : <TestTube className="w-6 h-6 text-indigo-600" />}
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold text-gray-900 mb-1">Payment Mode</h2>
+              <p className="text-gray-600 mb-4">
+                Switch between <strong>Sandbox</strong> (test, no real charges) and <strong>Live</strong> (real payments) for Stripe and Plaid.
+                Changes take effect immediately for all new transactions.
+              </p>
+
+              {modeLoading ? (
+                <div className="flex items-center space-x-2 text-gray-500">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">Loading...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleSavePaymentMode('sandbox')}
+                    disabled={modeSaving || paymentMode === 'sandbox'}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm border-2 transition-all duration-200 ${
+                      paymentMode === 'sandbox'
+                        ? 'bg-blue-600 border-blue-600 text-white shadow-md cursor-default'
+                        : 'bg-white border-gray-300 text-gray-700 hover:border-blue-400 hover:text-blue-600'
+                    }`}
+                  >
+                    <TestTube className="w-4 h-4" />
+                    Sandbox
+                    {paymentMode === 'sandbox' && <span className="ml-1 text-xs bg-white/20 px-1.5 py-0.5 rounded">Active</span>}
+                  </button>
+
+                  <button
+                    onClick={() => handleSavePaymentMode('live')}
+                    disabled={modeSaving || paymentMode === 'live'}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm border-2 transition-all duration-200 ${
+                      paymentMode === 'live'
+                        ? 'bg-green-600 border-green-600 text-white shadow-md cursor-default'
+                        : 'bg-white border-gray-300 text-gray-700 hover:border-green-500 hover:text-green-600'
+                    }`}
+                  >
+                    {modeSaving && paymentMode !== 'live' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                    Live
+                    {paymentMode === 'live' && <span className="ml-1 text-xs bg-white/20 px-1.5 py-0.5 rounded">Active</span>}
+                  </button>
+                </div>
+              )}
+
+              <AnimatePresence>
+                {modeStatus && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className={`mt-3 flex items-center space-x-2 text-sm font-medium ${
+                      modeStatus.type === 'success' ? 'text-green-700' : 'text-red-700'
+                    }`}
+                  >
+                    {modeStatus.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                    <span>{modeStatus.message}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {paymentMode === 'live' && (
+                <div className="mt-4 bg-amber-50 border border-amber-300 rounded-lg p-3 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-800">
+                    <strong>Live mode is active.</strong> All payments will charge real cards and bank accounts.
+                    Ensure your live Stripe and Plaid keys are set in <code className="bg-amber-100 px-1 rounded">.env.local</code> before proceeding.
+                  </p>
+                </div>
+              )}
+
+              {paymentMode === 'sandbox' && (
+                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-700">
+                    <strong>Sandbox mode.</strong> Use Stripe test cards (e.g. 4242 4242 4242 4242) and Plaid sandbox credentials. No real charges are made.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Round-Up Threshold Section */}

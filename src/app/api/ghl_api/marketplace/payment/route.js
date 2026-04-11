@@ -1,7 +1,6 @@
-import Stripe from 'stripe';
 import { prisma } from '../../../../lib/prisma';
+import { createStripeClient } from '@/app/lib/payment-mode';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2023-10-16',
 });
 
@@ -27,6 +26,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 export async function POST(req) {
   let body;
   try {
+    const stripe = await createStripeClient();
     body = await req.json();
   } catch {
     return Response.json({ success: false, message: 'Invalid JSON body' }, { status: 400 });
@@ -170,6 +170,7 @@ export async function POST(req) {
 
   // ── 4. Has saved payment method → charge server-side, no form ───────────────
   try {
+    const stripe = await createStripeClient();
     if (type === 'one_time') {
       return await chargeOneTimeOffSession({
         stripe, stripeAccountId, amountInCents, product_id,

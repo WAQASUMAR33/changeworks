@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
-import Stripe from "stripe";
 import emailService from "../../../lib/email-service";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // POST /api/subscriptions/setup-payment - Setup payment for subscription
 export async function POST(request) {
   try {
+    const stripe = await createStripeClient();
     const body = await request.json();
     const {
       donor_id,
@@ -225,7 +225,7 @@ export async function POST(request) {
 
         // Send welcome email and monthly impact email for auto-created subscription
         try {
-          let appBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+          let appBase = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
           if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
           const dashboardLink = `${appBase}/donor/login`;
           

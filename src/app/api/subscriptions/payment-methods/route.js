@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
-import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // GET /api/subscriptions/payment-methods - List payment methods for a customer
 export async function GET(request) {
   try {
+    const stripe = await createStripeClient();
     const { searchParams } = new URL(request.url);
     const customerId = searchParams.get('customer_id');
     const donorId = searchParams.get('donor_id');
@@ -92,6 +92,7 @@ export async function GET(request) {
 // POST /api/subscriptions/payment-methods - Create a new payment method
 export async function POST(request) {
   try {
+    const stripe = await createStripeClient();
     const body = await request.json();
     const {
       donor_id,
@@ -190,6 +191,7 @@ export async function POST(request) {
 // DELETE /api/subscriptions/payment-methods - Remove a payment method
 export async function DELETE(request) {
   try {
+    const stripe = await createStripeClient();
     const { searchParams } = new URL(request.url);
     const paymentMethodId = searchParams.get('payment_method_id');
 

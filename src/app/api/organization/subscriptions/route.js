@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from '../../../lib/prisma';
-import Stripe from 'stripe';
 import jwt from 'jsonwebtoken';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function GET(req) {
   try {
+    const stripe = await createStripeClient();
     const authHeader = req.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'No token provided' }, { status: 401 });

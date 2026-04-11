@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../../lib/prisma";
-import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // GET /api/subscriptions/[id]/transactions - Get subscription transactions
 export async function GET(request, { params }) {
   try {
+    const stripe = await createStripeClient();
     const subscriptionId = params.id;
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page')) || 1;
@@ -105,6 +105,7 @@ export async function GET(request, { params }) {
 // POST /api/subscriptions/[id]/transactions - Create manual transaction record
 export async function POST(request, { params }) {
   try {
+    const stripe = await createStripeClient();
     const subscriptionId = params.id;
     const body = await request.json();
     const {

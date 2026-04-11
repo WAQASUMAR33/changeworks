@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { verifyAdminToken } from '../../../lib/admin-auth';
+import { clearPaymentModeCache } from '../../lib/payment-mode';
 
 // Default settings seeded when not in DB yet
 const DEFAULTS = {
@@ -8,6 +9,11 @@ const DEFAULTS = {
     value: '1.00',
     label: 'Round-Up Minimum Threshold ($)',
     description: 'Minimum accumulated round-up amount before charging donor via ACH. Stripe rejects charges below $1.00.',
+  },
+  payment_mode: {
+    value: 'sandbox',
+    label: 'Payment Mode',
+    description: 'Switch between sandbox (test) and live payment processing for Stripe and Plaid.',
   },
 };
 
@@ -84,6 +90,14 @@ export async function PUT(request) {
       }
     }
 
+    // Validate payment_mode
+    if (key === 'payment_mode' && !['sandbox', 'live'].includes(value)) {
+      return NextResponse.json(
+        { success: false, error: 'payment_mode must be "sandbox" or "live"' },
+        { status: 400 }
+      );
+    }
+
     const setting = await prisma.appSetting.upsert({
       where:  { key },
       update: { value: String(value), updated_by: user.email },
@@ -95,6 +109,11 @@ export async function PUT(request) {
         updated_by:  user.email,
       },
     });
+
+    // Clear in-memory mode cache so next request picks up the change immediately
+    if (key === 'payment_mode') {
+      clearPaymentModeCache();
+    }
 
     return NextResponse.json({ success: true, setting });
   } catch (error) {

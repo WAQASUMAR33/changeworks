@@ -10,7 +10,7 @@ import { getStripe } from '../../lib/stripe';
  */
 export async function createOrganizationStripeProducts(organization) {
   try {
-    const stripe = getStripe();
+    const stripe = await getStripe();
 
     // Product 1: Package 1
     const product1 = await stripe.products.create({
@@ -80,7 +80,7 @@ export async function createOrganizationStripeProducts(organization) {
  */
 export async function createDefaultPricesForProducts(products, organization, customPrices = null) {
   try {
-    const stripe = getStripe();
+    const stripe = await getStripe();
 
     // Use custom prices if provided, otherwise use defaults
     const product1PriceCents = customPrices?.product1Price || 1000; // Default $10.00
