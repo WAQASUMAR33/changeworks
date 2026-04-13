@@ -35,8 +35,8 @@ export async function deauthorizeStripeAccount(stripeAccountId) {
 
 // ─── Payment Intents ──────────────────────────────────────────────────────────
 
-export async function createPaymentIntent({ amount, currency, stripeAccountId, applicationFeeAmount, metadata = {}, customerId }) {
-  const stripe = await createStripeClient();
+export async function createPaymentIntent({ amount, currency, stripeAccountId, applicationFeeAmount, metadata = {}, customerId, livemode = null }) {
+  const stripe = await createStripeClient(livemode);
   return stripe.paymentIntents.create(
     {
       amount, currency, automatic_payment_methods: { enabled: true },
@@ -52,8 +52,8 @@ export async function getPaymentIntent(paymentIntentId, stripeAccountId) {
   return stripe.paymentIntents.retrieve(paymentIntentId, { stripeAccount: stripeAccountId });
 }
 
-export async function updatePaymentIntentMetadata(paymentIntentId, metadata, stripeAccountId) {
-  const stripe = await createStripeClient();
+export async function updatePaymentIntentMetadata(paymentIntentId, metadata, stripeAccountId, livemode = null) {
+  const stripe = await createStripeClient(livemode);
   return stripe.paymentIntents.update(paymentIntentId, { metadata }, { stripeAccount: stripeAccountId });
 }
 
@@ -91,16 +91,16 @@ export async function getConnectedAccount(stripeAccountId) {
 
 // ─── Customers & Subscriptions ────────────────────────────────────────────────
 
-export async function createCustomer({ stripeAccountId, email, name, phone, metadata = {} }) {
-  const stripe = await createStripeClient();
+export async function createCustomer({ stripeAccountId, email, name, phone, metadata = {}, livemode = null }) {
+  const stripe = await createStripeClient(livemode);
   return stripe.customers.create(
     { ...(email ? { email } : {}), ...(name ? { name } : {}), ...(phone ? { phone } : {}), metadata },
     { stripeAccount: stripeAccountId }
   );
 }
 
-export async function createSubscription({ stripeAccountId, customerId, priceId, applicationFeePercent, metadata = {} }) {
-  const stripe = await createStripeClient();
+export async function createSubscription({ stripeAccountId, customerId, priceId, applicationFeePercent, metadata = {}, livemode = null }) {
+  const stripe = await createStripeClient(livemode);
   return stripe.subscriptions.create(
     {
       customer:         customerId,
@@ -114,8 +114,8 @@ export async function createSubscription({ stripeAccountId, customerId, priceId,
   );
 }
 
-export async function createInlineSubscription({ stripeAccountId, customerId, amount, currency, interval = 'month', productName = 'Subscription', applicationFeePercent, metadata = {} }) {
-  const stripe = await createStripeClient();
+export async function createInlineSubscription({ stripeAccountId, customerId, amount, currency, interval = 'month', productName = 'Subscription', applicationFeePercent, metadata = {}, livemode = null }) {
+  const stripe = await createStripeClient(livemode);
   const product = await stripe.products.create({ name: productName }, { stripeAccount: stripeAccountId });
   return stripe.subscriptions.create(
     {
@@ -130,8 +130,8 @@ export async function createInlineSubscription({ stripeAccountId, customerId, am
   );
 }
 
-export async function getPrice(priceId, stripeAccountId) {
-  const stripe = await createStripeClient();
+export async function getPrice(priceId, stripeAccountId, livemode = null) {
+  const stripe = await createStripeClient(livemode);
   return stripe.prices.retrieve(priceId, { stripeAccount: stripeAccountId });
 }
 

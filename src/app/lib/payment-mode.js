@@ -64,9 +64,17 @@ export function clearPaymentModeCache() {
 
 const _stripeInstances = { sandbox: null, live: null };
 
-/** Get a mode-appropriate Stripe instance. Always awaited inside route handlers. */
-export async function createStripeClient() {
-  const mode = await loadMode();
+/**
+ * Get a mode-appropriate Stripe instance.
+ * @param {boolean|null} [forceLivemode] – when provided, overrides the global payment_mode.
+ *   Pass `stripeAccount.livemode` from a GHL Stripe connection to ensure the platform key
+ *   matches the mode in which the connected account was created.
+ */
+export async function createStripeClient(forceLivemode = null) {
+  const mode = forceLivemode !== null
+    ? (forceLivemode ? 'live' : 'sandbox')
+    : await loadMode();
+
   if (_stripeInstances[mode]) return _stripeInstances[mode];
 
   const key = mode === 'live'
