@@ -110,9 +110,21 @@ export async function PUT(request) {
       },
     });
 
-    // Clear in-memory mode cache so next request picks up the change immediately
+    // Clear in-memory mode cache so next request picks up the change immediately.
+    // Also sync all ghlStripeConnection records so the publishableKey and livemode
+    // stored in DB reflect the new mode — otherwise create-intent returns stale test keys.
     if (key === 'payment_mode') {
       clearPaymentModeCache();
+      const isLive = value === 'live';
+      const pubKey = isLive
+        ? (process.env.STRIPE_PUBLISHABLE_KEY_LIVE  ?? '')
+        : (process.env.STRIPE_PUBLISHABLE_KEY_SANDBOX ?? '');
+      if (pubKey) {
+        await prisma.ghlStripeConnection.updateMany({
+          data: { livemode: isLive, publishableKey: pubKey },
+        });
+        console.log(`[settings] Synced ghlStripeConnection rows to ${value} mode (pubKey: ${pubKey.slice(0, 12)}...)`);
+      }
     }
 
     return NextResponse.json({ success: true, setting });
