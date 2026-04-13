@@ -204,11 +204,9 @@ export async function POST(request) {
   } catch {}
   const isSpecialOrg = orgEmail?.toLowerCase() === SPECIAL_ORG_EMAIL.toLowerCase();
 
-  // Ensure the publishableKey returned to GHL matches the connected account's livemode.
-  // If auto-connect stored an empty key, fall back to the account-mode-appropriate platform key.
-  const effectivePubKey = stripeAccount.publishableKey || (stripeAccount.livemode
-    ? (process.env.STRIPE_PUBLISHABLE_KEY_LIVE ?? '')
-    : (process.env.STRIPE_PUBLISHABLE_KEY_SANDBOX ?? ''));
+  // Use the admin-controlled payment_mode to pick the publishable key.
+  // getStripePublishableKey() reads the same payment_mode setting used by createStripeClient().
+  const effectivePubKey = stripeAccount.publishableKey || await getStripePublishableKey();
 
   const sharedMeta = { locationId, entityId: finalEntityId, entityType: finalEntityType, ...metadata };
 
@@ -229,7 +227,7 @@ export async function POST(request) {
 
     let price;
     try {
-      price = await getPrice(resolvedPriceId, stripeAccount.stripeAccountId, stripeAccount.livemode);
+      price = await getPrice(resolvedPriceId, stripeAccount.stripeAccountId);
     } catch (err) {
       return NextResponse.json({ error: `Invalid price: ${err.message}` }, { status: 400 });
     }
@@ -240,13 +238,11 @@ export async function POST(request) {
         email: metadata.customerEmail ?? null, name: metadata.customerName ?? null,
         phone: metadata.customerPhone ?? null,
         metadata: { locationId, entityId: finalEntityId },
-        livemode: stripeAccount.livemode,
       });
       const applicationFeePercent = isSpecialOrg ? 0 : SUBSCRIPTION_FEE_PERCENT;
       const subscription = await createSubscription({
         stripeAccountId: stripeAccount.stripeAccountId, customerId: customer.id, priceId,
         applicationFeePercent, metadata: { ...sharedMeta, entityType: 'subscription' },
-        livemode: stripeAccount.livemode,
       });
       const paymentIntent = subscription.latest_invoice?.payment_intent;
       if (!paymentIntent?.client_secret) {
@@ -269,14 +265,13 @@ export async function POST(request) {
         email: metadata.customerEmail, name: metadata.customerName ?? null,
         phone: metadata.customerPhone ?? null,
         metadata: { locationId, entityId: finalEntityId },
-        livemode: stripeAccount.livemode,
       });
       oneTimeCustomerId = customer.id;
     }
     const intent = await createPaymentIntent({
       amount: priceAmount, currency: priceCurrency, stripeAccountId: stripeAccount.stripeAccountId,
       applicationFeeAmount: applicationFeeAmount || undefined, metadata: sharedMeta,
-      customerId: oneTimeCustomerId, livemode: stripeAccount.livemode,
+      customerId: oneTimeCustomerId,
     });
     return NextResponse.json({
       clientSecret: intent.client_secret, paymentIntentId: intent.id,
@@ -292,14 +287,12 @@ export async function POST(request) {
       email: metadata.customerEmail ?? null, name: metadata.customerName ?? null,
       phone: metadata.customerPhone ?? null,
       metadata: { locationId, entityId: finalEntityId },
-      livemode: stripeAccount.livemode,
     });
     const subscription = await createInlineSubscription({
       stripeAccountId: stripeAccount.stripeAccountId, customerId: customer.id,
       amount, currency, interval: resolvedInterval, productName: 'Subscription',
       applicationFeePercent: isSpecialOrg ? 0 : SUBSCRIPTION_FEE_PERCENT,
       metadata: { ...sharedMeta, entityType: 'subscription', ghlSubscriptionId: ghlSubscriptionId ?? null },
-      livemode: stripeAccount.livemode,
     });
     const paymentIntent = subscription.latest_invoice?.payment_intent;
     if (!paymentIntent?.client_secret) {
@@ -308,7 +301,7 @@ export async function POST(request) {
     try {
       await updatePaymentIntentMetadata(paymentIntent.id, {
         ...sharedMeta, entityType: 'subscription', ghlSubscriptionId: ghlSubscriptionId ?? null,
-      }, stripeAccount.stripeAccountId, stripeAccount.livemode);
+      }, stripeAccount.stripeAccountId);
     } catch {}
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id,
@@ -326,7 +319,6 @@ export async function POST(request) {
         email: metadata.customerEmail, name: metadata.customerName ?? null,
         phone: metadata.customerPhone ?? null,
         metadata: { locationId, entityId: finalEntityId },
-        livemode: stripeAccount.livemode,
       });
       directCustomerId = customer.id;
     } catch (custErr) {
@@ -338,7 +330,7 @@ export async function POST(request) {
     intent = await createPaymentIntent({
       amount, currency, stripeAccountId: stripeAccount.stripeAccountId,
       applicationFeeAmount: applicationFeeAmount || undefined, metadata: sharedMeta,
-      customerId: directCustomerId, livemode: stripeAccount.livemode,
+      customerId: directCustomerId,
     });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
