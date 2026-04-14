@@ -46,26 +46,26 @@ export async function POST(request) {
 
   const stripeAccount  = await getStripeAccount(locationId);
   const apiKey         = process.env.GHL_CLIENT_SECRET;
-  const publishableKey = stripeAccount?.publishableKey
-    || process.env.STRIPE_PUBLISHABLE_KEY
-    || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-    || process.env.STRIPE_PUBLISHABLE_KEY;
+  const livePubKey     = process.env.STRIPE_PUBLISHABLE_KEY_LIVE    || '';
+  const testPubKey     = process.env.STRIPE_PUBLISHABLE_KEY_SANDBOX || '';
 
   results.envCheck = {
-    hasGhlClientSecret:    !!process.env.GHL_CLIENT_SECRET,
-    hasStripePublishable:  !!(process.env.STRIPE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
-    hasStripeAccount:      !!stripeAccount,
-    stripeAccountPkPrefix: stripeAccount?.publishableKey?.slice(0, 7) ?? null,
+    hasGhlClientSecret:   !!apiKey,
+    hasLivePubKey:        !!livePubKey,
+    hasTestPubKey:        !!testPubKey,
+    hasStripeAccount:     !!stripeAccount,
+    stripeAccountId:      stripeAccount?.stripeAccountId ?? null,
+    storedPkPrefix:       stripeAccount?.publishableKey?.slice(0, 7) ?? null,
   };
 
-  if (!publishableKey || !apiKey) {
-    results.connect = { ok: false, error: 'GHL_CLIENT_SECRET or STRIPE_PUBLISHABLE_KEY missing from env vars' };
+  if (!apiKey) {
+    results.connect = { ok: false, error: 'GHL_CLIENT_SECRET missing from env vars' };
     return NextResponse.json(results, { status: 200 });
   }
 
   const connectBody = {
-    live: { liveMode: true,  apiKey, publishableKey, enabled: true },
-    test: { liveMode: false, apiKey, publishableKey, enabled: true },
+    live: { liveMode: true,  apiKey, publishableKey: livePubKey, enabled: true },
+    test: { liveMode: false, apiKey, publishableKey: testPubKey, enabled: true },
   };
 
   try {

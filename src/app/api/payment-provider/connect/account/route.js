@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { getConnectedAccount } from '@/app/lib/payment-provider/stripe';
 import { getStripeAccount, saveStripeAccount } from '@/app/lib/payment-provider/tokenStore';
 import { prisma } from '@/app/lib/prisma';
-import { createStripeClient } from '@/app/lib/payment-mode';
+import { createStripeClient, getPaymentMode, getStripePublishableKey } from '@/app/lib/payment-mode';
 const getStripe = () => createStripeClient();
 
 export async function GET(request) {
@@ -51,12 +51,14 @@ export async function GET(request) {
 
       if (stripeAccountId) {
         try {
+          const autoMode   = await getPaymentMode();
+          const autoPubKey = await getStripePublishableKey();
           await saveStripeAccount(locationId, {
             stripeAccountId,
             accessToken:    'direct',
             refreshToken:   null,
-            publishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? '',
-            livemode:       true,
+            publishableKey: autoPubKey,
+            livemode:       autoMode === 'live',
             tokenType:      'direct',
             scope:          null,
           });

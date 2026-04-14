@@ -154,16 +154,21 @@ export async function createGHLPaymentProvider(locationId) {
 }
 
 export async function connectGHLPaymentProvider(locationId) {
-  const providerData    = await createGHLPaymentProvider(locationId);
-  const apiKey          = process.env.GHL_CLIENT_SECRET;
-  const publishableKey  = process.env.STRIPE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
-  const client          = await ghlClient(locationId);
-  const connectBody  = {
-    live: { liveMode: true,  apiKey, publishableKey, enabled: true },
-    test: { liveMode: false, apiKey, publishableKey, enabled: true },
+  const providerData = await createGHLPaymentProvider(locationId);
+  const apiKey       = process.env.GHL_CLIENT_SECRET;
+
+  // Use the mode-appropriate publishable keys (STRIPE_PUBLISHABLE_KEY is not used).
+  const livePubKey  = process.env.STRIPE_PUBLISHABLE_KEY_LIVE     || '';
+  const testPubKey  = process.env.STRIPE_PUBLISHABLE_KEY_SANDBOX  || '';
+
+  const client      = await ghlClient(locationId);
+  const connectBody = {
+    live: { liveMode: true,  apiKey, publishableKey: livePubKey, enabled: true },
+    test: { liveMode: false, apiKey, publishableKey: testPubKey, enabled: true },
   };
   try {
     await client.post(`/payments/custom-provider/connect?locationId=${locationId}`, connectBody);
+    console.log(`[GHL] Payment provider connected for location ${locationId}`);
   } catch (err) {
     console.warn(`[GHL] connect failed (non-fatal): ${err.response?.status} ${JSON.stringify(err.response?.data ?? err.message)}`);
   }
