@@ -5,6 +5,7 @@ import { exchangeStripeCode } from '@/app/lib/payment-provider/stripe';
 import { saveStripeAccount } from '@/app/lib/payment-provider/tokenStore';
 import { verifyStateToken } from '@/app/lib/payment-provider/crypto';
 import { connectGHLPaymentProvider } from '@/app/lib/payment-provider/ghl';
+import { prisma } from '@/app/lib/prisma';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -42,8 +43,10 @@ export async function GET(request) {
     return NextResponse.redirect(`${dashboardUrl}?error=stripe_token_exchange&locationId=${locationId}`);
   }
 
+  const stripeAccountId = oauthToken.stripe_user_id;
+
   await saveStripeAccount(locationId, {
-    stripeAccountId: oauthToken.stripe_user_id,
+    stripeAccountId,
     accessToken:     oauthToken.access_token,
     refreshToken:    oauthToken.refresh_token,
     publishableKey:  oauthToken.stripe_publishable_key,
@@ -51,6 +54,29 @@ export async function GET(request) {
     tokenType:       oauthToken.token_type,
     scope:           oauthToken.scope,
   });
+
+  // Also sync stripeAccountId onto the Organization record so the org dashboard
+  // can show the correct Stripe status without a separate ghlStripeConnection lookup.
+  try {
+    const org = await prisma.organization.findFirst({
+      where: {
+        OR: [
+          { ghlId: locationId },
+          { ghlAccounts: { some: { ghl_location_id: locationId } } },
+        ],
+      },
+      select: { id: true, stripeAccountId: true },
+    });
+    if (org && org.stripeAccountId !== stripeAccountId) {
+      await prisma.organization.update({
+        where: { id: org.id },
+        data:  { stripeAccountId },
+      });
+      console.log(`[Stripe callback] Synced stripeAccountId ${stripeAccountId} → org ${org.id}`);
+    }
+  } catch (orgErr) {
+    console.warn('[Stripe callback] Failed to sync stripeAccountId to org (non-fatal):', orgErr.message);
+  }
 
   try {
     await connectGHLPaymentProvider(locationId);

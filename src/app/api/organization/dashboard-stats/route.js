@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { getStripeConnectAccount } from "../../../lib/stripe-connect";
 import { getStripe } from "../../../../lib/stripe";
+import { getStripeAccount } from "../../../lib/payment-provider/tokenStore";
 
 export async function GET(request) {
   try {
@@ -25,13 +26,14 @@ export async function GET(request) {
     const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
 
     // Get organization data
-    const organization = await prisma.organization.findUnique({
+    let organization = await prisma.organization.findUnique({
       where: { id: orgId },
-      select: { 
-        id: true, 
-        name: true, 
-        email: true, 
-        imageUrl: true, 
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        imageUrl: true,
+        ghlId: true,
         stripeAccountId: true,
         stripeProductId1: true,
         stripeProductId2: true,
@@ -46,33 +48,70 @@ export async function GET(request) {
       }, { status: 404 });
     }
 
+    // Resolve Stripe account ID — prefer org.stripeAccountId, fall back to ghlStripeConnection.
+    let resolvedStripeAccountId = organization.stripeAccountId || null;
+    if (!resolvedStripeAccountId) {
+      try {
+        // Look up the GHL location for this org and check ghlStripeConnection.
+        const ghlLocation = await prisma.gHLAccount.findFirst({
+          where: { organization_id: orgId, status: 'active' },
+          select: { ghl_location_id: true },
+          orderBy: { created_at: 'desc' },
+        });
+        const locationId = ghlLocation?.ghl_location_id || organization.ghlId || null;
+        if (locationId) {
+          const conn = await getStripeAccount(locationId);
+          if (conn?.stripeAccountId) {
+            resolvedStripeAccountId = conn.stripeAccountId;
+            // Back-fill the missing stripeAccountId on the org so future loads are fast.
+            await prisma.organization.update({
+              where: { id: orgId },
+              data:  { stripeAccountId: resolvedStripeAccountId },
+            });
+            console.log(`[dashboard-stats] Back-filled stripeAccountId ${resolvedStripeAccountId} → org ${orgId}`);
+          }
+        }
+      } catch (e) {
+        console.error('[dashboard-stats] ghlStripeConnection fallback failed:', e.message);
+      }
+    }
+
     // Check Stripe Status
     let stripeStatus = {
         details_submitted: false,
-        charges_enabled: false
+        charges_enabled: false,
+        api_error: false,   // true when Stripe responded but with an error (key mismatch etc.)
     };
 
-    if (organization.stripeAccountId) {
+    if (resolvedStripeAccountId) {
         try {
-            const account = await getStripeConnectAccount(organization.stripeAccountId);
+            const account = await getStripeConnectAccount(resolvedStripeAccountId);
             stripeStatus.details_submitted = account.details_submitted;
             stripeStatus.charges_enabled = account.charges_enabled;
         } catch (e) {
             console.error('Failed to fetch stripe account status', e);
+            // Mark as api_error so the UI doesn't incorrectly show "Complete Setup Required"
+            // when the account IS set up but the API call failed (e.g. wrong key mode).
+            stripeStatus.api_error = true;
+            stripeStatus.details_submitted = true;   // assume complete — don't block the user
+            stripeStatus.charges_enabled = true;
         }
     }
+
+    // Expose the resolved ID (may differ from organization.stripeAccountId if back-filled above)
+    organization = { ...organization, stripeAccountId: resolvedStripeAccountId ?? organization.stripeAccountId };
 
     // Fetch live totals from Stripe if connected
     let totalDonationsAmount = 0;
     let thisMonthAmount = 0;
     let lastMonthAmount = 0;
 
-    if (organization.stripeAccountId) {
+    if (resolvedStripeAccountId) {
       try {
         const stripe = await getStripe();
         const paymentIntents = await stripe.paymentIntents.list(
           { limit: 100, expand: ['data.latest_charge'] },
-          { stripeAccount: organization.stripeAccountId }
+          { stripeAccount: resolvedStripeAccountId }
         );
 
         for (const pi of paymentIntents.data) {
