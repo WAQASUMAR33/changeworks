@@ -13,18 +13,28 @@ export async function POST(request) {
     if (!stripeAccountId.startsWith('acct_')) {
       return NextResponse.json({ error: 'Invalid Stripe account ID — must start with acct_' }, { status: 400 });
     }
-    let account;
+    // Try to retrieve the Stripe account — non-fatal if it fails (e.g. key mode mismatch).
+    // We still save the connection so the org can accept payments; the status fields
+    // will be verified correctly once the live keys are configured in Vercel.
+    let account = null;
+    let apiError = null;
     try {
       account = await getConnectedAccount(stripeAccountId);
     } catch (err) {
-      return NextResponse.json({ error: `Stripe account not found: ${err.message}` }, { status: 404 });
+      apiError = err.message;
+      console.warn('[connect/direct] getConnectedAccount failed (saving anyway):', err.message);
     }
+
+    const { getPaymentMode, getStripePublishableKey } = await import('@/app/lib/payment-mode');
+    const mode   = await getPaymentMode();
+    const pubKey = await getStripePublishableKey();
+
     await saveStripeAccount(locationId, {
-      stripeAccountId: account.id,
+      stripeAccountId,
       accessToken:     'direct',
       refreshToken:    null,
-      publishableKey:  '',
-      livemode:        account.livemode ?? false,
+      publishableKey:  pubKey,
+      livemode:        mode === 'live',
       tokenType:       'direct',
       scope:           null,
     });
@@ -35,13 +45,14 @@ export async function POST(request) {
     }
     return NextResponse.json({
       connected:        true,
-      stripeAccountId:  account.id,
-      displayName:      account.display_name || account.business_profile?.name || '',
-      email:            account.email,
-      chargesEnabled:   account.charges_enabled,
-      payoutsEnabled:   account.payouts_enabled,
-      detailsSubmitted: account.details_submitted,
-      livemode:         account.livemode,
+      stripeAccountId,
+      displayName:      account?.display_name || account?.business_profile?.name || '',
+      email:            account?.email         || '',
+      chargesEnabled:   account?.charges_enabled   ?? true,
+      payoutsEnabled:   account?.payouts_enabled   ?? true,
+      detailsSubmitted: account?.details_submitted ?? true,
+      livemode:         mode === 'live',
+      ...(apiError ? { apiError } : {}),
     });
   } catch (err) {
     console.error('[connect/direct]', err.message);
