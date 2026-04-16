@@ -68,42 +68,54 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
 
     const orgName = organization?.name || 'ChangeWorks';
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+    const loginUrl = `${baseUrl}/donor/login`;
     const logoUrl = emailService.getOrganizationLogoUrl(organization);
+
+    const subject = `Welcome to ${orgName}'s Donation Community`;
 
     const html = emailService.generateEmailHtml(`
       <div style="text-align:center;margin-bottom:30px;">
         ${logoUrl ? `<img src="${logoUrl}" alt="${orgName}" style="max-height:120px;max-width:250px;height:auto;border:0;display:inline-block;margin-bottom:15px;">` : ''}
-        <h2 style="color:#302E56;margin:0;font-size:24px;font-weight:700;">${orgName}</h2>
+        ${!logoUrl ? `<h2 style="color:#302E56;margin:0;font-size:24px;font-weight:700;">${orgName}</h2>` : ''}
       </div>
 
-      <p style="font-size:18px;font-weight:500;color:#212529;margin-bottom:20px;">Welcome, ${name}!</p>
+      <p style="font-size:18px;font-weight:500;color:#212529;margin-bottom:20px;">Hello ${name}</p>
 
-      <p>A donor account has been created for you on <strong>${orgName}</strong>'s donation platform after your payment. Use the credentials below to log in and track your donations.</p>
+      <p>Thank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.</p>
+
+      <p>That's why you have your own donor dashboard with our trusted donation platform partner, <strong>ChangeWorks</strong>. It puts everything you need in one place:</p>
+
+      <ul style="color:#495057;">
+        <li><strong>See your monthly donation totals</strong> whenever you'd like</li>
+        <li><strong>Adjust or pause your contributions</strong> if your needs change</li>
+        <li><strong>Download your donation records</strong> for easy reference or tax time</li>
+      </ul>
+
+      <p>You can visit your dashboard anytime using the credentials below:</p>
 
       <div style="background:#f3f4f6;border-radius:8px;padding:20px;margin:24px 0;border-left:4px solid #302E56;">
         <p style="margin:0 0 8px;color:#6b7280;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Your Login Details</p>
-        <p style="margin:0 0 8px;color:#111827;font-size:15px;"><strong>Email:</strong> ${customerEmail}</p>
+        <p style="margin:0 0 8px;color:#111827;font-size:15px;"><strong>Username:</strong> ${customerEmail}</p>
+        <p style="margin:0 0 8px;color:#111827;font-size:15px;"><strong>Login URL:</strong> <a href="${loginUrl}" style="color:#302E56;">${loginUrl}</a></p>
         <p style="margin:0;color:#111827;font-size:15px;"><strong>Temporary Password:</strong> ${rawPassword}</p>
       </div>
 
-      <div style="text-align:center;margin:28px 0;">
-        <a href="${baseUrl}/donor/login" class="button">Log In to Your Donor Dashboard</a>
-      </div>
-
-      <p style="font-size:14px;color:#6c757d;">Please change your password after logging in. If you did not make a payment through ${orgName}, please ignore this email.</p>
+      <p>If you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.</p>
 
       <div style="margin-top:30px;font-style:italic;color:#495057;">
         <p>Warm regards,<br><strong>The ${orgName} Team</strong></p>
       </div>
 
+      <p style="margin-top:20px;font-size:14px;color:#6c757d;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
+
       ${emailService.getFooterHtml()}
-    `, null, `Your ${orgName} Donor Account`, false, false);
+    `, null, subject, false, false);
 
     await emailService.sendEmail({
       to: customerEmail,
-      subject: `Your ${orgName} Donor Account`,
+      subject,
       html,
-      text: `Welcome to ${orgName}!\n\nA donor account has been created for you.\n\nEmail: ${customerEmail}\nTemporary Password: ${rawPassword}\n\nLog in at: ${baseUrl}/donor/login\n\nPlease change your password after logging in.`,
+      text: `Welcome to ${orgName}'s Donation Community\n\nHello ${name},\n\nThank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.\n\nThat's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:\n- See your monthly donation totals whenever you'd like\n- Adjust or pause your contributions if your needs change\n- Download your donation records for easy reference or tax time\n\nYou can visit your dashboard anytime using the credentials below:\n\nUsername: ${customerEmail}\nLogin URL: ${loginUrl}\nTemporary Password: ${rawPassword}\n\nIf you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.\n\nWarm regards,\nThe ${orgName} Team\n\nP.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.`,
       from: `"${orgName}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });
 
