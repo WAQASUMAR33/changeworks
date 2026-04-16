@@ -822,19 +822,19 @@ export default function DonorSignupPage() {
                                 }`}
                               >
                                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                  {org.imageUrl && (
+                                  {org.imageUrl ? (
                                     <Image
                                       src={buildOrgLogoUrl(org.imageUrl)}
                                       alt={org.name}
                                       width={40}
                                       height={40}
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                      className="w-full h-full object-contain"
                                     />
+                                  ) : (
+                                    <div className="w-full h-full bg-blue-100 rounded-lg flex items-center justify-center">
+                                      <Heart className="w-5 h-5 text-blue-600" />
+                                    </div>
                                   )}
-                                  <div className={`w-full h-full bg-blue-100 rounded-lg flex items-center justify-center ${org.imageUrl ? 'hidden' : 'flex'}`}>
-                                    <Heart className="w-5 h-5 text-blue-600" />
-                                  </div>
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="font-semibold text-gray-900 truncate">{org.name}</p>
@@ -919,19 +919,19 @@ export default function DonorSignupPage() {
                           {selectedOrganization ? (
                             <div className="flex items-center space-x-2 mt-1">
                               <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                                {selectedOrganization.imageUrl && (
+                                {selectedOrganization.imageUrl ? (
                                   <Image
                                     src={buildOrgLogoUrl(selectedOrganization.imageUrl)}
                                     alt={selectedOrganization.name}
                                     width={32}
                                     height={32}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                    className="w-full h-full object-contain"
                                   />
+                                ) : (
+                                  <div className="w-full h-full bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <Heart className="w-4 h-4 text-blue-600" />
+                                  </div>
                                 )}
-                                <div className={`w-full h-full bg-blue-100 rounded-lg flex items-center justify-center ${selectedOrganization.imageUrl ? 'hidden' : 'flex'}`}>
-                                  <Heart className="w-4 h-4 text-blue-600" />
-                                </div>
                               </div>
                               <p className="text-black font-medium">{selectedOrganization.name}</p>
                             </div>

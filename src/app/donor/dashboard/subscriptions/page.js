@@ -437,25 +437,20 @@ export default function DonorSubscriptionsPage() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
                           {subscription.organization?.imageUrl ? (
                             <Image
                               src={buildOrgLogoUrl(subscription.organization.imageUrl)}
                               alt={subscription.organization.name || 'Organization'}
                               width={40}
                               height={40}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
-                              }}
+                              className="w-full h-full object-contain"
                             />
-                          ) : null}
-                          <div
-                            className={`w-full h-full flex items-center justify-center ${subscription.organization?.imageUrl ? 'hidden' : 'flex'}`}
-                          >
-                            <Building2 className="w-5 h-5 text-blue-600" />
-                          </div>
+                          ) : (
+                            <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                              <Building2 className="w-5 h-5 text-blue-600" />
+                            </div>
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">
@@ -582,25 +577,20 @@ export default function DonorSubscriptionsPage() {
                 {subscriptionToCancel && (
                   <div className="bg-gray-50 rounded-lg p-3 mb-4">
                     <div className="flex items-center space-x-3 mb-2">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
                         {subscriptionToCancel.organization?.imageUrl ? (
                           <Image
                             src={buildOrgLogoUrl(subscriptionToCancel.organization.imageUrl)}
                             alt={subscriptionToCancel.organization.name || 'Organization'}
                             width={32}
                             height={32}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
-                            }}
+                            className="w-full h-full object-contain"
                           />
-                        ) : null}
-                        <div
-                          className={`w-full h-full flex items-center justify-center ${subscriptionToCancel.organization?.imageUrl ? 'hidden' : 'flex'}`}
-                        >
-                          <Building2 className="w-4 h-4 text-blue-600" />
-                        </div>
+                        ) : (
+                          <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                            <Building2 className="w-4 h-4 text-blue-600" />
+                          </div>
+                        )}
                       </div>
                       <p className="text-sm text-gray-600">
                         <strong>Organization:</strong> {subscriptionToCancel.organization?.name || 'Unknown'}

@@ -538,7 +538,7 @@ export default function OrganizationManagementPage() {
                               alt={org.name}
                               width={40}
                               height={40}
-                              className="w-10 h-10 rounded-lg object-cover mr-3"
+                              className="w-10 h-10 rounded-lg object-contain mr-3"
                               onError={(e) => {
                                 e.target.style.display = 'none';
                               }}
@@ -857,7 +857,7 @@ export default function OrganizationManagementPage() {
                         alt="Organization preview"
                         width={80}
                         height={80}
-                        className="h-20 w-20 object-cover rounded-lg mt-2"
+                        className="h-20 w-20 object-contain rounded-lg mt-2"
                       />
                     </Box>
                   )}

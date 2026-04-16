@@ -219,16 +219,20 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
                     : 'border-gray-50 bg-white hover:border-blue-200'
                     }`}
                 >
-                  <div className="w-14 h-14 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
                     {org.imageUrl ? (
                       <Image
                         src={buildOrgLogoUrl(org.imageUrl)}
                         alt={org.name}
                         width={56}
                         height={56}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                       />
-                    ) : <Building2 className="w-7 h-7 text-blue-600" />}
+                    ) : (
+                      <div className="w-full h-full bg-white shadow-sm border border-gray-100 rounded-2xl flex items-center justify-center">
+                        <Building2 className="w-7 h-7 text-blue-600" />
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1">
                     <h4 className="font-black text-gray-900 leading-tight">{org.name}</h4>

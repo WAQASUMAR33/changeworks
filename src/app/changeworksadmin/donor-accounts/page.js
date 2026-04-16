@@ -26,6 +26,15 @@ import {
   EyeOff
 } from 'lucide-react';
 
+// Build a full image URL from a stored filename or relative path
+const buildImageUrl = (imageUrl) => {
+  if (!imageUrl) return null;
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
+  const base = process.env.NEXT_PUBLIC_IMAGE_BACK_URL;
+  if (!base) return imageUrl;
+  return `${base.endsWith('/') ? base : `${base}/`}${imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl}`;
+};
+
 // Constants
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50, 100, { value: 'all', label: 'All' }];
 const STATUS_OPTIONS = [
@@ -525,8 +534,8 @@ export default function DonorManagementPage() {
                       <div className="flex items-center">
                         <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
                           {donor.imageUrl ? (
-                            <Image 
-                              src={donor.imageUrl} 
+                            <Image
+                              src={buildImageUrl(donor.imageUrl)}
                               alt={donor.name}
                               width={40}
                               height={40}

@@ -267,21 +267,18 @@ export default function MultiStepPaymentForm({
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {org.imageUrl ? (
-                      <Image 
-                        src={buildOrgLogoUrl(org.imageUrl)} 
+                      <Image
+                        src={buildOrgLogoUrl(org.imageUrl)}
                         alt={`${org.name} logo`}
                         width={48}
                         height={48}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
+                        className="w-full h-full object-contain"
                       />
-                    ) : null}
-                    <div className={`w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center ${org.imageUrl ? 'hidden' : 'flex'}`}>
-                      <Heart className="w-6 h-6 text-white" />
-                    </div>
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                        <Heart className="w-6 h-6 text-white" />
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-black truncate">{org.name}</h4>

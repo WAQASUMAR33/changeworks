@@ -259,7 +259,18 @@ const ProfilePage = () => {
       setProfileData(data.organization);
       setSuccess('Profile updated successfully');
       setShowEditProfilePopup(false);
-      
+
+      // Update sessionStorage so the header reflects the new logo immediately
+      try {
+        const stored = JSON.parse(sessionStorage.getItem('orgUser') || '{}');
+        sessionStorage.setItem('orgUser', JSON.stringify({
+          ...stored,
+          name: data.organization.name || stored.name,
+          imageUrl: data.organization.imageUrl || stored.imageUrl,
+        }));
+        window.dispatchEvent(new CustomEvent('orgUserUpdated'));
+      } catch {}
+
       // Clean up preview URL if it was a blob
       if (previewUrl && previewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl);
@@ -424,22 +435,17 @@ const ProfilePage = () => {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <div className="w-16 h-16 bg-[#0E0061] rounded-full flex items-center justify-center mr-6 overflow-hidden">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mr-6 overflow-hidden">
                 {profileData.imageUrl ? (
-                  <img 
-                    src={buildOrgLogoUrl(profileData.imageUrl)} 
-                    alt={profileData.name} 
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      console.error('Error loading profile image:', profileData.imageUrl);
-                      e.target.style.display = 'none';
-                      // Fallback to showing icon
-                      e.target.parentElement.classList.add('flex', 'items-center', 'justify-center');
-                      e.target.parentElement.innerHTML = '<svg class="w-8 h-8 text-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path></svg>';
-                    }}
+                  <img
+                    src={buildOrgLogoUrl(profileData.imageUrl)}
+                    alt={profileData.name}
+                    className="w-full h-full object-contain"
                   />
                 ) : (
-                  <Building2 className="w-8 h-8 text-white" />
+                  <div className="w-full h-full bg-[#0E0061] rounded-full flex items-center justify-center">
+                    <Building2 className="w-8 h-8 text-white" />
+                  </div>
                 )}
               </div>
               <div>
@@ -634,7 +640,7 @@ const ProfilePage = () => {
                   <div className="flex items-start space-x-4">
                     <div className="w-20 h-20 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200 relative">
                       {previewUrl ? (
-                        <img src={buildOrgLogoUrl(previewUrl)} alt="Preview" className="w-full h-full object-cover" />
+                        <img src={buildOrgLogoUrl(previewUrl)} alt="Preview" className="w-full h-full object-contain" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Camera className="w-8 h-8 text-gray-400" />

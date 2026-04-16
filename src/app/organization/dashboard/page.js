@@ -223,23 +223,20 @@ export default function OrganizationDashboard() {
                     transition={{ delay: 0.1, duration: 0.6 }}
                     className="text-center"
                 >
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-[#0E0061] rounded-2xl mb-4 shadow-lg overflow-hidden">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 shadow-lg overflow-hidden">
                         {organization?.imageUrl ? (
                             <Image
                                 src={buildOrgLogoUrl(organization.imageUrl)}
                                 alt={`${organization.name} logo`}
                                 width={80}
                                 height={80}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    e.target.nextSibling.style.display = 'flex';
-                                }}
+                                className="w-full h-full object-contain"
                             />
-                        ) : null}
-                        <div className={`w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center ${organization?.imageUrl ? 'hidden' : 'flex'}`}>
-                            <Building2 className="w-8 h-8 text-white" />
-                        </div>
+                        ) : (
+                            <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center">
+                                <Building2 className="w-8 h-8 text-white" />
+                            </div>
+                        )}
                     </div>
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-3">
                         {organization?.name || 'Organization'} Dashboard

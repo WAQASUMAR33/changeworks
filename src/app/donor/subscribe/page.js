@@ -256,16 +256,20 @@ const SubscribePage = () => {
                                                 animate={{ opacity: 1, scale: 1 }}
                                                 className="p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl flex items-center space-x-4"
                                             >
-                                                <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center overflow-hidden">
+                                                <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center">
                                                     {selectedOrg.imageUrl ? (
                                                         <Image
                                                             src={buildOrgLogoUrl(selectedOrg.imageUrl)}
                                                             alt={selectedOrg.name}
                                                             width={48}
                                                             height={48}
-                                                            className="w-full h-full object-cover"
+                                                            className="w-full h-full object-contain"
                                                         />
-                                                    ) : <Building2 className="w-6 h-6 text-blue-600" />}
+                                                    ) : (
+                                                        <div className="w-full h-full bg-white shadow-sm flex items-center justify-center">
+                                                            <Building2 className="w-6 h-6 text-blue-600" />
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <h4 className="font-black text-gray-900 leading-tight">{selectedOrg.name}</h4>

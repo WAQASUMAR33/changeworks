@@ -123,7 +123,7 @@ class EmailService {
                  <img src="${changeWorksLogoUrl}" alt="ChangeWorks Fund" style="max-height: 50px; height: auto; display: block;">
             </div>
 
-            <h3 style="margin: 0 0 5px 0; color: #000; font-size: 16px; font-weight: bold;">ChangeWorks Fund</h3>
+            <h3 style="margin: 0 0 5px 0; color: #000; font-size: 16px; font-weight: 700;"><strong>ChangeWorks Fund</strong></h3>
             <p style="margin: 0 0 3px 0; font-size: 14px; color: #333;"><a href="https://changeworksfund.org" style="color: #0056b3; text-decoration: none;">ChangeWorksFund.Org</a></p>
             <p style="margin: 0; font-size: 14px; color: #333;">Your trusted platform partner for charitable giving</p>
         </div>
@@ -426,22 +426,22 @@ ChangeWorks Team
       <p>That's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:</p>
       
       <ul style="color: #495057;">
-        <li>See your monthly donation totals whenever you'd like</li>
-        <li>Adjust or pause your contributions if your needs change</li>
-        <li>Download your donation records for easy reference or tax time</li>
+        <li><strong>See your monthly donation totals</strong> whenever you'd like</li>
+        <li><strong>Adjust or pause your contributions</strong> if your needs change</li>
+        <li><strong>Download your donation records</strong> for easy reference or tax time</li>
       </ul>
-      
+
       <p>You can visit your dashboard anytime once your verify your email using the link below:</p>
-      
+
       <div style="text-align: center; margin: 25px 0;">
         <a href="${verificationLink}" class="button">VERIFY YOUR EMAIL HERE</a>
       </div>
-      
+
       <p>If you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.</p>
-      
+
       <div style="margin-top: 30px; font-style: italic; color: #495057;">
         <p>Warm regards,<br>
-        The ${orgName} Team</p>
+        <strong>The ${orgName} Team</strong></p>
       </div>
 
       <p style="margin-top: 20px; font-size: 14px; color: #6c757d;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>

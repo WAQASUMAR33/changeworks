@@ -464,12 +464,12 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                               <div className="flex items-center space-x-3">
                                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                                   {org.imageUrl ? (
-                                    <Image src={buildOrgLogoUrl(org.imageUrl)} alt={`${org.name} logo`} width={40} height={40} className="w-full h-full object-cover"
-                                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                                  ) : null}
-                                  <div className={`w-full h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center ${org.imageUrl ? 'hidden' : 'flex'}`}>
-                                    <Heart className="w-5 h-5 text-white" />
-                                  </div>
+                                    <Image src={buildOrgLogoUrl(org.imageUrl)} alt={`${org.name} logo`} width={40} height={40} className="w-full h-full object-contain" />
+                                  ) : (
+                                    <div className="w-full h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                                      <Heart className="w-5 h-5 text-white" />
+                                    </div>
+                                  )}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <h5 className="font-semibold text-black truncate">{org.name}</h5>
