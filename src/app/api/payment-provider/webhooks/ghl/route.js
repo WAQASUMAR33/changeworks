@@ -24,17 +24,18 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
     if (existing) return;
 
     let organizationId = null;
+    let organization = null;
     if (locationId) {
-      const org = await prisma.organization.findFirst({
+      organization = await prisma.organization.findFirst({
         where: {
           OR: [
             { ghlId: locationId },
             { ghlAccounts: { some: { ghl_location_id: locationId } } },
           ],
         },
-        select: { id: true },
+        select: { id: true, name: true, imageUrl: true },
       });
-      if (org) organizationId = org.id;
+      if (organization) organizationId = organization.id;
     }
 
     const rawPassword = randomBytes(8).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
@@ -55,24 +56,45 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
 
     console.log(`[donor-auto-create] Created donor for ${customerEmail} (org: ${organizationId ?? 'none'})`);
 
-    const baseUrl = 'https://app.changeworksfund.org';
+    const orgName = organization?.name || 'ChangeWorks';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+    const logoUrl = emailService.getOrganizationLogoUrl(organization);
+
+    const html = emailService.generateEmailHtml(`
+      <div style="text-align:center;margin-bottom:30px;">
+        ${logoUrl ? `<img src="${logoUrl}" alt="${orgName}" style="max-height:120px;max-width:250px;height:auto;border:0;display:inline-block;margin-bottom:15px;">` : ''}
+        <h2 style="color:#302E56;margin:0;font-size:24px;font-weight:700;">${orgName}</h2>
+      </div>
+
+      <p style="font-size:18px;font-weight:500;color:#212529;margin-bottom:20px;">Welcome, ${name}!</p>
+
+      <p>A donor account has been created for you on <strong>${orgName}</strong>'s donation platform after your payment. Use the credentials below to log in and track your donations.</p>
+
+      <div style="background:#f3f4f6;border-radius:8px;padding:20px;margin:24px 0;border-left:4px solid #302E56;">
+        <p style="margin:0 0 8px;color:#6b7280;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Your Login Details</p>
+        <p style="margin:0 0 8px;color:#111827;font-size:15px;"><strong>Email:</strong> ${customerEmail}</p>
+        <p style="margin:0;color:#111827;font-size:15px;"><strong>Temporary Password:</strong> ${rawPassword}</p>
+      </div>
+
+      <div style="text-align:center;margin:28px 0;">
+        <a href="${baseUrl}/donor/login" class="button">Log In to Your Donor Dashboard</a>
+      </div>
+
+      <p style="font-size:14px;color:#6c757d;">Please change your password after logging in. If you did not make a payment through ${orgName}, please ignore this email.</p>
+
+      <div style="margin-top:30px;font-style:italic;color:#495057;">
+        <p>Warm regards,<br><strong>The ${orgName} Team</strong></p>
+      </div>
+
+      ${emailService.getFooterHtml()}
+    `, null, `Your ${orgName} Donor Account`, false, false);
+
     await emailService.sendEmail({
       to: customerEmail,
-      subject: 'Your ChangeWorks Donor Account',
-      html: `
-        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;background:#fff;">
-          <h2 style="color:#0E0061;margin-bottom:8px;">Welcome to ChangeWorks!</h2>
-          <p style="color:#374151;margin-bottom:20px;">A donor account has been created for you after your payment. Use these credentials to log in and track your donations.</p>
-          <div style="background:#f3f4f6;border-radius:8px;padding:20px;margin-bottom:24px;">
-            <p style="margin:0 0 8px;color:#6b7280;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Your Login Details</p>
-            <p style="margin:0 0 6px;color:#111827;font-size:15px;"><strong>Email:</strong> ${customerEmail}</p>
-            <p style="margin:0;color:#111827;font-size:15px;"><strong>Password:</strong> ${rawPassword}</p>
-          </div>
-          <a href="${baseUrl}/donor/login" style="display:inline-block;background:#0E0061;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">Log In to Your Account</a>
-          <p style="margin-top:24px;color:#9ca3af;font-size:12px;">Please change your password after logging in. If you did not make a payment through ChangeWorks, please ignore this email.</p>
-        </div>
-      `,
-      text: `Welcome to ChangeWorks!\n\nEmail: ${customerEmail}\nPassword: ${rawPassword}\n\nLog in at: ${baseUrl}/donor/login`,
+      subject: `Your ${orgName} Donor Account`,
+      html,
+      text: `Welcome to ${orgName}!\n\nA donor account has been created for you.\n\nEmail: ${customerEmail}\nTemporary Password: ${rawPassword}\n\nLog in at: ${baseUrl}/donor/login\n\nPlease change your password after logging in.`,
+      from: `"${orgName}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });
 
     console.log(`[donor-auto-create] Credentials email sent to ${customerEmail}`);
