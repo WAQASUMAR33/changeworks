@@ -245,7 +245,7 @@ class EmailService {
       
       <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello ${donor.name},</p>
       
-      <p>Thank you for joining ${orgName}‘s round-up program! Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
+      <p>Thank you for joining ${orgName}'s round-up program! Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
       
       <p>You can view your donation activity anytime through your personalized <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">Donor Portal</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
       
@@ -274,7 +274,7 @@ Welcome to ${orgName}'s Round-Up Community
 
 Hello ${donor.name},
 
-Thank you for joining ${orgName}‘s round-up program! Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
+Thank you for joining ${orgName}'s round-up program! Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
 
 You can view your donation activity anytime through your personalized Donor Portal on ChangeWorks, our platform partner. That's where you'll be able to:
 - Track your monthly round-up totals
@@ -423,10 +423,10 @@ ChangeWorks Team
       
       <p>Thank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.</p>
       
-      <p>That’s why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:</p>
+      <p>That's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:</p>
       
       <ul style="color: #495057;">
-        <li>See your monthly donation totals whenever you’d like</li>
+        <li>See your monthly donation totals whenever you'd like</li>
         <li>Adjust or pause your contributions if your needs change</li>
         <li>Download your donation records for easy reference or tax time</li>
       </ul>
@@ -437,32 +437,32 @@ ChangeWorks Team
         <a href="${verificationLink}" class="button">VERIFY YOUR EMAIL HERE</a>
       </div>
       
-      <p>If you ever have a question or just want to reach out, we’d love to hear from you. We’re grateful to have you with us.</p>
+      <p>If you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.</p>
       
       <div style="margin-top: 30px; font-style: italic; color: #495057;">
         <p>Warm regards,<br>
         The ${orgName} Team</p>
       </div>
 
-      <p style="margin-top: 20px; font-size: 14px; color: #6c757d;"><strong>P.S.</strong> At the end of each month, we’ll send you an update with your 30-day total, so you can see the difference you’ve made.</p>
+      <p style="margin-top: 20px; font-size: 14px; color: #6c757d;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
 
       ${this.getFooterHtml()}
     `;
 
-    // Note: We’re passing false for showOrgName in generateEmailHtml because we handle the header manually in the content
+    // Note: We're passing false for showOrgName in generateEmailHtml because we handle the header manually in the content
     // to match the specific layout requested (Org Logo -> Hello!)
     // We also pass false for showFooter because we handle the footer manually in the content
     const html = this.generateEmailHtml(content, null, subject, false, false);
 
     const text = `
-Welcome to ${orgName}’s Donation Community
+Welcome to ${orgName}'s Donation Community
 
 Hello ${donor.name}
 
 Thank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.
 
-That’s why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:
-- See your monthly donation totals whenever you’d like
+That's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:
+- See your monthly donation totals whenever you'd like
 - Adjust or pause your contributions if your needs change
 - Download your donation records for easy reference or tax time
 
@@ -470,12 +470,12 @@ You can visit your dashboard anytime once your verify your email using the link 
 
 VERIFY YOUR EMAIL HERE: ${verificationLink}
 
-If you ever have a question or just want to reach out, we’d love to hear from you. We’re grateful to have you with us.
+If you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.
 
 Warm regards,
 The ${orgName} Team
 
-P.S. At the end of each month, we’ll send you an update with your 30-day total, so you can see the difference you’ve made.
+P.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.
 
 ChangeWorks Fund
 ChangeWorksFund.Org
@@ -494,7 +494,7 @@ Unsubscribe
       subject: subject,
       html: html,
       text: text,
-      from: `"${organization?.name || ‘ChangeWorks Fund’}" <${process.env.EMAIL_FROM || ‘info@changeworksfund.org’}>`,
+      from: `"${organization?.name || 'ChangeWorks Fund'}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });
   }
 
@@ -623,7 +623,7 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
         <a href="${dashboardLink}" class="button">CLICK HERE TO ACCESS YOUR DONOR DASHBOARD</a>
       </div>
 
-      <p>At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We’re grateful for your trust and would be glad to keep you informed about the impact of your giving.</p>
+      <p>At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We're grateful for your trust and would be glad to keep you informed about the impact of your giving.</p>
 
       <p style="font-size: 14px; color: #6c757d; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
         ${organization.name} is a registered 501(c)(3) nonprofit organization in the United States (EIN: ${ein}). Your donation may be tax-deductible; please consult a tax professional regarding your specific situation.
@@ -666,7 +666,7 @@ You can access your donor account at any time to update your contribution amount
 
 CLICK HERE TO ACCESS YOUR DONOR DASHBOARD: ${dashboardLink}
 
-At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We’re grateful for your trust and would be glad to keep you informed about the impact of your giving.
+At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We're grateful for your trust and would be glad to keep you informed about the impact of your giving.
 
 ${organization.name} is a registered 501(c)(3) nonprofit organization in the United States (EIN: ${ein}). Your donation may be tax-deductible; please consult a tax professional regarding your specific situation.
 
@@ -737,7 +737,7 @@ Unsubscribe
         <a href="${dashboardLink}" class="button">CLICK HERE TO ACCESS YOUR DONOR DASHBOARD</a>
       </div>
       
-      <p>At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We’re grateful for your trust and would be glad to keep you informed about the impact of your giving.</p>
+      <p>At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We're grateful for your trust and would be glad to keep you informed about the impact of your giving.</p>
       
       <p style="font-size: 14px; color: #6c757d; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
         ${organization.name} is a registered 501(c)(3) nonprofit organization in the United States (EIN: ${ein}). Your donation may be tax-deductible; please consult a tax professional regarding your specific situation.
@@ -778,7 +778,7 @@ You can access your donor account at any time to update your contribution amount
 
 CLICK HERE TO ACCESS YOUR DONOR DASHBOARD: ${dashboardLink}
 
-At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We’re grateful for your trust and would be glad to keep you informed about the impact of your giving.
+At ${organization.name}, our mission is straightforward: to use every contribution responsibly and thoughtfully in support of the people and communities we serve. We're grateful for your trust and would be glad to keep you informed about the impact of your giving.
 
 ${organization.name} is a registered 501(c)(3) nonprofit organization in the United States (EIN: ${ein}). Your donation may be tax-deductible; please consult a tax professional regarding your specific situation.
 
@@ -1197,9 +1197,9 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
       
       <p>We received a request to reset the password for your ${orgName} donor account.</p>
       
-      <p>To keep your information secure, you’ll need to create a new password before you can access your ChangeWorks donor dashboard. The process is quick and should take less than a minute.</p>
+      <p>To keep your information secure, you'll need to create a new password before you can access your ChangeWorks donor dashboard. The process is quick and should take less than a minute.</p>
       
-      <p style="margin-bottom: 10px;">What you can do once you’re logged in:</p>
+      <p style="margin-bottom: 10px;">What you can do once you're logged in:</p>
       <ul style="color: #495057;">
         <li>View and manage your donation activity</li>
         <li>Update payment details or giving preferences</li>
@@ -1212,7 +1212,7 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
         <a href="${resetLink}" class="button">CLICK HERE TO RESET YOUR PASSWORD</a>
       </div>
       
-      <p>If you didn’t request a password reset, you can safely ignore this email. No changes will be made to your account.</p>
+      <p>If you didn't request a password reset, you can safely ignore this email. No changes will be made to your account.</p>
       
       <p>If you need help at any point, support is available through our trusted donation partner, ChangeWorks: <a href="mailto:support@changeworksfund.org" style="color: #302E56;">support@changeworksfund.org</a></p>
       
@@ -1255,9 +1255,9 @@ Hello! ${donor.name}
 
 We received a request to reset the password for your ${orgName} donor account.
 
-To keep your information secure, you’ll need to create a new password before you can access your ChangeWorks donor dashboard. The process is quick and should take less than a minute.
+To keep your information secure, you'll need to create a new password before you can access your ChangeWorks donor dashboard. The process is quick and should take less than a minute.
 
-What you can do once you’re logged in:
+What you can do once you're logged in:
 - View and manage your donation activity
 - Update payment details or giving preferences
 - Download donation records for your files
@@ -1266,7 +1266,7 @@ To reset your password, click the button below and follow the on-screen steps. T
 
 CLICK HERE TO RESET YOUR PASSWORD: ${resetLink}
 
-If you didn’t request a password reset, you can safely ignore this email. No changes will be made to your account.
+If you didn't request a password reset, you can safely ignore this email. No changes will be made to your account.
 
 If you need help at any point, support is available through our trusted donation partner, ChangeWorks: support@changeworksfund.org
 
@@ -1320,10 +1320,10 @@ Unsubscribe
       
       <p>We received a request to reset the password for your ChangeWorks organization admin account.</p>
       
-      <p>To protect your account and donor data, you’ll need to create a new password before accessing your admin dashboard. The process is quick and should take less than a minute.</p>
+      <p>To protect your account and donor data, you'll need to create a new password before accessing your admin dashboard. The process is quick and should take less than a minute.</p>
       
       <div class="highlight-box">
-        <h3 style="color: #302E56; margin-top: 0;">What you can do once you’re logged in</h3>
+        <h3 style="color: #302E56; margin-top: 0;">What you can do once you're logged in</h3>
         <ul>
           <li>View and manage donation activity across campaigns</li>
           <li>Access reports, payouts, and donor insights</li>
@@ -1378,9 +1378,9 @@ Dear ${adminName},
 
 We received a request to reset the password for your ChangeWorks organization admin account.
 
-To protect your account and donor data, you’ll need to create a new password before accessing your admin dashboard. The process is quick and should take less than a minute.
+To protect your account and donor data, you'll need to create a new password before accessing your admin dashboard. The process is quick and should take less than a minute.
 
-What you can do once you’re logged in:
+What you can do once you're logged in:
 - View and manage donation activity across campaigns
 - Access reports, payouts, and donor insights
 - Update organization settings and user permissions
@@ -1441,7 +1441,7 @@ Unsubscribe
 
       <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Dear ${adminName},</p>
       
-      <p>Welcome to <strong>ChangeWorks.</strong> We’re excited to have you on board and look forward to supporting your organization’s fundraising efforts.</p>
+      <p>Welcome to <strong>ChangeWorks.</strong> We're excited to have you on board and look forward to supporting your organization's fundraising efforts.</p>
       
       <p>Your ChangeWorks account is now active, giving you access to a secure admin dashboard where you can manage donations, track activity, and stay connected with your supporters. Everything is designed to be straightforward, flexible, and easy to manage.</p>
       
@@ -1480,7 +1480,7 @@ Welcome to your ChangeWorks partnership!
 
 Dear ${adminName},
 
-Welcome to ChangeWorks. We’re excited to have you on board and look forward to supporting your organization’s fundraising efforts.
+Welcome to ChangeWorks. We're excited to have you on board and look forward to supporting your organization's fundraising efforts.
 
 Your ChangeWorks account is now active, giving you access to a secure admin dashboard where you can manage donations, track activity, and stay connected with your supporters. Everything is designed to be straightforward, flexible, and easy to manage.
 
