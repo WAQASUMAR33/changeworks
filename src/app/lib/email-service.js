@@ -120,10 +120,11 @@ class EmailService {
             </p>
             
             <div style="margin-bottom: 10px;">
-                 <img src="${changeWorksLogoUrl}" alt="ChangeWorks" style="max-height: 50px; height: auto; display: block;">
+                 <img src="${changeWorksLogoUrl}" alt="ChangeWorks Fund" style="max-height: 50px; height: auto; display: block;">
             </div>
-            
-            <h3 style="margin: 0 0 5px 0; color: #000; font-size: 16px; font-weight: bold;">ChangeWorks</h3>
+
+            <h3 style="margin: 0 0 5px 0; color: #000; font-size: 16px; font-weight: bold;">ChangeWorks Fund</h3>
+            <p style="margin: 0 0 3px 0; font-size: 14px; color: #333;"><a href="https://changeworksfund.org" style="color: #0056b3; text-decoration: none;">ChangeWorksFund.Org</a></p>
             <p style="margin: 0; font-size: 14px; color: #333;">Your trusted platform partner for charitable giving</p>
         </div>
 
@@ -438,23 +439,23 @@ ChangeWorks Team
       
       <p>If you ever have a question or just want to reach out, we’d love to hear from you. We’re grateful to have you with us.</p>
       
-      ${orgName !== 'ChangeWorks' ? `<div style="margin-top: 30px; font-style: italic; color: #495057;">
+      <div style="margin-top: 30px; font-style: italic; color: #495057;">
         <p>Warm regards,<br>
         The ${orgName} Team</p>
-      </div>` : ''}
-      
-      <p style="margin-top: 20px; font-size: 14px; color: #6c757d;"><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
+      </div>
+
+      <p style="margin-top: 20px; font-size: 14px; color: #6c757d;"><strong>P.S.</strong> At the end of each month, we’ll send you an update with your 30-day total, so you can see the difference you’ve made.</p>
 
       ${this.getFooterHtml()}
     `;
 
-    // Note: We're passing false for showOrgName in generateEmailHtml because we handle the header manually in the content
+    // Note: We’re passing false for showOrgName in generateEmailHtml because we handle the header manually in the content
     // to match the specific layout requested (Org Logo -> Hello!)
     // We also pass false for showFooter because we handle the footer manually in the content
     const html = this.generateEmailHtml(content, null, subject, false, false);
 
     const text = `
-Welcome to ${orgName}'s Donation Community
+Welcome to ${orgName}’s Donation Community
 
 Hello ${donor.name}
 
@@ -471,10 +472,14 @@ VERIFY YOUR EMAIL HERE: ${verificationLink}
 
 If you ever have a question or just want to reach out, we’d love to hear from you. We’re grateful to have you with us.
 
-${orgName !== 'ChangeWorks' ? `Warm regards,
-The ${orgName} Team` : ''}
+Warm regards,
+The ${orgName} Team
 
-P.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.
+P.S. At the end of each month, we’ll send you an update with your 30-day total, so you can see the difference you’ve made.
+
+ChangeWorks Fund
+ChangeWorksFund.Org
+Your trusted platform partner for charitable giving
 
 Contact Information
 Email: support@changeworksfund.org
@@ -489,7 +494,7 @@ Unsubscribe
       subject: subject,
       html: html,
       text: text,
-      from: `"${organization?.name || 'ChangeWorks Fund'}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
+      from: `"${organization?.name || ‘ChangeWorks Fund’}" <${process.env.EMAIL_FROM || ‘info@changeworksfund.org’}>`,
     });
   }
 
