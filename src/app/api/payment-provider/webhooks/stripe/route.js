@@ -17,7 +17,8 @@ import { emailService } from '@/app/lib/email-service';
  * If not, create a donor account with an auto-generated password and send credentials by email.
  */
 async function maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId }) {
-  if (!customerEmail) return;
+  // Only create for GHL-originated payments (locationId identifies the GHL location)
+  if (!customerEmail || !locationId) return;
 
   try {
     // Check if donor already exists
@@ -83,12 +84,12 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
 
       <p>Thank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.</p>
 
-      <p>That's why you have your own donor dashboard with our trusted donation platform partner, <strong>ChangeWorks</strong>. It puts everything you need in one place:</p>
+      <p>That's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:</p>
 
       <ul style="color:#495057;">
-        <li><strong>See your monthly donation totals</strong> whenever you'd like</li>
-        <li><strong>Adjust or pause your contributions</strong> if your needs change</li>
-        <li><strong>Download your donation records</strong> for easy reference or tax time</li>
+        <li>See your monthly donation totals whenever you'd like</li>
+        <li>Adjust or pause your contributions if your needs change</li>
+        <li>Download your donation records for easy reference or tax time</li>
       </ul>
 
       <p>You can visit your dashboard anytime using the credentials below:</p>
@@ -119,7 +120,7 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
       from: `"${orgName}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });
 
-    console.log(`[donor-auto-create] Credentials email sent to ${customerEmail}`);
+    console.log(`[donor-auto-create] Welcome email sent to ${customerEmail}`);
   } catch (err) {
     // Non-fatal — payment already succeeded
     console.error('[donor-auto-create] Failed:', err.message, err.stack);
@@ -172,8 +173,10 @@ export async function POST(request) {
           status: 'SUCCESS', customerName, customerEmail, customerPhone, metadata: intent.metadata,
         });
 
-        // Auto-create donor account if email is new
-        await maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId: locationId ?? intent.metadata?.locationId });
+        // Auto-create donor account only for confirmed GHL payments
+        if (intent.status === 'succeeded') {
+          await maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId: locationId ?? intent.metadata?.locationId });
+        }
 
         if (locationId) {
           let chargeId = intent.id;
