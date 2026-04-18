@@ -183,8 +183,7 @@ async function run() {
   const orgName = organization?.name || 'ChangeWorks';
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
   const logoUrl = getOrgLogoUrl(organization);
-  // Use a dummy verification URL for testing (real one requires DB token)
-  const verificationUrl = `${baseUrl}/api/verify-donor?token=TEST_TOKEN_PREVIEW`;
+  const loginUrl = `${baseUrl}/donor/login`;
   // Use a dummy password for preview (real one is generated per-donor)
   const testPassword = 'TempPass123';
 
@@ -193,7 +192,7 @@ async function run() {
   console.log('  Donor email     :', TEST_EMAIL);
   console.log('  Org name        :', orgName);
   console.log('  Logo URL        :', logoUrl || '(none — will show org name as text)');
-  console.log('  Verification URL:', verificationUrl);
+  console.log('  Login URL       :', loginUrl);
 
   // Step 4: Build email (exact mirror of webhook)
   const subject = `Welcome to ${orgName}'s Donation Community`;
@@ -233,10 +232,8 @@ async function run() {
       </table>
     </div>
 
-    <p>You can visit your dashboard anytime once you verify your email using the link below:</p>
-
     <div style="text-align:center;margin:28px 0;">
-      <a href="${verificationUrl}" style="display:inline-block;background-color:#302E56;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:24px;font-weight:600;font-size:15px;letter-spacing:.02em;">VERIFY YOUR EMAIL HERE</a>
+      <a href="${loginUrl}" style="display:inline-block;background-color:#302E56;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:24px;font-weight:600;font-size:15px;letter-spacing:.02em;">LOGIN TO YOUR DASHBOARD</a>
     </div>
 
     <p>If you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.</p>
@@ -250,7 +247,7 @@ async function run() {
 
   const html = wrapEmailHtml(content, subject);
 
-  const text = `Welcome to ${orgName}'s Donation Community\n\nHello ${name},\n\nThank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.\n\nThat's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:\n- See your monthly donation totals whenever you'd like\n- Adjust or pause your contributions if your needs change\n- Download your donation records for easy reference or tax time\n\nYour account has been created. Here are your login credentials:\nEmail: ${TEST_EMAIL}\nPassword: ${testPassword}\n\nYou can visit your dashboard anytime once you verify your email using the link below:\n\nVERIFY YOUR EMAIL HERE: ${verificationUrl}\n\nIf you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.\n\nWarm regards,\nThe ${orgName} Team\n\nP.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.`;
+  const text = `Welcome to ${orgName}'s Donation Community\n\nHello ${name},\n\nThank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.\n\nThat's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:\n- See your monthly donation totals whenever you'd like\n- Adjust or pause your contributions if your needs change\n- Download your donation records for easy reference or tax time\n\nYour account is ready. Here are your login credentials:\nEmail: ${TEST_EMAIL}\nPassword: ${testPassword}\n\nLogin to your dashboard: ${loginUrl}\n\nIf you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.\n\nWarm regards,\nThe ${orgName} Team\n\nP.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.`;
 
   // Step 5: Send
   const recipient = SEND_TO || TEST_EMAIL;

@@ -45,14 +45,14 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
     });
     if (organization) organizationId = organization.id;
 
-    // Generate a random password (hashed — donor will reset via forgot-password)
+    // Generate a random password (hashed)
     const rawPassword = crypto.randomBytes(8).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
     const hashedPassword = await bcrypt.hash(rawPassword, 12);
 
     const name = customerName?.trim() || customerEmail.split('@')[0];
     const email = customerEmail.toLowerCase().trim();
 
-    // Create donor with status=false (inactive until email verified)
+    // Create donor with status=true (active immediately — no email verification required)
     await prisma.donor.create({
       data: {
         name,
@@ -60,26 +60,16 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
         password: hashedPassword,
         phone: customerPhone || null,
         country: 'US',
-        status: false,
+        status: true,
         ...(organizationId ? { organization_id: organizationId } : {}),
       },
     });
 
     console.log(`[donor-auto-create] Created donor account for ${email} (org: ${organizationId ?? 'none'})`);
 
-    // Generate email verification token (7-day expiry)
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    await prisma.donorVerificationToken.create({
-      data: {
-        identifier: email,
-        token: verificationToken,
-        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
-
     const orgName = organization?.name || 'ChangeWorks';
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
-    const verificationUrl = `${baseUrl}/api/verify-donor?token=${verificationToken}`;
+    const loginUrl = `${baseUrl}/donor/login`;
     const logoUrl = emailService.getOrganizationLogoUrl(organization);
 
     const subject = `Welcome to ${orgName}'s Donation Community`;
@@ -104,7 +94,7 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
         <li><strong>Download your donation records</strong> for easy reference or tax time</li>
       </ul>
 
-      <p>Your account has been created. Here are your login credentials:</p>
+      <p>Your account is ready. Here are your login credentials:</p>
 
       <div style="background-color:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:20px 24px;margin:20px 0;">
         <table style="width:100%;border-collapse:collapse;">
@@ -119,10 +109,8 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
         </table>
       </div>
 
-      <p>You can visit your dashboard anytime once you verify your email using the link below:</p>
-
       <div style="text-align:center;margin:28px 0;">
-        <a href="${verificationUrl}" style="display:inline-block;background-color:#302E56;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:24px;font-weight:600;font-size:15px;letter-spacing:.02em;">VERIFY YOUR EMAIL HERE</a>
+        <a href="${loginUrl}" style="display:inline-block;background-color:#302E56;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:24px;font-weight:600;font-size:15px;letter-spacing:.02em;">LOGIN TO YOUR DASHBOARD</a>
       </div>
 
       <p>If you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.</p>
@@ -140,7 +128,7 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
       to: email,
       subject,
       html,
-      text: `Welcome to ${orgName}'s Donation Community\n\nHello ${name},\n\nThank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.\n\nThat's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:\n- See your monthly donation totals whenever you'd like\n- Adjust or pause your contributions if your needs change\n- Download your donation records for easy reference or tax time\n\nYour account has been created. Here are your login credentials:\nEmail: ${email}\nPassword: ${rawPassword}\n\nYou can visit your dashboard anytime once you verify your email using the link below:\n\nVERIFY YOUR EMAIL HERE: ${verificationUrl}\n\nIf you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.\n\nWarm regards,\nThe ${orgName} Team\n\nP.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.`,
+      text: `Welcome to ${orgName}'s Donation Community\n\nHello ${name},\n\nThank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.\n\nThat's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:\n- See your monthly donation totals whenever you'd like\n- Adjust or pause your contributions if your needs change\n- Download your donation records for easy reference or tax time\n\nYour account is ready. Here are your login credentials:\nEmail: ${email}\nPassword: ${rawPassword}\n\nLogin to your dashboard: ${loginUrl}\n\nIf you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.\n\nWarm regards,\nThe ${orgName} Team\n\nP.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.`,
       from: `"${orgName}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });
 
