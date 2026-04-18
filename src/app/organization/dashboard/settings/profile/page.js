@@ -150,7 +150,9 @@ const ProfilePage = () => {
 
   const uploadImageToAPI = async (base64Data) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_IMAGE_UPLOAD_URL || process.env.IMAGE_UPLOAD_URL;
+      const rawUrl = process.env.NEXT_PUBLIC_IMAGE_UPLOAD_URL || process.env.IMAGE_UPLOAD_URL || '';
+      // Force https — http redirects to https and POST body is lost after the 301
+      const apiUrl = rawUrl.replace(/^http:\/\//i, 'https://');
       
       if (!apiUrl) {
         console.warn('Image upload API URL not configured');
