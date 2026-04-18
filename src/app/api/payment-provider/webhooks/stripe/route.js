@@ -82,7 +82,7 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
                      : null;
       } catch {}
     }
-    const name = resolvedName || emailPrefix;
+    const name = resolvedName || 'Donor';
 
     // Create donor with status=true (active immediately — no email verification required)
     await prisma.donor.create({
@@ -204,9 +204,10 @@ export async function POST(request) {
         try {
           const full    = await getPaymentIntentWithCharge(intent.id, stripeAccountId);
           const billing = full.latest_charge?.billing_details ?? {};
-          customerName  = billing.name  || customerName;
-          customerEmail = billing.email || customerEmail;
-          customerPhone = billing.phone || customerPhone;
+          const custObj = typeof full.customer === 'object' ? full.customer : null;
+          customerName  = billing.name || custObj?.name || customerName;
+          customerEmail = billing.email || custObj?.email || customerEmail;
+          customerPhone = billing.phone || custObj?.phone || customerPhone;
         } catch {}
         await upsertPaymentEvent({
           locationId: locationId ?? intent.metadata?.locationId, stripeAccountId: stripeAccountId ?? '',

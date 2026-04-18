@@ -61,7 +61,7 @@ export async function getPaymentIntentWithCharge(paymentIntentId, stripeAccountI
   const stripe = await createStripeClient();
   return stripe.paymentIntents.retrieve(
     paymentIntentId,
-    { expand: ['latest_charge'] },
+    { expand: ['latest_charge', 'customer'] },
     { stripeAccount: stripeAccountId }
   );
 }
