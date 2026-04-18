@@ -16,9 +16,8 @@ import { emailService } from '@/app/lib/email-service';
  * After a successful GHL payment, auto-create a donor account (status=false until
  * email verified) and send a white-label verification email.
  */
-async function maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId }) {
-  // Only create for GHL-originated payments (locationId identifies the GHL location)
-  if (!customerEmail || !locationId) return;
+async function maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId, stripeAccountId }) {
+  if (!customerEmail) return;
 
   try {
     // Check if donor already exists
@@ -31,19 +30,28 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
       return;
     }
 
-    // Resolve organization from locationId
+    // Resolve organization: try locationId first, then fall back to stripeAccountId
     let organizationId = null;
     let organization = null;
-    organization = await prisma.organization.findFirst({
-      where: {
-        OR: [
-          { ghlId: locationId },
-          { ghlAccounts: { some: { ghl_location_id: locationId } } },
-        ],
-      },
-      select: { id: true, name: true, imageUrl: true },
-    });
+    if (locationId) {
+      organization = await prisma.organization.findFirst({
+        where: {
+          OR: [
+            { ghlId: locationId },
+            { ghlAccounts: { some: { ghl_location_id: locationId } } },
+          ],
+        },
+        select: { id: true, name: true, imageUrl: true },
+      });
+    }
+    if (!organization && stripeAccountId) {
+      organization = await prisma.organization.findFirst({
+        where: { stripeAccountId },
+        select: { id: true, name: true, imageUrl: true },
+      });
+    }
     if (organization) organizationId = organization.id;
+    console.log(`[donor-auto-create] Org resolved: ${organization?.name ?? 'none'} (locationId=${locationId}, stripeAccountId=${stripeAccountId})`);
 
     // Generate a random password (hashed)
     const rawPassword = crypto.randomBytes(8).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
@@ -194,7 +202,7 @@ export async function POST(request) {
 
         // Auto-create donor account only for confirmed GHL payments
         if (intent.status === 'succeeded') {
-          await maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId: locationId ?? intent.metadata?.locationId });
+          await maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId: locationId ?? intent.metadata?.locationId, stripeAccountId });
         }
 
         if (locationId) {
