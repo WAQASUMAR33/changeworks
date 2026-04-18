@@ -146,7 +146,7 @@ export async function POST(request) {
 
   let event;
   try {
-    event = constructWebhookEvent(rawBody, signature);
+    event = await constructWebhookEvent(rawBody, signature);
   } catch (err) {
     console.error('[Stripe Webhook] Signature verification failed:', err.message);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
