@@ -35,7 +35,8 @@ export async function POST(request) {
       try {
         const intent = await getPaymentIntent(chargeId, stripeAccount.stripeAccountId);
         if (intent.status === 'succeeded') return NextResponse.json({ success: true });
-        if (['canceled', 'payment_failed'].includes(intent.status)) return NextResponse.json({ failed: true });
+        // 'requires_payment_method' = card declined / failed; 'canceled' = explicitly canceled
+        if (['canceled', 'requires_payment_method'].includes(intent.status)) return NextResponse.json({ failed: true });
         return NextResponse.json({ success: false });
       } catch {
         return NextResponse.json({ failed: true });

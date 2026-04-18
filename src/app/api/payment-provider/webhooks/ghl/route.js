@@ -146,8 +146,9 @@ export async function POST(request) {
           }
           // Donor account is created only after payment succeeds (via Stripe webhook payment_intent.succeeded)
           await updateWebhookLog(eventId, 'PROCESSED');
+          const subPubKey = stripeAccount.publishableKey || await getStripePublishableKey();
           console.log(`[GHL CHARGE] ✅ Subscription charge — returning clientSecret to GHL`);
-          return NextResponse.json({ clientSecret: paymentIntent.client_secret, publishableKey: stripeAccount.publishableKey });
+          return NextResponse.json({ clientSecret: paymentIntent.client_secret, publishableKey: subPubKey });
         }
 
         console.log(`[GHL CHARGE] Creating one-time PaymentIntent: amount=${data.amount} ${data.currency ?? 'usd'} on ${stripeAccount.stripeAccountId}`);
@@ -155,10 +156,13 @@ export async function POST(request) {
         console.log(`[GHL CHARGE] ✅ PaymentIntent created: ${intent.id}`);
         try {
           await upsertPaymentEvent({ locationId, stripeAccountId: stripeAccount.stripeAccountId, paymentIntentId: intent.id, entityId: data.entityId ?? null, entityType: data.entityType ?? 'invoice', amount: data.amount, currency: data.currency ?? 'usd', status: 'PENDING', customerName, customerEmail, customerPhone });
-        } catch {}
+        } catch (dbErr) {
+          console.warn('[GHL CHARGE] upsertPaymentEvent failed (non-fatal):', dbErr.message);
+        }
         await updateWebhookLog(eventId, 'PROCESSED');
-        console.log(`[GHL CHARGE] ✅ Returning clientSecret=${intent.id} + publishableKey to GHL`);
-        return NextResponse.json({ clientSecret: intent.client_secret, publishableKey: stripeAccount.publishableKey });
+        const chargePubKey = stripeAccount.publishableKey || await getStripePublishableKey();
+        console.log(`[GHL CHARGE] ✅ Returning clientSecret=${intent.id} + publishableKey=${chargePubKey ? chargePubKey.slice(0,12)+'...' : 'EMPTY'} to GHL`);
+        return NextResponse.json({ clientSecret: intent.client_secret, publishableKey: chargePubKey });
       }
 
       case 'PAYMENT_PROVIDER_REFUND': {
