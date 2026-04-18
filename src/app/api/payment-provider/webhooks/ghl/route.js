@@ -14,10 +14,12 @@ import { prisma } from '@/app/lib/prisma';
 import { getPaymentMode, getStripePublishableKey } from '@/app/lib/payment-mode';
 
 const GHL_CLIENT_SECRET = process.env.GHL_CLIENT_SECRET;
+// GHL signs webhooks with the Shared Secret key (separate from the OAuth Client Secret)
+const GHL_WEBHOOK_SECRET = process.env.GHL_WEBHOOK_SECRET || process.env.GHL_CLIENT_SECRET;
 
 function verifyGHLWebhook(rawBody, signature) {
   if (!signature) return false;
-  const expected = createHmac('sha256', GHL_CLIENT_SECRET).update(rawBody).digest('hex');
+  const expected = createHmac('sha256', GHL_WEBHOOK_SECRET).update(rawBody).digest('hex');
   // Handle bare hex or "sha256=<hex>" prefix
   const cleaned = signature.startsWith('sha256=') ? signature.slice(7) : signature;
   return expected === cleaned;
