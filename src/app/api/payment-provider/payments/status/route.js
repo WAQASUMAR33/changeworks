@@ -11,8 +11,10 @@ export async function POST(request) {
   }
 
   const { type, apiKey, locationId } = body;
+  console.log(`[Payment Status] ▶ type=${type} | locationId=${locationId} | apiKeyMatch=${apiKey === process.env.GHL_CLIENT_SECRET} | body=${JSON.stringify(body)}`);
 
   if (!apiKey || apiKey !== process.env.GHL_CLIENT_SECRET) {
+    console.error(`[Payment Status] ❌ Unauthorized — apiKey mismatch. Received: ${apiKey?.substring(0,8)}... Expected starts with: ${process.env.GHL_CLIENT_SECRET?.substring(0,8)}...`);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

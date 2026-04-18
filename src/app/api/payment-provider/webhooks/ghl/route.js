@@ -25,7 +25,6 @@ function verifyGHLWebhook(rawBody, signature) {
 
 export async function POST(request) {
   const rawBody = Buffer.from(await request.arrayBuffer());
-  // GHL may send signature under different header names
   const signature =
     request.headers.get('x-ghl-signature') ||
     request.headers.get('x-wl-signature')  ||
@@ -35,9 +34,15 @@ export async function POST(request) {
   let rawType = '';
   try { rawType = JSON.parse(rawBody.toString('utf-8'))?.type ?? ''; } catch {}
 
+  console.log(`[GHL Webhook] ▶ Received type=${rawType} | signature=${signature ? 'present' : 'MISSING'} | bodyLen=${rawBody.length}`);
+
   const isPaymentEvent = ['PAYMENT_PROVIDER_CHARGE', 'PAYMENT_PROVIDER_REFUND', 'INSTALL', 'UNINSTALL'].includes(rawType);
-  if (GHL_CLIENT_SECRET && signature && isPaymentEvent && !verifyGHLWebhook(rawBody, signature)) {
-    console.warn('[GHL Webhook] Signature mismatch (non-fatal). Proceeding with payload validation.');
+  if (GHL_CLIENT_SECRET && signature && isPaymentEvent) {
+    const valid = verifyGHLWebhook(rawBody, signature);
+    console.log(`[GHL Webhook] Signature check: ${valid ? '✅ valid' : '❌ MISMATCH'}`);
+    if (!valid) console.warn('[GHL Webhook] Proceeding despite signature mismatch.');
+  } else if (isPaymentEvent && !signature) {
+    console.warn('[GHL Webhook] No signature header received for payment event.');
   }
 
   let payload;
@@ -55,7 +60,9 @@ export async function POST(request) {
   try {
     switch (type) {
       case 'PAYMENT_PROVIDER_CHARGE': {
+        console.log(`[GHL CHARGE] locationId=${locationId} | amount=${data?.amount} | currency=${data?.currency} | priceId=${data?.priceId ?? 'none'} | contact=${JSON.stringify(data?.contact ?? {})}`);
         let stripeAccount = await getStripeAccount(locationId);
+        console.log(`[GHL CHARGE] getStripeAccount(${locationId}): ${stripeAccount ? 'FOUND → ' + stripeAccount.stripeAccountId : 'NULL — trying fallback'}`);
 
         // Fallback: look up org by ghlId / ghlAccounts and auto-connect Stripe account
         if (!stripeAccount) {
@@ -87,9 +94,11 @@ export async function POST(request) {
         }
 
         if (!stripeAccount) {
+          console.error(`[GHL CHARGE] ❌ No Stripe account found for locationId=${locationId} even after fallback. Returning 404.`);
           await updateWebhookLog(eventId, 'FAILED', `No Stripe account for location ${locationId}`);
           return NextResponse.json({ error: `No Stripe account connected for location ${locationId}` }, { status: 404 });
         }
+        console.log(`[GHL CHARGE] ✅ Stripe account resolved: ${stripeAccount.stripeAccountId} (livemode=${stripeAccount.livemode})`);
         const contact       = data.contact ?? {};
         const customerName  = (contact.firstName || contact.lastName) ? [contact.firstName, contact.lastName].filter(Boolean).join(' ') : (data.customerName ?? null);
         const customerEmail = contact.email ?? data.email ?? null;
@@ -137,15 +146,18 @@ export async function POST(request) {
           }
           // Donor account is created only after payment succeeds (via Stripe webhook payment_intent.succeeded)
           await updateWebhookLog(eventId, 'PROCESSED');
+          console.log(`[GHL CHARGE] ✅ Subscription charge — returning clientSecret to GHL`);
           return NextResponse.json({ clientSecret: paymentIntent.client_secret, publishableKey: stripeAccount.publishableKey });
         }
 
+        console.log(`[GHL CHARGE] Creating one-time PaymentIntent: amount=${data.amount} ${data.currency ?? 'usd'} on ${stripeAccount.stripeAccountId}`);
         const intent = await createPaymentIntent({ amount: data.amount, currency: data.currency ?? 'usd', stripeAccountId: stripeAccount.stripeAccountId, metadata: sharedMeta });
+        console.log(`[GHL CHARGE] ✅ PaymentIntent created: ${intent.id}`);
         try {
           await upsertPaymentEvent({ locationId, stripeAccountId: stripeAccount.stripeAccountId, paymentIntentId: intent.id, entityId: data.entityId ?? null, entityType: data.entityType ?? 'invoice', amount: data.amount, currency: data.currency ?? 'usd', status: 'PENDING', customerName, customerEmail, customerPhone });
         } catch {}
-        // Donor account is created only after payment succeeds (via Stripe webhook payment_intent.succeeded)
         await updateWebhookLog(eventId, 'PROCESSED');
+        console.log(`[GHL CHARGE] ✅ Returning clientSecret=${intent.id} + publishableKey to GHL`);
         return NextResponse.json({ clientSecret: intent.client_secret, publishableKey: stripeAccount.publishableKey });
       }
 

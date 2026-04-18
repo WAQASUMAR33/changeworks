@@ -185,14 +185,15 @@ export default function CheckoutPage() {
     })
       .then((r) => r.json())
       .then((data) => {
-        if (data.error) { setPageError(data.error); return; }
+        console.log('[Checkout] create-intent response:', JSON.stringify(data));
+        if (data.error) { console.error('[Checkout] create-intent error:', data.error); setPageError(data.error); return; }
         setMode(data.mode ?? 'payment');
         setSubscriptionId(data.subscriptionId ?? null);
         setClientSecret(data.clientSecret);
         setStripePromise(loadStripe(publishableKey || data.publishableKey, { ...(data.stripeAccountId ? { stripeAccount: data.stripeAccountId } : {}) }));
         setReady(true);
       })
-      .catch(() => setPageError('Could not connect to payment server. Please try again.'));
+      .catch((err) => { console.error('[Checkout] create-intent fetch failed:', err); setPageError('Could not connect to payment server. Please try again.'); });
   }, []);
 
   useEffect(() => {
@@ -206,10 +207,13 @@ export default function CheckoutPage() {
     function onMessage(event) {
       let msg = event.data;
       if (typeof msg === 'string') { try { msg = JSON.parse(msg); } catch { return; } }
-      if (!msg || msg.type !== 'payment_initiate_props') return;
+      if (!msg) return;
+      console.log('[Checkout] postMessage received:', msg.type, JSON.stringify(msg));
+      if (msg.type !== 'payment_initiate_props') return;
       if (initDataRef.current) return;
       clearInterval(readyInterval);
       initDataRef.current = msg;
+      console.log('[Checkout] Initialising payment with:', JSON.stringify(msg));
       initPayment(msg);
     }
 
