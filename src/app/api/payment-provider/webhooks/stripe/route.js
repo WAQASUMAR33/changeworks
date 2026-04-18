@@ -13,8 +13,8 @@ import { prisma } from '@/app/lib/prisma';
 import { emailService } from '@/app/lib/email-service';
 
 /**
- * After a successful payment, check if the customer email exists as a donor.
- * If not, create a donor account with an auto-generated password and send credentials by email.
+ * After a successful GHL payment, auto-create a donor account (status=false until
+ * email verified) and send a white-label verification email.
  */
 async function maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId }) {
   // Only create for GHL-originated payments (locationId identifies the GHL location)
@@ -34,71 +34,80 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
     // Resolve organization from locationId
     let organizationId = null;
     let organization = null;
-    if (locationId) {
-      organization = await prisma.organization.findFirst({
-        where: {
-          OR: [
-            { ghlId: locationId },
-            { ghlAccounts: { some: { ghl_location_id: locationId } } },
-          ],
-        },
-        select: { id: true, name: true, imageUrl: true },
-      });
-      if (organization) organizationId = organization.id;
-    }
+    organization = await prisma.organization.findFirst({
+      where: {
+        OR: [
+          { ghlId: locationId },
+          { ghlAccounts: { some: { ghl_location_id: locationId } } },
+        ],
+      },
+      select: { id: true, name: true, imageUrl: true },
+    });
+    if (organization) organizationId = organization.id;
 
-    // Generate a random password
+    // Generate a random password (hashed — donor will reset via forgot-password)
     const rawPassword = crypto.randomBytes(8).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
     const hashedPassword = await bcrypt.hash(rawPassword, 12);
 
     const name = customerName?.trim() || customerEmail.split('@')[0];
+    const email = customerEmail.toLowerCase().trim();
 
+    // Create donor with status=false (inactive until email verified)
     await prisma.donor.create({
       data: {
         name,
-        email: customerEmail.toLowerCase().trim(),
+        email,
         password: hashedPassword,
         phone: customerPhone || null,
         country: 'US',
-        status: true,
+        status: false,
         ...(organizationId ? { organization_id: organizationId } : {}),
       },
     });
 
-    console.log(`[donor-auto-create] Created donor account for ${customerEmail} (org: ${organizationId ?? 'none'})`);
+    console.log(`[donor-auto-create] Created donor account for ${email} (org: ${organizationId ?? 'none'})`);
+
+    // Generate email verification token (7-day expiry)
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    await prisma.donorVerificationToken.create({
+      data: {
+        identifier: email,
+        token: verificationToken,
+        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
 
     const orgName = organization?.name || 'ChangeWorks';
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
-    const loginUrl = `${baseUrl}/donor/login`;
+    const verificationUrl = `${baseUrl}/api/verify-donor?token=${verificationToken}`;
     const logoUrl = emailService.getOrganizationLogoUrl(organization);
 
     const subject = `Welcome to ${orgName}'s Donation Community`;
 
     const html = emailService.generateEmailHtml(`
       <div style="text-align:center;margin-bottom:30px;">
-        ${logoUrl ? `<img src="${logoUrl}" alt="${orgName}" style="max-height:120px;max-width:250px;height:auto;border:0;display:inline-block;margin-bottom:15px;">` : ''}
-        ${!logoUrl ? `<h2 style="color:#302E56;margin:0;font-size:24px;font-weight:700;">${orgName}</h2>` : ''}
+        ${logoUrl
+          ? `<img src="${logoUrl}" alt="${orgName}" style="max-height:120px;max-width:250px;height:auto;border:0;display:inline-block;margin-bottom:15px;">`
+          : `<h2 style="color:#302E56;margin:0;font-size:24px;font-weight:700;">${orgName}</h2>`
+        }
       </div>
 
       <p style="font-size:18px;font-weight:500;color:#212529;margin-bottom:20px;">Hello ${name}</p>
 
       <p>Thank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.</p>
 
-      <p>That's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:</p>
+      <p>That's why you have your own donor dashboard with our trusted donation platform partner, <strong>ChangeWorks</strong>. It puts everything you need in one place:</p>
 
       <ul style="color:#495057;">
-        <li>See your monthly donation totals whenever you'd like</li>
-        <li>Adjust or pause your contributions if your needs change</li>
-        <li>Download your donation records for easy reference or tax time</li>
+        <li><strong>See your monthly donation totals</strong> whenever you'd like</li>
+        <li><strong>Adjust or pause your contributions</strong> if your needs change</li>
+        <li><strong>Download your donation records</strong> for easy reference or tax time</li>
       </ul>
 
-      <p>You can visit your dashboard anytime using the credentials below:</p>
+      <p>You can visit your dashboard anytime once you verify your email using the link below:</p>
 
-      <div style="background:#f3f4f6;border-radius:8px;padding:20px;margin:24px 0;border-left:4px solid #302E56;">
-        <p style="margin:0 0 8px;color:#6b7280;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Your Login Details</p>
-        <p style="margin:0 0 8px;color:#111827;font-size:15px;"><strong>Username:</strong> ${customerEmail}</p>
-        <p style="margin:0 0 8px;color:#111827;font-size:15px;"><strong>Login URL:</strong> <a href="${loginUrl}" style="color:#302E56;">${loginUrl}</a></p>
-        <p style="margin:0;color:#111827;font-size:15px;"><strong>Temporary Password:</strong> ${rawPassword}</p>
+      <div style="text-align:center;margin:28px 0;">
+        <a href="${verificationUrl}" style="display:inline-block;background-color:#302E56;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:24px;font-weight:600;font-size:15px;letter-spacing:.02em;">VERIFY YOUR EMAIL HERE</a>
       </div>
 
       <p>If you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.</p>
@@ -113,14 +122,14 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
     `, null, subject, false, false);
 
     await emailService.sendEmail({
-      to: customerEmail,
+      to: email,
       subject,
       html,
-      text: `Welcome to ${orgName}'s Donation Community\n\nHello ${name},\n\nThank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.\n\nThat's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:\n- See your monthly donation totals whenever you'd like\n- Adjust or pause your contributions if your needs change\n- Download your donation records for easy reference or tax time\n\nYou can visit your dashboard anytime using the credentials below:\n\nUsername: ${customerEmail}\nLogin URL: ${loginUrl}\nTemporary Password: ${rawPassword}\n\nIf you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.\n\nWarm regards,\nThe ${orgName} Team\n\nP.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.`,
+      text: `Welcome to ${orgName}'s Donation Community\n\nHello ${name},\n\nThank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.\n\nThat's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:\n- See your monthly donation totals whenever you'd like\n- Adjust or pause your contributions if your needs change\n- Download your donation records for easy reference or tax time\n\nYou can visit your dashboard anytime once you verify your email using the link below:\n\nVERIFY YOUR EMAIL HERE: ${verificationUrl}\n\nIf you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.\n\nWarm regards,\nThe ${orgName} Team\n\nP.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.`,
       from: `"${orgName}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });
 
-    console.log(`[donor-auto-create] Welcome email sent to ${customerEmail}`);
+    console.log(`[donor-auto-create] Verification email sent to ${email}`);
   } catch (err) {
     // Non-fatal — payment already succeeded
     console.error('[donor-auto-create] Failed:', err.message, err.stack);

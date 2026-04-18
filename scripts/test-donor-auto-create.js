@@ -178,51 +178,48 @@ async function run() {
     }
   }
 
-  // Step 3: Generate credentials (same logic as webhook)
-  const rawPassword = crypto.randomBytes(8).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
-  const name = TEST_NAME?.trim() || TEST_EMAIL.split('@')[0];
-
-  const orgName  = organization?.name || 'ChangeWorks';
-  const baseUrl  = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
-  const loginUrl = `${baseUrl}/donor/login`;
-  const logoUrl  = getOrgLogoUrl(organization);
+  // Step 3: Build email parameters
+  const name    = TEST_NAME?.trim() || TEST_EMAIL.split('@')[0];
+  const orgName = organization?.name || 'ChangeWorks';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+  const logoUrl = getOrgLogoUrl(organization);
+  // Use a dummy verification URL for testing (real one requires DB token)
+  const verificationUrl = `${baseUrl}/api/verify-donor?token=TEST_TOKEN_PREVIEW`;
 
   console.log('\nStep 3: Email parameters');
-  console.log('  Donor name     :', name);
-  console.log('  Donor email    :', TEST_EMAIL);
-  console.log('  Org name       :', orgName);
-  console.log('  Logo URL       :', logoUrl || '(none — will show org name as text)');
-  console.log('  Login URL      :', loginUrl);
-  console.log('  Raw password   :', rawPassword, '  ← (for testing only)');
+  console.log('  Donor name      :', name);
+  console.log('  Donor email     :', TEST_EMAIL);
+  console.log('  Org name        :', orgName);
+  console.log('  Logo URL        :', logoUrl || '(none — will show org name as text)');
+  console.log('  Verification URL:', verificationUrl);
 
   // Step 4: Build email (exact mirror of webhook)
   const subject = `Welcome to ${orgName}'s Donation Community`;
 
   const content = `
     <div style="text-align:center;margin-bottom:30px;">
-      ${logoUrl ? `<img src="${logoUrl}" alt="${orgName}" style="max-height:120px;max-width:250px;height:auto;border:0;display:inline-block;margin-bottom:15px;">` : ''}
-      ${!logoUrl ? `<h2 style="color:#302E56;margin:0;font-size:24px;font-weight:700;">${orgName}</h2>` : ''}
+      ${logoUrl
+        ? `<img src="${logoUrl}" alt="${orgName}" style="max-height:120px;max-width:250px;height:auto;border:0;display:inline-block;margin-bottom:15px;">`
+        : `<h2 style="color:#302E56;margin:0;font-size:24px;font-weight:700;">${orgName}</h2>`
+      }
     </div>
 
     <p style="font-size:18px;font-weight:500;color:#212529;margin-bottom:20px;">Hello ${name}</p>
 
     <p>Thank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.</p>
 
-    <p>That's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:</p>
+    <p>That's why you have your own donor dashboard with our trusted donation platform partner, <strong>ChangeWorks</strong>. It puts everything you need in one place:</p>
 
     <ul style="color:#495057;">
-      <li>See your monthly donation totals whenever you'd like</li>
-      <li>Adjust or pause your contributions if your needs change</li>
-      <li>Download your donation records for easy reference or tax time</li>
+      <li><strong>See your monthly donation totals</strong> whenever you'd like</li>
+      <li><strong>Adjust or pause your contributions</strong> if your needs change</li>
+      <li><strong>Download your donation records</strong> for easy reference or tax time</li>
     </ul>
 
-    <p>You can visit your dashboard anytime using the credentials below:</p>
+    <p>You can visit your dashboard anytime once you verify your email using the link below:</p>
 
-    <div style="background:#f3f4f6;border-radius:8px;padding:20px;margin:24px 0;border-left:4px solid #302E56;">
-      <p style="margin:0 0 8px;color:#6b7280;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Your Login Details</p>
-      <p style="margin:0 0 8px;color:#111827;font-size:15px;"><strong>Username:</strong> ${TEST_EMAIL}</p>
-      <p style="margin:0 0 8px;color:#111827;font-size:15px;"><strong>Login URL:</strong> <a href="${loginUrl}" style="color:#302E56;">${loginUrl}</a></p>
-      <p style="margin:0;color:#111827;font-size:15px;"><strong>Temporary Password:</strong> ${rawPassword}</p>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${verificationUrl}" style="display:inline-block;background-color:#302E56;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:24px;font-weight:600;font-size:15px;letter-spacing:.02em;">VERIFY YOUR EMAIL HERE</a>
     </div>
 
     <p>If you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.</p>
@@ -236,7 +233,7 @@ async function run() {
 
   const html = wrapEmailHtml(content, subject);
 
-  const text = `Welcome to ${orgName}'s Donation Community\n\nHello ${name},\n\nThank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.\n\nThat's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:\n- See your monthly donation totals whenever you'd like\n- Adjust or pause your contributions if your needs change\n- Download your donation records for easy reference or tax time\n\nYou can visit your dashboard anytime using the credentials below:\n\nUsername: ${TEST_EMAIL}\nLogin URL: ${loginUrl}\nTemporary Password: ${rawPassword}\n\nIf you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.\n\nWarm regards,\nThe ${orgName} Team\n\nP.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.`;
+  const text = `Welcome to ${orgName}'s Donation Community\n\nHello ${name},\n\nThank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.\n\nThat's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:\n- See your monthly donation totals whenever you'd like\n- Adjust or pause your contributions if your needs change\n- Download your donation records for easy reference or tax time\n\nYou can visit your dashboard anytime once you verify your email using the link below:\n\nVERIFY YOUR EMAIL HERE: ${verificationUrl}\n\nIf you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.\n\nWarm regards,\nThe ${orgName} Team\n\nP.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.`;
 
   // Step 5: Send
   const recipient = SEND_TO || TEST_EMAIL;
