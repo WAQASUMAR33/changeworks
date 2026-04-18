@@ -68,11 +68,16 @@ export async function POST(request) {
     test: { liveMode: false, apiKey, publishableKey: testPubKey, enabled: true },
   };
 
+  console.log(`[register-provider] connect body: apiKey=${connectBody.live.apiKey ? connectBody.live.apiKey.slice(0,8)+'...' : 'MISSING'} | livePk=${connectBody.live.publishableKey ? connectBody.live.publishableKey.slice(0,12)+'...' : 'EMPTY'} | testPk=${connectBody.test.publishableKey ? connectBody.test.publishableKey.slice(0,12)+'...' : 'EMPTY'}`);
   try {
     const { data } = await client.post(`/payments/custom-provider/connect?locationId=${locationId}`, connectBody);
     results.connect = { ok: true, data };
+    console.log(`[register-provider] ✅ connect succeeded for ${locationId}:`, JSON.stringify(data));
   } catch (err) {
-    results.connect = { ok: false, status: err.response?.status, error: err.response?.data ?? err.message };
+    const status = err.response?.status;
+    const errData = err.response?.data ?? err.message;
+    results.connect = { ok: false, status, error: errData };
+    console.error(`[register-provider] ❌ connect FAILED for ${locationId}: status=${status} | error=${JSON.stringify(errData)}`);
   }
 
   return NextResponse.json(results, { status: 200 });

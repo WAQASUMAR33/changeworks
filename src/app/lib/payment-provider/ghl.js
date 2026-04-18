@@ -177,16 +177,22 @@ export async function connectGHLPaymentProvider(locationId) {
   const livePubKey  = process.env.STRIPE_PUBLISHABLE_KEY_LIVE     || '';
   const testPubKey  = process.env.STRIPE_PUBLISHABLE_KEY_SANDBOX  || '';
 
+  console.log(`[GHL] connectGHLPaymentProvider for ${locationId}: apiKey=${apiKey ? apiKey.slice(0,8)+'...' : 'MISSING'} | livePubKey=${livePubKey ? livePubKey.slice(0,12)+'...' : 'EMPTY'} | testPubKey=${testPubKey ? testPubKey.slice(0,12)+'...' : 'EMPTY'}`);
+
   const client      = await ghlClient(locationId);
   const connectBody = {
     live: { liveMode: true,  apiKey, publishableKey: livePubKey, enabled: true },
     test: { liveMode: false, apiKey, publishableKey: testPubKey, enabled: true },
   };
   try {
-    await client.post(`/payments/custom-provider/connect?locationId=${locationId}`, connectBody);
-    console.log(`[GHL] Payment provider connected for location ${locationId}`);
+    const { data: connectData } = await client.post(`/payments/custom-provider/connect?locationId=${locationId}`, connectBody);
+    console.log(`[GHL] ✅ Payment provider connected for location ${locationId}:`, JSON.stringify(connectData));
   } catch (err) {
-    console.warn(`[GHL] connect failed (non-fatal): ${err.response?.status} ${JSON.stringify(err.response?.data ?? err.message)}`);
+    const status = err.response?.status;
+    const errData = err.response?.data ?? err.message;
+    console.error(`[GHL] ❌ connect FAILED for ${locationId}: status=${status} | error=${JSON.stringify(errData)}`);
+    // Re-throw so callers can surface the failure
+    throw new Error(`GHL connect failed (${status}): ${JSON.stringify(errData)}`);
   }
   return providerData;
 }

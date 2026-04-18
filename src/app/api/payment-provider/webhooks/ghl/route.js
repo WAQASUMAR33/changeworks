@@ -175,9 +175,9 @@ export async function POST(request) {
           try {
             const { connectGHLPaymentProvider } = await import('@/app/lib/payment-provider/ghl');
             await connectGHLPaymentProvider(locationId);
-            console.log(`[GHL Webhook] Payment provider re-connected for ${locationId} on INSTALL`);
+            console.log(`[GHL Webhook] ✅ Payment provider re-connected for ${locationId} on INSTALL`);
           } catch (installErr) {
-            console.warn('[GHL Webhook] INSTALL connectGHLPaymentProvider failed (non-fatal):', installErr.message);
+            console.error(`[GHL Webhook] ❌ INSTALL connectGHLPaymentProvider FAILED for ${locationId}:`, installErr.message);
           }
         }
         await updateWebhookLog(eventId, 'PROCESSED');
