@@ -107,9 +107,18 @@ export async function getStripeConnectClientId() {
   return process.env.STRIPE_CONNECT_CLIENT_ID ?? '';
 }
 
-/** Returns the mode-appropriate Stripe Connect webhook secret (payment provider). */
+/** Returns the mode-appropriate Stripe Connect webhook secret (payment provider).
+ *  DB (AppSetting) takes precedence over env vars so the secret can be
+ *  auto-registered without a server restart. */
 export async function getStripeConnectWebhookSecret() {
   const mode = await loadMode();
+  const dbKey = mode === 'live'
+    ? 'stripe_connect_webhook_secret_live'
+    : 'stripe_connect_webhook_secret_sandbox';
+  try {
+    const row = await prisma.appSetting.findUnique({ where: { key: dbKey } });
+    if (row?.value) return row.value;
+  } catch {}
   return mode === 'live'
     ? (process.env.STRIPE_CONNECT_WEBHOOK_SECRET_LIVE ?? '')
     : (process.env.STRIPE_CONNECT_WEBHOOK_SECRET_SANDBOX ?? '');
