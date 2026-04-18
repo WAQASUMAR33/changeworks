@@ -58,16 +58,31 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
     const hashedPassword = await bcrypt.hash(rawPassword, 12);
 
     const email = customerEmail.toLowerCase().trim();
+    const emailPrefix = email.split('@')[0];
 
-    // Resolve real name: Stripe metadata → GHL contact lookup → email prefix
-    let resolvedName = customerName?.trim() || null;
-    if (!resolvedName && locationId) {
+    // A "real" name must contain a space or differ from the email prefix
+    function isRealName(n) {
+      if (!n) return false;
+      const v = n.trim();
+      if (!v) return false;
+      if (v.includes('@')) return false;               // looks like an email
+      if (v.toLowerCase() === emailPrefix.toLowerCase()) return false; // same as email prefix
+      return true;
+    }
+
+    // Resolve first name: Stripe metadata → GHL contact firstName/lastName → email prefix
+    let resolvedName = isRealName(customerName) ? customerName.trim() : null;
+    if (!resolvedName) {
       try {
-        const contact = await getContactByEmail(locationId, email);
-        resolvedName = contact?.name?.trim() || contact?.firstName?.trim() || null;
+        const contact = await getContactByEmail(locationId || '', email);
+        const ghlFirst = contact?.firstName?.trim() || null;
+        const ghlFull  = contact?.name?.trim() || null;
+        resolvedName = isRealName(ghlFirst) ? ghlFirst
+                     : isRealName(ghlFull)  ? ghlFull.split(' ')[0]
+                     : null;
       } catch {}
     }
-    const name = resolvedName || email.split('@')[0];
+    const name = resolvedName || emailPrefix;
 
     // Create donor with status=true (active immediately — no email verification required)
     await prisma.donor.create({
