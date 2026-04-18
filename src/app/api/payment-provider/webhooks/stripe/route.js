@@ -8,7 +8,7 @@ import {
   getLocationByStripeAccount, upsertPaymentEvent, getPaymentEventByEntityId,
   isWebhookProcessed, createWebhookLog, updateWebhookLog,
 } from '@/app/lib/payment-provider/tokenStore';
-import { postPaymentUpdateToGHL, postSubscriptionUpdateToGHL } from '@/app/lib/payment-provider/ghl';
+import { postPaymentUpdateToGHL, postSubscriptionUpdateToGHL, getContactByEmail } from '@/app/lib/payment-provider/ghl';
 import { prisma } from '@/app/lib/prisma';
 import { emailService } from '@/app/lib/email-service';
 
@@ -49,8 +49,17 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
     const rawPassword = crypto.randomBytes(8).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
     const hashedPassword = await bcrypt.hash(rawPassword, 12);
 
-    const name = customerName?.trim() || customerEmail.split('@')[0];
     const email = customerEmail.toLowerCase().trim();
+
+    // Resolve real name: Stripe metadata → GHL contact lookup → email prefix
+    let resolvedName = customerName?.trim() || null;
+    if (!resolvedName && locationId) {
+      try {
+        const contact = await getContactByEmail(locationId, email);
+        resolvedName = contact?.name?.trim() || contact?.firstName?.trim() || null;
+      } catch {}
+    }
+    const name = resolvedName || email.split('@')[0];
 
     // Create donor with status=true (active immediately — no email verification required)
     await prisma.donor.create({
@@ -76,10 +85,8 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
 
     const html = emailService.generateEmailHtml(`
       <div style="text-align:center;margin-bottom:30px;">
-        ${logoUrl
-          ? `<img src="${logoUrl}" alt="${orgName}" style="max-height:120px;max-width:250px;height:auto;border:0;display:inline-block;margin-bottom:15px;">`
-          : `<h2 style="color:#302E56;margin:0;font-size:24px;font-weight:700;">${orgName}</h2>`
-        }
+        ${logoUrl ? `<img src="${logoUrl}" alt="${orgName}" style="max-height:100px;max-width:220px;height:auto;border:0;display:block;margin:0 auto 12px auto;">` : ''}
+        <h2 style="color:#302E56;margin:0;font-size:22px;font-weight:700;">${orgName}</h2>
       </div>
 
       <p style="font-size:18px;font-weight:500;color:#212529;margin-bottom:20px;">Hello ${name}</p>

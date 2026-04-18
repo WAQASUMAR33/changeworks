@@ -108,6 +108,22 @@ export async function getLocation(locationId) {
   return data.location;
 }
 
+// ─── Contacts ─────────────────────────────────────────────────────────────────
+
+export async function getContactByEmail(locationId, email) {
+  try {
+    const client = await ghlClient(locationId);
+    const { data } = await client.get(`/contacts/search/duplicate`, {
+      params: { locationId, email },
+    });
+    const contact = data?.contact ?? data?.contacts?.[0] ?? null;
+    return contact;
+  } catch (err) {
+    console.warn(`[GHL] getContactByEmail failed for ${email}:`, err.response?.status ?? err.message);
+    return null;
+  }
+}
+
 // ─── Payments ─────────────────────────────────────────────────────────────────
 
 export async function getTransaction(locationId, transactionId) {

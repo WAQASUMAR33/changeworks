@@ -199,10 +199,8 @@ async function run() {
 
   const content = `
     <div style="text-align:center;margin-bottom:30px;">
-      ${logoUrl
-        ? `<img src="${logoUrl}" alt="${orgName}" style="max-height:120px;max-width:250px;height:auto;border:0;display:inline-block;margin-bottom:15px;">`
-        : `<h2 style="color:#302E56;margin:0;font-size:24px;font-weight:700;">${orgName}</h2>`
-      }
+      ${logoUrl ? `<img src="${logoUrl}" alt="${orgName}" style="max-height:100px;max-width:220px;height:auto;border:0;display:block;margin:0 auto 12px auto;">` : ''}
+      <h2 style="color:#302E56;margin:0;font-size:22px;font-weight:700;">${orgName}</h2>
     </div>
 
     <p style="font-size:18px;font-weight:500;color:#212529;margin-bottom:20px;">Hello ${name}</p>
