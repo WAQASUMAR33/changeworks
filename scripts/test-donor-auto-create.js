@@ -185,6 +185,8 @@ async function run() {
   const logoUrl = getOrgLogoUrl(organization);
   // Use a dummy verification URL for testing (real one requires DB token)
   const verificationUrl = `${baseUrl}/api/verify-donor?token=TEST_TOKEN_PREVIEW`;
+  // Use a dummy password for preview (real one is generated per-donor)
+  const testPassword = 'TempPass123';
 
   console.log('\nStep 3: Email parameters');
   console.log('  Donor name      :', name);
@@ -216,6 +218,21 @@ async function run() {
       <li><strong>Download your donation records</strong> for easy reference or tax time</li>
     </ul>
 
+    <p>Your account has been created. Here are your login credentials:</p>
+
+    <div style="background-color:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:20px 24px;margin:20px 0;">
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td style="padding:6px 0;font-size:14px;color:#6c757d;width:120px;">Email</td>
+          <td style="padding:6px 0;font-size:15px;color:#212529;font-weight:600;">${TEST_EMAIL}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;font-size:14px;color:#6c757d;">Password</td>
+          <td style="padding:6px 0;font-size:15px;color:#212529;font-weight:600;">${testPassword}</td>
+        </tr>
+      </table>
+    </div>
+
     <p>You can visit your dashboard anytime once you verify your email using the link below:</p>
 
     <div style="text-align:center;margin:28px 0;">
@@ -233,7 +250,7 @@ async function run() {
 
   const html = wrapEmailHtml(content, subject);
 
-  const text = `Welcome to ${orgName}'s Donation Community\n\nHello ${name},\n\nThank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.\n\nThat's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:\n- See your monthly donation totals whenever you'd like\n- Adjust or pause your contributions if your needs change\n- Download your donation records for easy reference or tax time\n\nYou can visit your dashboard anytime once you verify your email using the link below:\n\nVERIFY YOUR EMAIL HERE: ${verificationUrl}\n\nIf you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.\n\nWarm regards,\nThe ${orgName} Team\n\nP.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.`;
+  const text = `Welcome to ${orgName}'s Donation Community\n\nHello ${name},\n\nThank you for supporting our work financially with your donation. Your generosity truly matters to us, and we want giving to feel simple and effortless.\n\nThat's why you have your own donor dashboard with our trusted donation platform partner, ChangeWorks. It puts everything you need in one place:\n- See your monthly donation totals whenever you'd like\n- Adjust or pause your contributions if your needs change\n- Download your donation records for easy reference or tax time\n\nYour account has been created. Here are your login credentials:\nEmail: ${TEST_EMAIL}\nPassword: ${testPassword}\n\nYou can visit your dashboard anytime once you verify your email using the link below:\n\nVERIFY YOUR EMAIL HERE: ${verificationUrl}\n\nIf you ever have a question or just want to reach out, we'd love to hear from you. We're grateful to have you with us.\n\nWarm regards,\nThe ${orgName} Team\n\nP.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.`;
 
   // Step 5: Send
   const recipient = SEND_TO || TEST_EMAIL;
