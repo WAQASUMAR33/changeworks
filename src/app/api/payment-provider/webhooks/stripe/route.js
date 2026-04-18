@@ -8,7 +8,7 @@ import {
   getLocationByStripeAccount, upsertPaymentEvent, getPaymentEventByEntityId,
   isWebhookProcessed, createWebhookLog, updateWebhookLog,
 } from '@/app/lib/payment-provider/tokenStore';
-import { postPaymentUpdateToGHL, postSubscriptionUpdateToGHL, getContactByEmail } from '@/app/lib/payment-provider/ghl';
+import { postPaymentUpdateToGHL, postSubscriptionUpdateToGHL, getContactByEmail, getTransaction } from '@/app/lib/payment-provider/ghl';
 import { prisma } from '@/app/lib/prisma';
 import { emailService } from '@/app/lib/email-service';
 
@@ -16,7 +16,7 @@ import { emailService } from '@/app/lib/email-service';
  * After a successful GHL payment, auto-create a donor account (status=false until
  * email verified) and send a white-label verification email.
  */
-async function maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId, stripeAccountId }) {
+async function maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId, stripeAccountId, ghlTransactionId }) {
   if (!customerEmail) return;
 
   try {
@@ -70,8 +70,20 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
       return true;
     }
 
-    // Resolve first name: Stripe metadata → GHL contact firstName/lastName → email prefix
+    // Resolve first name: Stripe metadata → GHL transaction contactSnapshot → GHL contact lookup → 'Donor'
     let resolvedName = isRealName(customerName) ? customerName.trim() : null;
+    if (!resolvedName && ghlTransactionId && locationId) {
+      try {
+        const txn = await getTransaction(locationId, ghlTransactionId);
+        const snap = Array.isArray(txn) ? txn[0]?.contactSnapshot : txn?.contactSnapshot;
+        const first = snap?.firstName?.trim() || null;
+        const last  = snap?.lastName?.trim()  || null;
+        const full  = snap?.fullNameLowerCase  || null;
+        resolvedName = isRealName(first) ? first
+                     : isRealName(last)  ? last
+                     : (full ? full.split(' ')[0] : null);
+      } catch {}
+    }
     if (!resolvedName) {
       try {
         const contact = await getContactByEmail(locationId || '', email);
@@ -218,7 +230,7 @@ export async function POST(request) {
 
         // Auto-create donor account only for confirmed GHL payments
         if (intent.status === 'succeeded') {
-          await maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId: locationId ?? intent.metadata?.locationId, stripeAccountId });
+          await maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId: locationId ?? intent.metadata?.locationId, stripeAccountId, ghlTransactionId: intent.metadata?.ghlTransactionId ?? intent.metadata?.entityId ?? null });
         }
 
         if (locationId) {
