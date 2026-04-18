@@ -158,6 +158,19 @@ export async function POST(request) {
       }
 
       case 'INSTALL':
+        // Re-register the payment provider every time the app is installed/reinstalled
+        if (locationId) {
+          try {
+            const { connectGHLPaymentProvider } = await import('@/app/lib/payment-provider/ghl');
+            await connectGHLPaymentProvider(locationId);
+            console.log(`[GHL Webhook] Payment provider re-connected for ${locationId} on INSTALL`);
+          } catch (installErr) {
+            console.warn('[GHL Webhook] INSTALL connectGHLPaymentProvider failed (non-fatal):', installErr.message);
+          }
+        }
+        await updateWebhookLog(eventId, 'PROCESSED');
+        return NextResponse.json({ received: true });
+
       case 'UNINSTALL':
         await updateWebhookLog(eventId, 'PROCESSED');
         return NextResponse.json({ received: true });
