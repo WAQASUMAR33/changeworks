@@ -50,10 +50,11 @@ export async function POST(request) {
       }
     }
 
-    // Create fresh endpoint
+    // Create fresh Connect webhook (connect:true so events from all connected accounts are received)
     const endpoint = await stripe.webhookEndpoints.create({
       url: webhookUrl,
       enabled_events: WEBHOOK_EVENTS,
+      connect: true,
       description: 'ChangeWorks GHL payment provider – auto-registered',
     });
 
