@@ -7,9 +7,11 @@ import {
   createProduct, createPrice, updateProduct, archivePrice, setProductDefaultPrice,
 } from '@/app/lib/payment-provider/stripe';
 import {
-  getStripeAccount, createWebhookLog, updateWebhookLog, upsertPaymentEvent,
+  getStripeAccount, saveStripeAccount, createWebhookLog, updateWebhookLog, upsertPaymentEvent,
   saveProductSync, getProductSync, deleteProductSync, savePriceSync, getPriceSync, deletePriceSync,
 } from '@/app/lib/payment-provider/tokenStore';
+import { prisma } from '@/app/lib/prisma';
+import { getPaymentMode, getStripePublishableKey } from '@/app/lib/payment-mode';
 
 const GHL_CLIENT_SECRET = process.env.GHL_CLIENT_SECRET;
 
@@ -53,7 +55,37 @@ export async function POST(request) {
   try {
     switch (type) {
       case 'PAYMENT_PROVIDER_CHARGE': {
-        const stripeAccount = await getStripeAccount(locationId);
+        let stripeAccount = await getStripeAccount(locationId);
+
+        // Fallback: look up org by ghlId / ghlAccounts and auto-connect Stripe account
+        if (!stripeAccount) {
+          try {
+            let org = await prisma.organization.findFirst({
+              where: { OR: [{ ghlId: locationId }, { ghlAccounts: { some: { ghl_location_id: locationId } } }] },
+              select: { stripeAccountId: true },
+            });
+            if (!org?.stripeAccountId) {
+              const install = await prisma.gHLAppInstallation.findUnique({ where: { location_id: locationId }, select: { ghl_id: true } });
+              if (install?.ghl_id) {
+                org = await prisma.organization.findFirst({ where: { ghlId: install.ghl_id }, select: { stripeAccountId: true } });
+              }
+            }
+            if (org?.stripeAccountId) {
+              const mode    = await getPaymentMode();
+              const pubKey  = await getStripePublishableKey();
+              await saveStripeAccount(locationId, {
+                stripeAccountId: org.stripeAccountId,
+                accessToken: 'direct', refreshToken: null,
+                publishableKey: pubKey, livemode: mode === 'live', tokenType: 'direct', scope: null,
+              });
+              stripeAccount = await getStripeAccount(locationId);
+              console.log(`[GHL Webhook] Auto-connected Stripe ${org.stripeAccountId} for location ${locationId}`);
+            }
+          } catch (fbErr) {
+            console.warn('[GHL Webhook] Fallback org lookup failed:', fbErr.message);
+          }
+        }
+
         if (!stripeAccount) {
           await updateWebhookLog(eventId, 'FAILED', `No Stripe account for location ${locationId}`);
           return NextResponse.json({ error: `No Stripe account connected for location ${locationId}` }, { status: 404 });
