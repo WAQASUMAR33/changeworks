@@ -5,7 +5,7 @@ import { exchangeGHLCode, connectGHLPaymentProvider } from '@/app/lib/payment-pr
 import { saveGHLTokens, saveStripeAccount } from '@/app/lib/payment-provider/tokenStore';
 import { verifyStateToken } from '@/app/lib/payment-provider/crypto';
 import { getConnectedAccount } from '@/app/lib/payment-provider/stripe';
-import { getStripePublishableKey } from '@/app/lib/payment-mode';
+import { getStripePublishableKey, getPaymentMode } from '@/app/lib/payment-mode';
 import { prisma } from '@/app/lib/prisma';
 
 export async function GET(request) {
@@ -105,13 +105,14 @@ export async function GET(request) {
       }
       if (org?.stripeAccountId) {
         const account = await getConnectedAccount(org.stripeAccountId);
-        const pubKey = await getStripePublishableKey();
+        const pubKey  = await getStripePublishableKey();
+        const mode    = await getPaymentMode();
         await saveStripeAccount(locationId, {
           stripeAccountId: account.id,
           accessToken:     'direct',
           refreshToken:    null,
           publishableKey:  pubKey,
-          livemode:        account.livemode ?? false,
+          livemode:        mode === 'live',
           tokenType:       'direct',
           scope:           null,
         });
