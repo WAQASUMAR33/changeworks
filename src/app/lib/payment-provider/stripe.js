@@ -195,5 +195,6 @@ export async function setProductDefaultPrice(stripeAccountId, productId, priceId
 export async function constructWebhookEvent(rawBody, signature) {
   const stripe = await createStripeClient();
   const secret = await getStripeConnectWebhookSecret();
+  console.log(`[constructWebhookEvent] secret source prefix=${secret ? secret.slice(0, 14) + '...' : 'MISSING'} | bodyLen=${rawBody?.length ?? 0} | sigPresent=${!!signature}`);
   return stripe.webhooks.constructEvent(rawBody, signature, secret);
 }

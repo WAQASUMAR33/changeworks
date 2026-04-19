@@ -117,11 +117,16 @@ export async function getStripeConnectWebhookSecret() {
     : 'stripe_connect_webhook_secret_sandbox';
   try {
     const row = await prisma.appSetting.findUnique({ where: { key: dbKey } });
-    if (row?.value) return row.value;
+    if (row?.value) {
+      console.log(`[getStripeConnectWebhookSecret] source=DB key=${dbKey} prefix=${row.value.slice(0, 14)}...`);
+      return row.value;
+    }
   } catch {}
-  return mode === 'live'
+  const envSecret = mode === 'live'
     ? (process.env.STRIPE_CONNECT_WEBHOOK_SECRET_LIVE ?? '')
     : (process.env.STRIPE_CONNECT_WEBHOOK_SECRET_SANDBOX ?? '');
+  console.log(`[getStripeConnectWebhookSecret] source=ENV mode=${mode} prefix=${envSecret ? envSecret.slice(0, 14) + '...' : 'MISSING'}`);
+  return envSecret;
 }
 
 // ─── Plaid ────────────────────────────────────────────────────────────────────
