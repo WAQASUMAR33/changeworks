@@ -143,8 +143,10 @@ export async function POST(request) {
           const subscription = await createSubscription({ stripeAccountId: stripeAccount.stripeAccountId, customerId: customer.id, priceId: stripePriceId, metadata: sharedMeta });
           const paymentIntent = subscription.latest_invoice?.payment_intent;
           if (!paymentIntent?.client_secret) {
-            await updateWebhookLog(eventId, 'FAILED', 'Subscription created but no payment intent available');
-            return NextResponse.json({ error: 'Subscription payment not required yet' }, { status: 422 });
+            // Subscription created but no immediate payment required (e.g. free trial / $0 price).
+            // Return success — GHL will see the subscription as active without a checkout step.
+            await updateWebhookLog(eventId, 'PROCESSED');
+            return NextResponse.json({ success: true, message: 'Subscription created, no immediate payment required' });
           }
           // Donor account is created only after payment succeeds (via Stripe webhook payment_intent.succeeded)
           await updateWebhookLog(eventId, 'PROCESSED');
@@ -203,7 +205,7 @@ export async function POST(request) {
         const variant = prod.variants?.[0] ?? prod.prices?.[0] ?? {};
         const priceAmount = variant.price ?? variant.amount ?? prod.price ?? 0;
         const currency = (variant.currency ?? prod.currency ?? 'usd').toLowerCase();
-        const isRecurring = prod.recurring ?? prod.productType === 'RECURRING' ?? false;
+        const isRecurring = !!(prod.recurring) || prod.productType === 'RECURRING';
         const interval = prod.interval ?? variant.interval ?? 'month';
         const stripeProduct = await createProduct({ stripeAccountId: stripeAccount.stripeAccountId, name, description: prod.description ?? undefined });
         let stripePrice = null;
@@ -254,7 +256,7 @@ export async function POST(request) {
         const rawAmount = priceData.amount ?? priceData.price ?? priceData.unitAmount ?? 0;
         const amount = rawAmount < 1000 ? Math.round(Number(rawAmount) * 100) : Math.round(Number(rawAmount));
         const currency = (priceData.currency ?? 'usd').toLowerCase();
-        const isRecurring = priceData.recurring ?? priceData.type === 'RECURRING' ?? false;
+        const isRecurring = !!(priceData.recurring) || priceData.type === 'RECURRING';
         const interval = priceData.interval ?? priceData.recurringInterval ?? 'month';
         const stripePrice = await createPrice({ stripeAccountId: stripeAccount.stripeAccountId, productId: productMapping.stripeProductId, amount, currency, recurring: isRecurring ? { interval } : undefined });
         await savePriceSync(locationId, ghlPriceId, ghlProductId, stripePrice.id);
@@ -276,7 +278,7 @@ export async function POST(request) {
         if (productMapping?.stripeProductId) {
           const amount = priceData.amount ?? priceData.price ?? 0;
           const currency = (priceData.currency ?? 'usd').toLowerCase();
-          const isRecurring = priceData.recurring ?? priceData.type === 'RECURRING' ?? false;
+          const isRecurring = !!(priceData.recurring) || priceData.type === 'RECURRING';
           const interval = priceData.interval ?? 'month';
           const newPrice = await createPrice({ stripeAccountId: stripeAccount.stripeAccountId, productId: productMapping.stripeProductId, amount: Math.round(Number(amount) * 100), currency, recurring: isRecurring ? { interval } : undefined });
           await savePriceSync(locationId, ghlPriceId, ghlProductId, newPrice.id);

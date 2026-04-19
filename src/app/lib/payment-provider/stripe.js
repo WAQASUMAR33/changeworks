@@ -196,5 +196,6 @@ export async function constructWebhookEvent(rawBody, signature) {
   const stripe = await createStripeClient();
   const secret = await getStripeConnectWebhookSecret();
   console.log(`[constructWebhookEvent] secret source prefix=${secret ? secret.slice(0, 14) + '...' : 'MISSING'} | bodyLen=${rawBody?.length ?? 0} | sigPresent=${!!signature}`);
+  if (!secret) throw new Error('Stripe Connect webhook secret is not configured');
   return stripe.webhooks.constructEvent(rawBody, signature, secret);
 }
