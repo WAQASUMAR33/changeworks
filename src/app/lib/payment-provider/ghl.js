@@ -13,10 +13,14 @@ const GHL_TOKEN_BASE = 'https://services.leadconnectorhq.com/oauth';
 // ─── OAuth ────────────────────────────────────────────────────────────────────
 
 export function buildGHLOAuthUrl(state) {
+  const clientId    = process.env.GHL_APP_CLIENT_ID;
+  const redirectUri = process.env.GHL_REDIRECT_URI;
+  const versionId   = process.env.GHL_VERSION_ID;
+  console.log(`[buildGHLOAuthUrl] client_id=${clientId ?? 'MISSING'} | redirect_uri=${redirectUri ?? 'MISSING'} | version_id=${versionId ?? 'not set'}`);
   const params = new URLSearchParams({
     response_type: 'code',
-    redirect_uri:  process.env.GHL_REDIRECT_URI,
-    client_id:     process.env.GHL_APP_CLIENT_ID,
+    redirect_uri:  redirectUri,
+    client_id:     clientId,
     scope: [
       'payments/integration.write',
       'payments/integration.readonly',
@@ -41,21 +45,34 @@ export function buildGHLOAuthUrl(state) {
 }
 
 export async function exchangeGHLCode(code) {
+  const clientId     = process.env.GHL_APP_CLIENT_ID;
+  const clientSecret = process.env.GHL_APP_CLIENT_SECRET;
+  const redirectUri  = process.env.GHL_REDIRECT_URI;
+  console.log(`[exchangeGHLCode] ▶ client_id=${clientId ?? 'MISSING'} | secret=${clientSecret ? clientSecret.slice(0,8)+'...' : 'MISSING'} | redirect_uri=${redirectUri ?? 'MISSING'} | code=${code ? code.slice(0,12)+'...' : 'MISSING'}`);
   const params = new URLSearchParams({
-    client_id:     process.env.GHL_APP_CLIENT_ID,
-    client_secret: process.env.GHL_APP_CLIENT_SECRET,
+    client_id:     clientId,
+    client_secret: clientSecret,
     grant_type:    'authorization_code',
     code,
-    redirect_uri:  process.env.GHL_REDIRECT_URI,
+    redirect_uri:  redirectUri,
     user_type:     'Location',
   });
-  const { data } = await axios.post(`${GHL_TOKEN_BASE}/token`, params.toString(), {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  });
-  return data;
+  try {
+    const { data } = await axios.post(`${GHL_TOKEN_BASE}/token`, params.toString(), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+    console.log(`[exchangeGHLCode] ✅ success | locationId=${data.locationId} | token=${data.access_token ? data.access_token.slice(0,12)+'...' : 'MISSING'}`);
+    return data;
+  } catch (err) {
+    const status  = err.response?.status;
+    const errData = err.response?.data;
+    console.error(`[exchangeGHLCode] ❌ FAILED | status=${status} | response=${JSON.stringify(errData ?? err.message)}`);
+    throw err;
+  }
 }
 
 export async function refreshGHLToken(locationId) {
+  console.log(`[refreshGHLToken] ▶ locationId=${locationId}`);
   const stored = await getGHLTokens(locationId);
   if (!stored) throw new Error(`No tokens stored for location: ${locationId}`);
   const params = new URLSearchParams({
@@ -82,7 +99,12 @@ export async function refreshGHLToken(locationId) {
 
 export async function getValidAccessToken(locationId) {
   let tokens = await getGHLTokens(locationId);
-  if (!tokens) throw new Error(`Location ${locationId} not connected.`);
+  if (!tokens) {
+    console.error(`[getValidAccessToken] ❌ No tokens stored for locationId=${locationId}`);
+    throw new Error(`Location ${locationId} not connected.`);
+  }
+  const expiresIn = Math.round((tokens.expires_at - Date.now()) / 1000);
+  console.log(`[getValidAccessToken] locationId=${locationId} | expiresIn=${expiresIn}s | needsRefresh=${tokens.expires_at < Date.now() + 5 * 60 * 1000}`);
   if (tokens.expires_at < Date.now() + 5 * 60 * 1000) {
     tokens = await refreshGHLToken(locationId);
   }

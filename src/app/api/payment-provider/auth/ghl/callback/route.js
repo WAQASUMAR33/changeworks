@@ -15,15 +15,21 @@ export async function GET(request) {
   const dashboardUrl = `${baseUrl}/organization/dashboard/payment-provider`;
 
   const { searchParams } = reqUrl;
-  const code  = searchParams.get('code');
-  const state = searchParams.get('state');
-  const error = searchParams.get('error');
+  const code             = searchParams.get('code');
+  const state            = searchParams.get('state');
+  const error            = searchParams.get('error');
+  const errorDescription = searchParams.get('error_description');
+
+  // Log every incoming param so we can see exactly what GHL sent back
+  console.log(`[GHL callback] ▶ INCOMING | code=${code ? code.slice(0,12)+'...' : 'MISSING'} | state=${state ? 'present' : 'MISSING'} | error=${error ?? 'none'} | error_description=${errorDescription ?? 'none'} | fullUrl=${reqUrl.pathname}${reqUrl.search}`);
 
   try {
     if (error) {
-      return NextResponse.redirect(`${successUrl}?error=ghl_denied`);
+      console.error(`[GHL callback] ❌ GHL returned error | error=${error} | description=${errorDescription ?? 'none'}`);
+      return NextResponse.redirect(`${successUrl}?error=ghl_denied&ghl_error=${encodeURIComponent(error)}&detail=${encodeURIComponent(errorDescription ?? '')}`);
     }
     if (!code) {
+      console.error('[GHL callback] ❌ No code in callback — params:', Object.fromEntries(searchParams.entries()));
       return NextResponse.json({ error: 'Missing code' }, { status: 400 });
     }
 
@@ -31,12 +37,14 @@ export async function GET(request) {
     if (state) {
       try {
         stateData = verifyStateToken(state);
-      } catch {
+        console.log(`[GHL callback] ✅ State verified | locationId=${stateData?.locationId}`);
+      } catch (stateErr) {
+        console.error('[GHL callback] ❌ Invalid state token:', stateErr.message);
         return NextResponse.json({ error: 'Invalid state token' }, { status: 400 });
       }
     }
 
-    console.log(`[GHL callback] ▶ code received | state=${state ? 'present' : 'missing'} | error=${error ?? 'none'}`);
+    console.log(`[GHL callback] ▶ Exchanging code for token | client_id=${process.env.GHL_APP_CLIENT_ID ?? 'MISSING'} | redirect_uri=${process.env.GHL_REDIRECT_URI ?? 'MISSING'}`);
     let tokenData;
     try {
       tokenData = await exchangeGHLCode(code);
