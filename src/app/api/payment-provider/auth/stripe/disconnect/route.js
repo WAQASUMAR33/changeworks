@@ -13,11 +13,17 @@ export async function POST(request) {
   if (!account) {
     return NextResponse.json({ error: 'No Stripe account found for this location' }, { status: 404 });
   }
+
+  // Attempt OAuth deauthorize — Stripe blocks this if the connected account has a
+  // negative balance (platform is liable). In that case we skip it gracefully and
+  // just remove our local record; the account stays connected on Stripe's side
+  // until the balance is resolved.
   try {
     await deauthorizeStripeAccount(account.stripeAccountId);
   } catch (err) {
-    console.error('[Stripe Disconnect]', err.message);
+    console.warn('[Stripe Disconnect] deauthorize skipped:', err.message);
   }
+
   await saveStripeAccount(locationId, null);
   return NextResponse.json({ success: true });
 }
