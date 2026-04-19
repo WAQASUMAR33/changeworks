@@ -51,12 +51,6 @@ export async function GET(request) {
 
       if (stripeAccountId) {
         try {
-          // Ensure a GhlConnection row exists (FK required by ghl_stripe_connections)
-          await prisma.ghlConnection.upsert({
-            where:  { locationId },
-            create: { locationId, accessToken: 'auto-connect-stub', refreshToken: null, expiresAt: new Date(Date.now() + 100 * 365 * 24 * 3600 * 1000) },
-            update: {},
-          });
           const autoMode   = await getPaymentMode();
           const autoPubKey = await getStripePublishableKey();
           await saveStripeAccount(locationId, {

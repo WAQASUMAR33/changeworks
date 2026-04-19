@@ -53,6 +53,12 @@ export async function saveStripeAccount(locationId, data) {
     await prisma.ghlStripeConnection.deleteMany({ where: { locationId } });
     return;
   }
+  // Ensure parent GhlConnection row exists (FK required by ghl_stripe_connections)
+  await prisma.ghlConnection.upsert({
+    where:  { locationId },
+    create: { locationId, accessToken: 'auto-connect-stub', refreshToken: null, expiresAt: new Date(Date.now() + 100 * 365 * 24 * 3600 * 1000) },
+    update: {},
+  });
   // Delete ALL conflicting rows first (same stripeAccountId OR same locationId)
   // to avoid unique constraint violations from concurrent requests or stale data.
   await prisma.ghlStripeConnection.deleteMany({
