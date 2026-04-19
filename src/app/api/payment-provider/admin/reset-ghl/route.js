@@ -13,22 +13,20 @@ export async function DELETE(request) {
   const locationId = searchParams.get('locationId') ?? null;
 
   try {
-    if (locationId) {
-      const [ghl, stripe] = await Promise.all([
-        prisma.ghlConnection.deleteMany({ where: { locationId } }),
-        prisma.ghlStripeConnection.deleteMany({ where: { locationId } }),
-      ]);
-      console.log(`[reset-ghl] Removed locationId=${locationId} | ghlRows=${ghl.count} | stripeRows=${stripe.count}`);
-      return NextResponse.json({ success: true, locationId, ghlRows: ghl.count, stripeRows: stripe.count });
-    }
+    const where = locationId ? { where: { locationId } } : {};
+    const whereOpt = locationId ? { where: { locationId } } : {};
 
-    // Remove ALL
-    const [ghl, stripe] = await Promise.all([
-      prisma.ghlConnection.deleteMany({}),
-      prisma.ghlStripeConnection.deleteMany({}),
+    // Must delete children before parent due to FK constraints on GhlConnection.locationId
+    const [paymentEvents, webhookLogs, stripe] = await Promise.all([
+      prisma.ghlPaymentEvent.deleteMany(whereOpt),
+      prisma.ghlWebhookLog.deleteMany(whereOpt),
+      prisma.ghlStripeConnection.deleteMany(whereOpt),
     ]);
-    console.log(`[reset-ghl] Removed ALL | ghlRows=${ghl.count} | stripeRows=${stripe.count}`);
-    return NextResponse.json({ success: true, ghlRows: ghl.count, stripeRows: stripe.count });
+    const ghl = await prisma.ghlConnection.deleteMany(where);
+
+    const summary = { success: true, ghlRows: ghl.count, stripeRows: stripe.count, paymentEventRows: paymentEvents.count, webhookLogRows: webhookLogs.count, ...(locationId ? { locationId } : {}) };
+    console.log(`[reset-ghl] Removed | ${JSON.stringify(summary)}`);
+    return NextResponse.json(summary);
   } catch (err) {
     console.error('[reset-ghl] Error:', err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
