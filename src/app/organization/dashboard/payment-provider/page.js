@@ -205,7 +205,20 @@ export default function PaymentProviderPage() {
     finally { setAutoConnecting(false); }
   }
 
-  const GHL_INSTALL_URL = 'https://marketplace.gohighlevel.com/oauth/chooselocation?response_type=code&redirect_uri=https%3A%2F%2Fapp.changeworksfund.org%2Fapi%2Fpayment-provider%2Fauth%2Fghl%2Fcallback&client_id=69b31e9781d1b32fb138a905-mo4qacyq&scope=locations.readonly+products.readonly+products.write+products%2Fprices.readonly+products%2Fprices.write+products%2Fcollection.readonly+products%2Fcollection.write+payments%2Forders.readonly+payments%2Forders.write+payments%2Forders.collectPayment+payments%2Fintegration.readonly+payments%2Fintegration.write+payments%2Ftransactions.readonly+payments%2Fsubscriptions.readonly+payments%2Fcustom-provider.readonly+payments%2Fcustom-provider.write&version_id=69ba8c44d4a5d66b35362625';
+  const _appUrl     = process.env.NEXT_PUBLIC_APP_URL      || 'https://app.changeworksfund.org';
+  const _clientId   = process.env.NEXT_PUBLIC_GHL_CLIENT_ID  || '';
+  const _versionId  = process.env.NEXT_PUBLIC_GHL_VERSION_ID || '';
+  const _redirectUri = encodeURIComponent(`${_appUrl}/api/payment-provider/auth/ghl/callback`);
+  const _scopes = [
+    'locations.readonly','products.readonly','products.write',
+    'products/prices.readonly','products/prices.write',
+    'products/collection.readonly','products/collection.write',
+    'payments/orders.readonly','payments/orders.write','payments/orders.collectPayment',
+    'payments/integration.readonly','payments/integration.write',
+    'payments/transactions.readonly','payments/subscriptions.readonly',
+    'payments/custom-provider.readonly','payments/custom-provider.write',
+  ].map(encodeURIComponent).join('+');
+  const GHL_INSTALL_URL = `https://marketplace.gohighlevel.com/oauth/chooselocation?response_type=code&redirect_uri=${_redirectUri}&client_id=${_clientId}&scope=${_scopes}${_versionId ? `&version_id=${_versionId}` : ''}`;
 
   function connectGHL() {
     window.open(GHL_INSTALL_URL, '_blank');
