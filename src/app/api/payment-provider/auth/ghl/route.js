@@ -9,5 +9,6 @@ export async function GET(request) {
   const locationId = searchParams.get('locationId') ?? '';
   const state = generateStateToken({ locationId, source: 'ghl-oauth' });
   const authUrl = buildGHLOAuthUrl(state);
+  console.log(`[GHL Auth] redirecting to OAuth | client_id=${process.env.GHL_APP_CLIENT_ID ?? 'MISSING'} | version_id=${process.env.GHL_VERSION_ID ?? 'MISSING'} | redirect_uri=${process.env.GHL_REDIRECT_URI ?? 'MISSING'}`);
   return NextResponse.redirect(authUrl);
 }
