@@ -59,7 +59,7 @@ export async function POST(request) {
   };
 
   if (!apiKey) {
-    results.connect = { ok: false, error: 'GHL_CLIENT_SECRET missing from env vars' };
+    results.connect = { ok: false, error: 'GHL_APP_CLIENT_SECRET missing from env vars' };
     return NextResponse.json(results, { status: 200 });
   }
 
