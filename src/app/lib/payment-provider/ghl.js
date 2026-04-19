@@ -5,6 +5,7 @@
 
 import axios from 'axios';
 import { saveGHLTokens, getGHLTokens, getStripeAccount } from '@/app/lib/payment-provider/tokenStore';
+import { prisma } from '@/app/lib/prisma';
 
 const GHL_API_BASE   = process.env.GHL_API_BASE   || 'https://services.leadconnectorhq.com';
 const GHL_AUTH_BASE  = 'https://marketplace.gohighlevel.com/oauth';
@@ -82,17 +83,30 @@ export async function refreshGHLToken(locationId) {
     refresh_token: stored.refresh_token,
     user_type:     'Location',
   });
-  const { data } = await axios.post(`${GHL_TOKEN_BASE}/token`, params.toString(), {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  });
-  const updated = {
-    ...stored,
-    access_token:  data.access_token,
-    refresh_token: data.refresh_token || stored.refresh_token,
-    expires_at:    Date.now() + data.expires_in * 1000,
-  };
-  await saveGHLTokens(locationId, updated);
-  return updated;
+  try {
+    const { data } = await axios.post(`${GHL_TOKEN_BASE}/token`, params.toString(), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+    const updated = {
+      ...stored,
+      access_token:  data.access_token,
+      refresh_token: data.refresh_token || stored.refresh_token,
+      expires_at:    Date.now() + data.expires_in * 1000,
+    };
+    await saveGHLTokens(locationId, updated);
+    console.log(`[refreshGHLToken] ✅ refreshed for ${locationId}`);
+    return updated;
+  } catch (err) {
+    const status  = err.response?.status;
+    const errData = err.response?.data;
+    console.error(`[refreshGHLToken] ❌ FAILED | status=${status} | response=${JSON.stringify(errData ?? err.message)}`);
+    // Refresh token is dead — clear stale connection so caller gets a clean error
+    if (status === 401 || status === 400) {
+      await prisma.ghlConnection.deleteMany({ where: { locationId } });
+      console.error(`[refreshGHLToken] Cleared stale GHL connection for ${locationId} — reconnect GHL OAuth`);
+    }
+    throw new Error(`GHL token refresh failed (${status}) — reconnect GHL OAuth for location ${locationId}`);
+  }
 }
 
 // ─── Authenticated API Client ─────────────────────────────────────────────────

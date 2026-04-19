@@ -53,32 +53,27 @@ export async function saveStripeAccount(locationId, data) {
     await prisma.ghlStripeConnection.deleteMany({ where: { locationId } });
     return;
   }
-  // Remove any conflicting rows: same stripeAccountId but different locationId.
-  // This prevents the unique constraint crash when the same Stripe account is
-  // being re-linked to a new locationId while the old locationId row still exists.
+  // Delete ALL conflicting rows first (same stripeAccountId OR same locationId)
+  // to avoid unique constraint violations from concurrent requests or stale data.
   await prisma.ghlStripeConnection.deleteMany({
-    where: { stripeAccountId: data.stripeAccountId, NOT: { locationId } },
+    where: {
+      OR: [
+        { stripeAccountId: data.stripeAccountId },
+        { locationId },
+      ],
+    },
   });
-  await prisma.ghlStripeConnection.upsert({
-    where:  { locationId },
-    create: {
+  // Always INSERT fresh — no upsert race condition possible after the delete above.
+  await prisma.ghlStripeConnection.create({
+    data: {
       locationId,
       stripeAccountId: data.stripeAccountId,
       accessToken:     data.accessToken,
-      refreshToken:    data.refreshToken   ?? null,
+      refreshToken:    data.refreshToken  ?? null,
       publishableKey:  data.publishableKey,
-      livemode:        data.livemode       ?? false,
-      tokenType:       data.tokenType      ?? null,
-      scope:           data.scope          ?? null,
-    },
-    update: {
-      stripeAccountId: data.stripeAccountId,
-      accessToken:     data.accessToken,
-      refreshToken:    data.refreshToken   ?? undefined,
-      publishableKey:  data.publishableKey,
-      livemode:        data.livemode       ?? false,
-      tokenType:       data.tokenType      ?? undefined,
-      scope:           data.scope          ?? undefined,
+      livemode:        data.livemode      ?? false,
+      tokenType:       data.tokenType     ?? null,
+      scope:           data.scope         ?? null,
     },
   });
 }
