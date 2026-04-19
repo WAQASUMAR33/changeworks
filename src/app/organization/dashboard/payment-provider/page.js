@@ -245,6 +245,31 @@ export default function PaymentProviderPage() {
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   }
+  async function removeAllGHLAccounts() {
+    if (!confirm('Remove ALL GHL connected accounts? This will disconnect every location and their linked Stripe accounts.')) return;
+    setLoading(true); setError(''); setStatusMsg('');
+    try {
+      const r = await fetch('/api/payment-provider/admin/reset-ghl', { method: 'DELETE' });
+      const d = await r.json();
+      if (!r.ok) { setError(d.error ?? 'Failed to remove GHL accounts'); return; }
+      setStripeStatus(null);
+      setStatusMsg(`Removed ${d.ghlRows} GHL connection(s) and ${d.stripeRows} Stripe connection(s).`);
+    } catch (e) { setError(e.message); }
+    finally { setLoading(false); }
+  }
+  async function removeThisGHLAccount() {
+    if (!locationId) { setError('Enter a Location ID first.'); return; }
+    if (!confirm(`Remove GHL account for location ${locationId}?`)) return;
+    setLoading(true); setError(''); setStatusMsg('');
+    try {
+      const r = await fetch(`/api/payment-provider/admin/reset-ghl?locationId=${encodeURIComponent(locationId)}`, { method: 'DELETE' });
+      const d = await r.json();
+      if (!r.ok) { setError(d.error ?? 'Failed to remove GHL account'); return; }
+      setStripeStatus(null);
+      setStatusMsg(`Removed GHL connection for ${locationId}.`);
+    } catch (e) { setError(e.message); }
+    finally { setLoading(false); }
+  }
   async function registerProviderFor(locId) {
     if (!locId) return;
     setProviderLoading(true); setProviderResult(null);
@@ -454,6 +479,14 @@ export default function PaymentProviderPage() {
                 </div>
                 <button onClick={connectGHL} className="flex items-center gap-2 px-4 py-2.5 bg-[#0E0061] text-white text-sm font-semibold rounded-xl hover:bg-[#0E0061]/90 transition-colors whitespace-nowrap ml-4">
                   <ExternalLink className="w-4 h-4" />Connect GHL
+                </button>
+              </div>
+              <div className="flex gap-3 pt-2 border-t border-gray-100">
+                <button onClick={removeThisGHLAccount} disabled={loading || !locationId} className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 disabled:opacity-50 transition-colors">
+                  <Unplug className="w-3.5 h-3.5" />Remove This Location
+                </button>
+                <button onClick={removeAllGHLAccounts} disabled={loading} className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 disabled:opacity-50 transition-colors">
+                  <XCircle className="w-3.5 h-3.5" />Remove All GHL Accounts
                 </button>
               </div>
             </div>
