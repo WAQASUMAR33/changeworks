@@ -35,9 +35,11 @@ export async function GET(request) {
     return NextResponse.json({ error: 'No locationId in state' }, { status: 400 });
   }
 
+  console.log(`[Stripe callback] ▶ code received | locationId=${locationId}`);
   let oauthToken;
   try {
     oauthToken = await exchangeStripeCode(code);
+    console.log(`[Stripe callback] ✅ Token exchange OK | stripeAccountId=${oauthToken.stripe_user_id} | livemode=${oauthToken.livemode}`);
   } catch (err) {
     console.error('[Stripe OAuth] Token exchange failed:', err.message);
     return NextResponse.redirect(`${dashboardUrl}?error=stripe_token_exchange&locationId=${locationId}`);

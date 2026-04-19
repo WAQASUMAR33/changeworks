@@ -167,7 +167,8 @@ export async function POST(request) {
       });
       const paymentIntent = subscription.latest_invoice?.payment_intent;
       if (!paymentIntent?.client_secret) {
-        return NextResponse.json({ error: 'Subscription created but no payment required yet' }, { status: 422 });
+        console.log(`[create-intent] Subscription created with no immediate payment | subId=${subscription.id}`);
+        return NextResponse.json({ success: true, subscriptionId: subscription.id, mode: 'subscription', message: 'Subscription created, no immediate payment required' });
       }
       return NextResponse.json({
         clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id,
@@ -217,7 +218,8 @@ export async function POST(request) {
     });
     const paymentIntent = subscription.latest_invoice?.payment_intent;
     if (!paymentIntent?.client_secret) {
-      return NextResponse.json({ error: 'Subscription created but no payment required yet' }, { status: 422 });
+      console.log(`[create-intent] Inline subscription created with no immediate payment | subId=${subscription.id}`);
+      return NextResponse.json({ success: true, subscriptionId: subscription.id, mode: 'subscription', message: 'Subscription created, no immediate payment required' });
     }
     try {
       await updatePaymentIntentMetadata(paymentIntent.id, {

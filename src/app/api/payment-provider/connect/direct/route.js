@@ -8,6 +8,7 @@ import { connectGHLPaymentProvider } from '@/app/lib/payment-provider/ghl';
 export async function POST(request) {
   try {
     const { locationId, stripeAccountId } = await request.json();
+    console.log(`[connect/direct] ▶ locationId=${locationId} | stripeAccountId=${stripeAccountId}`);
     if (!locationId)      return NextResponse.json({ error: 'locationId is required' },      { status: 400 });
     if (!stripeAccountId) return NextResponse.json({ error: 'stripeAccountId is required' }, { status: 400 });
     if (!stripeAccountId.startsWith('acct_')) {
@@ -29,6 +30,7 @@ export async function POST(request) {
     const mode   = await getPaymentMode();
     const pubKey = await getStripePublishableKey();
 
+    console.log(`[connect/direct] saving | mode=${mode} | pubKey=${pubKey ? pubKey.slice(0,12)+'...' : 'MISSING'} | livemode=${mode === 'live'}`);
     await saveStripeAccount(locationId, {
       stripeAccountId,
       accessToken:     'direct',
@@ -38,6 +40,7 @@ export async function POST(request) {
       tokenType:       'direct',
       scope:           null,
     });
+    console.log(`[connect/direct] ✅ Stripe account saved for ${locationId}`);
     try {
       await connectGHLPaymentProvider(locationId);
     } catch (err) {

@@ -15,5 +15,6 @@ export async function GET(request) {
 
   const state   = generateStateToken({ locationId, source: 'stripe-connect' });
   const authUrl = buildStripeConnectOAuthUrl(state, email);
+  console.log(`[Stripe Auth] ▶ redirecting | locationId=${locationId} | clientId=${process.env.STRIPE_CONNECT_CLIENT_ID ?? 'MISSING'} | redirectUri=${process.env.STRIPE_CONNECT_REDIRECT_URI ?? 'MISSING'}`);
   return NextResponse.redirect(authUrl);
 }

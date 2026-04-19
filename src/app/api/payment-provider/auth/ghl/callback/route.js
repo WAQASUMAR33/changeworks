@@ -36,9 +36,11 @@ export async function GET(request) {
       }
     }
 
+    console.log(`[GHL callback] ▶ code received | state=${state ? 'present' : 'missing'} | error=${error ?? 'none'}`);
     let tokenData;
     try {
       tokenData = await exchangeGHLCode(code);
+      console.log(`[GHL callback] ✅ Token exchange OK | locationId=${tokenData.locationId} | companyId=${tokenData.companyId} | userId=${tokenData.userId} | expiresIn=${tokenData.expires_in}`);
     } catch (err) {
       const detail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
       console.error('[GHL OAuth] Token exchange failed:', detail);
@@ -50,6 +52,7 @@ export async function GET(request) {
       return NextResponse.json({ error: 'No locationId in token response' }, { status: 400 });
     }
 
+    console.log(`[GHL callback] saving tokens for locationId=${locationId}`);
     await saveGHLTokens(locationId, {
       access_token:  tokenData.access_token,
       refresh_token: tokenData.refresh_token,
@@ -59,8 +62,10 @@ export async function GET(request) {
       locationId,
     });
 
+    console.log(`[GHL callback] ✅ GHL tokens saved | attempting connectGHLPaymentProvider for ${locationId}`);
     try {
       await connectGHLPaymentProvider(locationId);
+      console.log(`[GHL callback] ✅ connectGHLPaymentProvider succeeded for ${locationId}`);
     } catch (err) {
       console.warn('[GHL callback] connectGHLPaymentProvider failed (non-fatal):', err.message);
     }
