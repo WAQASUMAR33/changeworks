@@ -16,7 +16,9 @@ export async function POST(request) {
     results.token = token ? `ok (${token.slice(0, 12)}...)` : 'missing';
   } catch (err) {
     results.token = `ERROR: ${err.message}`;
-    return NextResponse.json({ step: 'get-token', results }, { status: 500 });
+    results.error = 'GHL OAuth not completed for this location — connect GHL first';
+    console.error(`[register-provider] No GHL token for ${locationId}: ${err.message}`);
+    return NextResponse.json(results, { status: 200 });
   }
 
   const client = await ghlClient(locationId);
