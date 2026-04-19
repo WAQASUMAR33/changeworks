@@ -121,6 +121,10 @@ export async function getValidAccessToken(locationId) {
     console.error(`[getValidAccessToken] ❌ No tokens stored for locationId=${locationId}`);
     throw new Error(`Location ${locationId} not connected.`);
   }
+  if (tokens.access_token === 'auto-connect-stub') {
+    console.error(`[getValidAccessToken] ❌ Stub token detected for locationId=${locationId} — GHL OAuth not completed`);
+    throw new Error(`GHL OAuth not completed for this location — connect GHL first`);
+  }
   const expiresIn = Math.round((tokens.expires_at - Date.now()) / 1000);
   console.log(`[getValidAccessToken] locationId=${locationId} | expiresIn=${expiresIn}s | needsRefresh=${tokens.expires_at < Date.now() + 5 * 60 * 1000}`);
   if (tokens.expires_at < Date.now() + 5 * 60 * 1000) {
