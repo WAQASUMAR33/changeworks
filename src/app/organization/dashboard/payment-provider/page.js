@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
   Wifi, WifiOff, CreditCard, RefreshCw, Package,
   CheckCircle, AlertCircle, XCircle, ExternalLink, Loader2,
-  ChevronRight, DollarSign, BarChart2, Zap, Unplug,
+  ChevronRight, DollarSign, BarChart2, Zap, Unplug, Bug, ChevronDown, ChevronUp,
 } from 'lucide-react';
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -30,6 +30,22 @@ function Badge({ status }) {
   return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${cls}`}>{label}</span>;
 }
 
+// ─── Debug Row ────────────────────────────────────────────────────────────────
+
+function DebugRow({ label, ok, children }) {
+  return (
+    <div className={`rounded-xl border p-4 ${ok === true ? 'border-green-100 bg-green-50/40' : ok === false ? 'border-red-100 bg-red-50/40' : 'border-gray-100 bg-gray-50/40'}`}>
+      <div className="flex items-center gap-2 mb-1">
+        {ok === true  ? <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+        : ok === false ? <XCircle    className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+        :                <AlertCircle className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" />}
+        <span className="text-xs font-semibold text-gray-700 font-mono">{label}</span>
+      </div>
+      <div className="text-gray-600 pl-5">{children}</div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PaymentProviderPage() {
@@ -45,6 +61,7 @@ export default function PaymentProviderPage() {
   const [orgStripeAccountId, setOrgStripeAccountId] = useState('');
   const [providerResult, setProviderResult] = useState(null);
   const [providerLoading,setProviderLoading]= useState(false);
+  const [showDebug,      setShowDebug]      = useState(false);
 
   // Transactions
   const [transactions, setTransactions] = useState([]);
@@ -498,11 +515,121 @@ export default function PaymentProviderPage() {
               <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />Activating payment provider in GHL…
             </div>
           )}
-          {providerResult?.connect?.ok && (
-            <div className="bg-green-50 border border-green-100 rounded-2xl p-4 flex items-center gap-3 text-green-700 text-sm font-medium">
-              <CheckCircle className="w-4 h-4 flex-shrink-0" />Payment provider is active in GHL.
+
+          {/* ── Provider Debug Panel ─────────────────────────────────────────── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {/* Header row */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <Bug className="w-4 h-4 text-gray-400" />
+                <span className="font-semibold text-gray-900 text-sm">Payment Provider Registration</span>
+                {providerLoading ? (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full"><Loader2 className="w-3 h-3 animate-spin" />Checking…</span>
+                ) : providerResult?.connect?.ok ? (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full"><CheckCircle className="w-3 h-3" />Registered</span>
+                ) : providerResult?.error ? (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 px-2.5 py-1 rounded-full"><XCircle className="w-3 h-3" />GHL Not Connected</span>
+                ) : providerResult ? (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-yellow-700 bg-yellow-100 px-2.5 py-1 rounded-full"><AlertCircle className="w-3 h-3" />Partial / Failed</span>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">Not checked</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => registerProviderFor(locationId)}
+                  disabled={providerLoading || !locationId}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0E0061] text-white text-xs font-semibold rounded-lg hover:bg-[#0E0061]/90 disabled:opacity-50 transition-colors"
+                >
+                  <RefreshCw className={`w-3 h-3 ${providerLoading ? 'animate-spin' : ''}`} />Re-register
+                </button>
+                <button
+                  onClick={() => setShowDebug(v => !v)}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  {showDebug ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  {showDebug ? 'Hide' : 'Details'}
+                </button>
+              </div>
             </div>
-          )}
+
+            {/* Summary row — always visible */}
+            {providerResult && (
+              <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-gray-100 border-b border-gray-100">
+                {[
+                  { label: 'GHL Token',       value: providerResult.token,                         ok: providerResult.token && !providerResult.token.startsWith('ERROR') },
+                  { label: 'Create Provider', value: providerResult.createProvider?.ok ? 'OK' : (providerResult.createProvider?.status ?? (providerResult.createProvider ? 'Failed' : '—')),   ok: providerResult.createProvider?.ok },
+                  { label: 'Alt Provider',    value: providerResult.createProviderAlt?.ok ? 'OK' : (providerResult.createProviderAlt?.status ?? '—'),  ok: providerResult.createProviderAlt?.ok },
+                  { label: 'Env Check',       value: providerResult.envCheck ? (providerResult.envCheck.hasStripeAccount ? 'Stripe ✓' : 'No Stripe') : '—', ok: providerResult.envCheck?.hasStripeAccount },
+                  { label: 'Connect',         value: providerResult.connect?.ok ? 'OK' : (providerResult.connect?.status ?? (providerResult.connect ? 'Failed' : '—')),  ok: providerResult.connect?.ok },
+                ].map(({ label, value, ok }) => (
+                  <div key={label} className="px-4 py-3">
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">{label}</p>
+                    <p className={`text-xs font-mono font-bold ${ok === true ? 'text-green-600' : ok === false ? 'text-red-500' : 'text-gray-400'}`}>{value ?? '—'}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Expanded detail view */}
+            {showDebug && (
+              <div className="p-5 space-y-4">
+                {!providerResult ? (
+                  <p className="text-sm text-gray-400">No registration data yet. Click Re-register to check.</p>
+                ) : (
+                  <>
+                    {/* GHL Token */}
+                    <DebugRow label="GHL Token" ok={providerResult.token && !providerResult.token.startsWith('ERROR')}>
+                      <code className="text-xs">{providerResult.token ?? '—'}</code>
+                      {providerResult.error && <p className="text-red-500 text-xs mt-1">{providerResult.error}</p>}
+                    </DebugRow>
+
+                    {/* Env Check */}
+                    {providerResult.envCheck && (
+                      <DebugRow label="Environment Variables" ok={providerResult.envCheck.hasStripeAccount && providerResult.envCheck.hasGhlClientSecret}>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1">
+                          {[
+                            { k: 'GHL_APP_CLIENT_SECRET', v: providerResult.envCheck.hasGhlClientSecret },
+                            { k: 'STRIPE_PUBLISHABLE_KEY_LIVE',    v: providerResult.envCheck.hasLivePubKey },
+                            { k: 'STRIPE_PUBLISHABLE_KEY_SANDBOX', v: providerResult.envCheck.hasTestPubKey },
+                            { k: 'Stripe Account in DB',           v: providerResult.envCheck.hasStripeAccount },
+                            { k: 'Stripe Account ID',              v: providerResult.envCheck.stripeAccountId ?? 'none' },
+                            { k: 'Stored PK Prefix',               v: providerResult.envCheck.storedPkPrefix ?? 'none' },
+                          ].map(({ k, v }) => (
+                            <div key={k} className="flex items-center gap-1.5">
+                              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${v === true ? 'bg-green-500' : v === false ? 'bg-red-400' : 'bg-gray-300'}`} />
+                              <span className="text-xs text-gray-500 font-mono">{k}: <span className={`font-bold ${v === true ? 'text-green-600' : v === false ? 'text-red-500' : 'text-gray-700'}`}>{v === true ? 'set' : v === false ? 'missing' : v}</span></span>
+                            </div>
+                          ))}
+                        </div>
+                      </DebugRow>
+                    )}
+
+                    {/* Create Provider */}
+                    {providerResult.createProvider && (
+                      <DebugRow label="POST /payments/custom-provider/provider" ok={providerResult.createProvider.ok}>
+                        <pre className="text-xs mt-1 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(providerResult.createProvider, null, 2)}</pre>
+                      </DebugRow>
+                    )}
+
+                    {/* Alt Provider */}
+                    {providerResult.createProviderAlt && (
+                      <DebugRow label="POST /payments/integrations/provider/whitelabel (fallback)" ok={providerResult.createProviderAlt.ok}>
+                        <pre className="text-xs mt-1 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(providerResult.createProviderAlt, null, 2)}</pre>
+                      </DebugRow>
+                    )}
+
+                    {/* Connect */}
+                    {providerResult.connect && (
+                      <DebugRow label="POST /payments/custom-provider/connect" ok={providerResult.connect.ok}>
+                        <pre className="text-xs mt-1 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(providerResult.connect, null, 2)}</pre>
+                      </DebugRow>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
