@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { getConnectedAccount } from '@/app/lib/payment-provider/stripe';
 import { saveStripeAccount } from '@/app/lib/payment-provider/tokenStore';
 import { connectGHLPaymentProvider } from '@/app/lib/payment-provider/ghl';
+import { prisma } from '@/app/lib/prisma';
 
 export async function POST(request) {
   try {
@@ -30,6 +31,12 @@ export async function POST(request) {
     const mode   = await getPaymentMode();
     const pubKey = await getStripePublishableKey();
 
+    // Ensure a GhlConnection row exists (FK required by ghl_stripe_connections)
+    await prisma.ghlConnection.upsert({
+      where:  { locationId },
+      create: { locationId, accessToken: 'auto-connect-stub', refreshToken: null, expiresAt: new Date(Date.now() + 100 * 365 * 24 * 3600 * 1000) },
+      update: {},
+    });
     console.log(`[connect/direct] saving | mode=${mode} | pubKey=${pubKey ? pubKey.slice(0,12)+'...' : 'MISSING'} | livemode=${mode === 'live'}`);
     await saveStripeAccount(locationId, {
       stripeAccountId,

@@ -102,6 +102,10 @@ export async function refreshGHLToken(locationId) {
     console.error(`[refreshGHLToken] ❌ FAILED | status=${status} | response=${JSON.stringify(errData ?? err.message)}`);
     // Refresh token is dead — clear stale connection so caller gets a clean error
     if (status === 401 || status === 400) {
+      // Delete children first to satisfy FK constraints before removing the parent
+      await prisma.ghlStripeConnection.deleteMany({ where: { locationId } });
+      await prisma.ghlPaymentEvent.deleteMany({ where: { locationId } });
+      await prisma.ghlWebhookLog.deleteMany({ where: { locationId } });
       await prisma.ghlConnection.deleteMany({ where: { locationId } });
       console.error(`[refreshGHLToken] Cleared stale GHL connection for ${locationId} — reconnect GHL OAuth`);
     }
