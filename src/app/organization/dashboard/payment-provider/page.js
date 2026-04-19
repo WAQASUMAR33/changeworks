@@ -205,23 +205,9 @@ export default function PaymentProviderPage() {
     finally { setAutoConnecting(false); }
   }
 
-  const _appUrl     = process.env.NEXT_PUBLIC_APP_URL      || 'https://app.changeworksfund.org';
-  const _clientId   = process.env.NEXT_PUBLIC_GHL_APP_CLIENT_ID  || '';
-  const _versionId  = process.env.NEXT_PUBLIC_GHL_VERSION_ID || '';
-  const _redirectUri = encodeURIComponent(`${_appUrl}/api/payment-provider/auth/ghl/callback`);
-  const _scopes = [
-    'locations.readonly','products.readonly','products.write',
-    'products/prices.readonly','products/prices.write',
-    'products/collection.readonly','products/collection.write',
-    'payments/orders.readonly','payments/orders.write','payments/orders.collectPayment',
-    'payments/integration.readonly','payments/integration.write',
-    'payments/transactions.readonly','payments/subscriptions.readonly',
-    'payments/custom-provider.readonly','payments/custom-provider.write',
-  ].map(encodeURIComponent).join('+');
-  const GHL_INSTALL_URL = `https://marketplace.gohighlevel.com/oauth/chooselocation?response_type=code&redirect_uri=${_redirectUri}&client_id=${_clientId}&scope=${_scopes}${_versionId ? `&version_id=${_versionId}` : ''}`;
-
   function connectGHL() {
-    window.open(GHL_INSTALL_URL, '_blank');
+    // Server-side route builds the GHL OAuth URL using GHL_APP_CLIENT_ID (never exposed to browser)
+    window.open('/api/payment-provider/auth/ghl', '_blank');
   }
   function connectStripe() {
     if (!locationId) { setError('Enter a Location ID first.'); return; }

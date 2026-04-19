@@ -35,6 +35,7 @@ export function buildGHLOAuthUrl(state) {
       'products/collection.write',
     ].join(' '),
     state,
+    ...(process.env.GHL_VERSION_ID ? { version_id: process.env.GHL_VERSION_ID } : {}),
   });
   return `${GHL_AUTH_BASE}/chooselocation?${params.toString()}`;
 }
