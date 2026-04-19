@@ -13,9 +13,9 @@ import {
 import { prisma } from '@/app/lib/prisma';
 import { getPaymentMode, getStripePublishableKey } from '@/app/lib/payment-mode';
 
-const GHL_CLIENT_SECRET = process.env.GHL_CLIENT_SECRET;
+const GHL_CLIENT_SECRET = process.env.GHL_APP_CLIENT_SECRET;
 // GHL signs webhooks with the Shared Secret key (separate from the OAuth Client Secret)
-const GHL_WEBHOOK_SECRET = process.env.GHL_WEBHOOK_SECRET || process.env.GHL_CLIENT_SECRET;
+const GHL_WEBHOOK_SECRET = process.env.GHL_WEBHOOK_SECRET || process.env.GHL_APP_CLIENT_SECRET;
 
 function verifyGHLWebhook(rawBody, signature) {
   if (!signature) return false;

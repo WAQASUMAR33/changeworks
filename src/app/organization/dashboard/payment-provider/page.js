@@ -206,7 +206,7 @@ export default function PaymentProviderPage() {
   }
 
   const _appUrl     = process.env.NEXT_PUBLIC_APP_URL      || 'https://app.changeworksfund.org';
-  const _clientId   = process.env.NEXT_PUBLIC_GHL_CLIENT_ID  || '';
+  const _clientId   = process.env.NEXT_PUBLIC_GHL_APP_CLIENT_ID  || '';
   const _versionId  = process.env.NEXT_PUBLIC_GHL_VERSION_ID || '';
   const _redirectUri = encodeURIComponent(`${_appUrl}/api/payment-provider/auth/ghl/callback`);
   const _scopes = [

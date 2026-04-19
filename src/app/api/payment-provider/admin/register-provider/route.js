@@ -45,7 +45,7 @@ export async function POST(request) {
   }
 
   const stripeAccount  = await getStripeAccount(locationId);
-  const apiKey         = process.env.GHL_CLIENT_SECRET;
+  const apiKey         = process.env.GHL_APP_CLIENT_SECRET;
   const livePubKey     = process.env.STRIPE_PUBLISHABLE_KEY_LIVE    || '';
   const testPubKey     = process.env.STRIPE_PUBLISHABLE_KEY_SANDBOX || '';
 

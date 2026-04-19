@@ -16,7 +16,7 @@ export function buildGHLOAuthUrl(state) {
   const params = new URLSearchParams({
     response_type: 'code',
     redirect_uri:  process.env.GHL_REDIRECT_URI,
-    client_id:     process.env.GHL_CLIENT_ID,
+    client_id:     process.env.GHL_APP_CLIENT_ID,
     scope: [
       'payments/integration.write',
       'payments/integration.readonly',
@@ -41,8 +41,8 @@ export function buildGHLOAuthUrl(state) {
 
 export async function exchangeGHLCode(code) {
   const params = new URLSearchParams({
-    client_id:     process.env.GHL_CLIENT_ID,
-    client_secret: process.env.GHL_CLIENT_SECRET,
+    client_id:     process.env.GHL_APP_CLIENT_ID,
+    client_secret: process.env.GHL_APP_CLIENT_SECRET,
     grant_type:    'authorization_code',
     code,
     redirect_uri:  process.env.GHL_REDIRECT_URI,
@@ -58,8 +58,8 @@ export async function refreshGHLToken(locationId) {
   const stored = await getGHLTokens(locationId);
   if (!stored) throw new Error(`No tokens stored for location: ${locationId}`);
   const params = new URLSearchParams({
-    client_id:     process.env.GHL_CLIENT_ID,
-    client_secret: process.env.GHL_CLIENT_SECRET,
+    client_id:     process.env.GHL_APP_CLIENT_ID,
+    client_secret: process.env.GHL_APP_CLIENT_SECRET,
     grant_type:    'refresh_token',
     refresh_token: stored.refresh_token,
     user_type:     'Location',
@@ -171,7 +171,7 @@ export async function createGHLPaymentProvider(locationId) {
 
 export async function connectGHLPaymentProvider(locationId) {
   const providerData = await createGHLPaymentProvider(locationId);
-  const apiKey       = process.env.GHL_CLIENT_SECRET;
+  const apiKey       = process.env.GHL_APP_CLIENT_SECRET;
 
   // Use the mode-appropriate publishable keys (STRIPE_PUBLISHABLE_KEY is not used).
   const livePubKey  = process.env.STRIPE_PUBLISHABLE_KEY_LIVE     || '';
@@ -211,7 +211,7 @@ export async function postPaymentUpdateToGHL(locationId, payload) {
     ghlTransactionId: payload.ghlTransactionId,
     chargeSnapshot: { status: 'succeeded', amount: payload.amount, chargeId: payload.chargeId },
     locationId,
-    apiKey: process.env.GHL_CLIENT_SECRET,
+    apiKey: process.env.GHL_APP_CLIENT_SECRET,
   };
   const response = await axios.post(
     'https://backend.leadconnectorhq.com/payments/custom-provider/webhook',
@@ -228,7 +228,7 @@ export async function postSubscriptionUpdateToGHL(locationId, payload) {
     ghlSubscriptionId:   payload.entityId ?? payload.externalSubscriptionId,
     subscriptionSnapshot: { id: payload.externalSubscriptionId, status: payload.status },
     locationId,
-    apiKey: process.env.GHL_CLIENT_SECRET,
+    apiKey: process.env.GHL_APP_CLIENT_SECRET,
   };
   const response = await axios.post(
     'https://backend.leadconnectorhq.com/payments/custom-provider/webhook',
