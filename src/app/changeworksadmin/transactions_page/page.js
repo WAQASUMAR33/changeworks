@@ -134,8 +134,10 @@ export default function TransactionManagementPage() {
   // Apply filters
   useEffect(() => {
     const filtered = transactions.filter((transaction) => {
+      // Donor filter: match by email substring (Stripe data uses email as donor identifier)
       const matchesDonor = filterDonor
-        ? transaction.donor.id.toString() === filterDonor
+        ? (transaction.donor.email?.toLowerCase().includes(filterDonor.toLowerCase()) ||
+           transaction.donor.name?.toLowerCase().includes(filterDonor.toLowerCase()))
         : true;
       const matchesOrganization = filterOrganization
         ? transaction.organization.id.toString() === filterOrganization
@@ -143,12 +145,11 @@ export default function TransactionManagementPage() {
       const matchesStatus = filterStatus ? transaction.status === filterStatus : true;
       const matchesTransactionType = filterTransactionType ? transaction.transaction_type === filterTransactionType : true;
       const matchesPaymentMethod = filterPaymentMethod ? transaction.payment_method === filterPaymentMethod : true;
-      
-      // Date range filter
+
       const transactionDate = new Date(transaction.created_at);
       const matchesStartDate = startDate ? transactionDate >= new Date(startDate) : true;
       const matchesEndDate = endDate ? transactionDate <= new Date(endDate + 'T23:59:59') : true;
-      
+
       return matchesDonor && matchesOrganization && matchesStatus && matchesTransactionType && matchesPaymentMethod && matchesStartDate && matchesEndDate;
     });
     setFilteredTransactions(filtered);
@@ -156,25 +157,22 @@ export default function TransactionManagementPage() {
 
   const fetchTransactions = async () => {
     try {
-      const response = await fetch(`/api/donor_transactions`);
+      setLoading(true);
+      setError('');
+      const response = await fetch('/api/admin/stripe-transactions');
       const data = await response.json();
-      console.log('API Response:', data);
-      if (!response.ok) {
+      if (!response.ok || !data.success) {
         throw new Error(data.error || `HTTP ${response.status}: Failed to fetch transactions`);
       }
-
-      if (!data.transactions || !Array.isArray(data.transactions)) {
-        console.error('Unexpected response format:', data);
-        throw new Error('Expected transactions data to be an array');
+      if (!Array.isArray(data.transactions)) {
+        throw new Error('Unexpected response format');
       }
-
       setTransactions(data.transactions);
-      setLoading(false);
     } catch (err) {
       setError(`Failed to load transactions: ${err.message}`);
       setTransactions([]);
+    } finally {
       setLoading(false);
-      console.error('Fetch error:', err);
     }
   };
   
@@ -437,6 +435,13 @@ export default function TransactionManagementPage() {
         <div className="flex items-center space-x-2">
           <Button
             variant="outlined"
+            onClick={fetchTransactions}
+            disabled={loading}
+          >
+            {loading ? 'Loading…' : 'Refresh'}
+          </Button>
+          <Button
+            variant="outlined"
             startIcon={<Filter />}
             onClick={() => {
               setFilterDonor('');
@@ -590,22 +595,18 @@ export default function TransactionManagementPage() {
               ))}
             </Select>
           </FormControl>
-          <FormControl fullWidth size="small">
-            <InputLabel>Filter by Donor</InputLabel>
-            <Select
-              value={filterDonor}
-              onChange={handleFilterDonorChange}
-              label="Filter by Donor"
-              sx={{ backgroundColor: 'white' }}
-            >
-              <MenuItem value="">All Donors</MenuItem>
-              {donors.map((donor) => (
-                <MenuItem key={donor.id} value={donor.id.toString()}>
-                  {donor.name} ({donor.email})
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <TextField
+            label="Search Donor (name or email)"
+            value={filterDonor}
+            onChange={handleFilterDonorChange}
+            variant="outlined"
+            size="small"
+            fullWidth
+            sx={{
+              '& .MuiInputBase-input': { color: '#111827' },
+              '& .MuiOutlinedInput-root': { backgroundColor: 'white' },
+            }}
+          />
           <TextField
             label="Start Date"
             type="date"
