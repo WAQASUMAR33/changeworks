@@ -274,6 +274,9 @@ export default function OrganizationSignupPage() {
         logoUrl: '' // Will be set during upload on submit
       }));
 
+      // Clear any stale logo validation error
+      setErrors(prev => ({ ...prev, logo: '' }));
+
     } catch (error) {
       console.error('Logo processing error:', error);
       setErrorMsg('Failed to process logo. Please try again.');
