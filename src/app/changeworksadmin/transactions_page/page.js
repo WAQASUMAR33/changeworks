@@ -231,7 +231,7 @@ export default function TransactionManagementPage() {
   const exportToExcel = () => {
     const exportData = filteredTransactions.map(transaction => ({
       'Transaction ID': transaction.id,
-      'Donor Name': transaction.donor.name,
+      'Donor Name': transaction.donor.name !== 'Unknown' ? transaction.donor.name : '',
       'Donor Email': transaction.donor.email,
       'Organization': transaction.organization.name,
       'Amount': transaction.amount,
@@ -254,7 +254,9 @@ export default function TransactionManagementPage() {
     doc.autoTable({
       head: [['Donor', 'Organization', 'Amount', 'Status', 'Type', 'Method', 'Date']],
       body: filteredTransactions.map(transaction => [
-        `${transaction.donor.name} (${transaction.donor.email})`,
+        transaction.donor.name && transaction.donor.name !== 'Unknown'
+          ? `${transaction.donor.name} (${transaction.donor.email})`
+          : (transaction.donor.email || '—'),
         transaction.organization.name,
         `${transaction.amount} ${transaction.currency}`,
         transaction.status,
@@ -374,7 +376,7 @@ export default function TransactionManagementPage() {
             <tbody>
               ${filteredTransactions.map(transaction => `
                 <tr>
-                  <td>${transaction.donor.name}<br><small>${transaction.donor.email}</small></td>
+                  <td>${transaction.donor.name !== 'Unknown' ? transaction.donor.name + '<br>' : ''}<small>${transaction.donor.email || ''}</small></td>
                   <td>${transaction.organization.name}</td>
                   <td class="amount">${formatCurrency(transaction.amount, transaction.currency)}</td>
                   <td class="status-${transaction.status}">${transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}</td>
@@ -748,7 +750,10 @@ export default function TransactionManagementPage() {
                       
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">
-                          {transaction.donor.name} ({transaction.donor.email})
+                          {transaction.donor.name
+                            ? <><span className="font-medium">{transaction.donor.name}</span>{transaction.donor.email && <><br /><span className="text-gray-500 text-xs">{transaction.donor.email}</span></>}</>
+                            : <span>{transaction.donor.email || '—'}</span>
+                          }
                         </div>
                       </td>
                       <td className="px-6 py-4">

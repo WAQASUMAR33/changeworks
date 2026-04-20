@@ -50,7 +50,7 @@ export async function GET(request) {
             val(piCustomer?.name)          ||
             val(pi.metadata?.customerName) ||
             val(pi.metadata?.donor_name)   ||
-            'Unknown';
+            null;
 
           const donorEmail =
             val(billing.email)              ||
