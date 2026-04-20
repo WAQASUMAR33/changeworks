@@ -53,8 +53,9 @@ const TransactionsPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        if (startingAfter) setTransactions(prev => [...prev, ...data.transactions]);
-        else setTransactions(data.transactions);
+        const completed = (data.transactions || []).filter(t => t.status === 'completed');
+        if (startingAfter) setTransactions(prev => [...prev, ...completed]);
+        else setTransactions(completed);
         setOrganizationInfo(data.organization);
         setHasMore(data.hasMore ?? false);
         setCursor(data.nextCursor ?? null);
@@ -162,8 +163,6 @@ const TransactionsPage = () => {
       transaction.amount.toString().includes(searchTerm) ||
       transaction.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'all' || transaction.status === statusFilter;
-    
     const matchesMethod = methodFilter === 'all' || transaction.method === methodFilter;
 
     const matchesDate = dateFilter === 'all' || (() => {
@@ -184,7 +183,7 @@ const TransactionsPage = () => {
       }
     })();
 
-    return matchesSearch && matchesStatus && matchesMethod && matchesDate;
+    return matchesSearch && matchesMethod && matchesDate;
   });
 
   const totalAmount = filteredTransactions.reduce((sum, transaction) => {
@@ -330,17 +329,6 @@ const TransactionsPage = () => {
             </div>
           </div>
           <div className="flex gap-4">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
-              <option value="failed">Failed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
             <select
               value={methodFilter}
               onChange={(e) => setMethodFilter(e.target.value)}

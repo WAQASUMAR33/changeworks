@@ -142,7 +142,6 @@ export default function TransactionManagementPage() {
       const matchesOrganization = filterOrganization
         ? transaction.organization.id.toString() === filterOrganization
         : true;
-      const matchesStatus = filterStatus ? transaction.status === filterStatus : true;
       const matchesTransactionType = filterTransactionType ? transaction.transaction_type === filterTransactionType : true;
       const matchesPaymentMethod = filterPaymentMethod ? transaction.payment_method === filterPaymentMethod : true;
 
@@ -150,7 +149,7 @@ export default function TransactionManagementPage() {
       const matchesStartDate = startDate ? transactionDate >= new Date(startDate) : true;
       const matchesEndDate = endDate ? transactionDate <= new Date(endDate + 'T23:59:59') : true;
 
-      return matchesDonor && matchesOrganization && matchesStatus && matchesTransactionType && matchesPaymentMethod && matchesStartDate && matchesEndDate;
+      return matchesDonor && matchesOrganization && matchesTransactionType && matchesPaymentMethod && matchesStartDate && matchesEndDate;
     });
     setFilteredTransactions(filtered);
   }, [transactions, filterDonor, filterOrganization, filterStatus, filterTransactionType, filterPaymentMethod, startDate, endDate]);
@@ -167,7 +166,7 @@ export default function TransactionManagementPage() {
       if (!Array.isArray(data.transactions)) {
         throw new Error('Unexpected response format');
       }
-      setTransactions(data.transactions);
+      setTransactions(data.transactions.filter(t => t.status === 'completed'));
     } catch (err) {
       setError(`Failed to load transactions: ${err.message}`);
       setTransactions([]);
@@ -637,20 +636,6 @@ export default function TransactionManagementPage() {
               '& .MuiOutlinedInput-root': { backgroundColor: 'white' }
             }}
           />
-          <FormControl fullWidth size="small">
-            <InputLabel>Filter by Status</InputLabel>
-            <Select
-              value={filterStatus}
-              onChange={handleFilterStatusChange}
-              label="Filter by Status"
-              sx={{ backgroundColor: 'white' }}
-            >
-              <MenuItem value="">All Status</MenuItem>
-              <MenuItem value="completed">Completed</MenuItem>
-              <MenuItem value="pending">Pending</MenuItem>
-              <MenuItem value="failed">Failed</MenuItem>
-            </Select>
-          </FormControl>
           <FormControl fullWidth size="small">
             <InputLabel>Filter by Transaction Type</InputLabel>
             <Select

@@ -24,13 +24,6 @@ const METHOD_OPTIONS = [
   { label: 'one-time donation', value: 'one-time donation' },
 ];
 
-const STATUS_OPTIONS = [
-  { label: 'All Statuses', value: '' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Succeeded', value: 'succeeded' },
-  { label: 'Pending', value: 'pending' },
-  { label: 'Failed', value: 'failed' },
-];
 
 export default function DonorDonationsPage() {
   const [donations, setDonations] = useState([]);
@@ -41,10 +34,8 @@ export default function DonorDonationsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedMethod, setSelectedMethod] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [methodDropdownOpen, setMethodDropdownOpen] = useState(false);
-  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
 
   const fetchDonations = async () => {
     try {
@@ -69,8 +60,11 @@ export default function DonorDonationsPage() {
       const data = await response.json();
 
       if (data.success) {
-        setDonations(data.transactions || []);
-        setFilteredDonations(data.transactions || []);
+        const completed = (data.transactions || []).filter(d =>
+          ['completed', 'succeeded'].includes(d.status?.toLowerCase())
+        );
+        setDonations(completed);
+        setFilteredDonations(completed);
       } else {
         setError(data.error || 'Failed to load donations');
       }
@@ -113,14 +107,8 @@ export default function DonorDonationsPage() {
       );
     }
 
-    if (selectedStatus) {
-      filtered = filtered.filter(donation =>
-        donation.status?.toLowerCase() === selectedStatus.toLowerCase()
-      );
-    }
-
     setFilteredDonations(filtered);
-  }, [donations, searchTerm, startDate, endDate, selectedMethod, selectedStatus]);
+  }, [donations, searchTerm, startDate, endDate, selectedMethod]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -337,7 +325,7 @@ export default function DonorDonationsPage() {
             {/* Method filter */}
             <div className="relative">
               <button
-                onClick={() => { setMethodDropdownOpen(!methodDropdownOpen); setStatusDropdownOpen(false); }}
+                onClick={() => setMethodDropdownOpen(!methodDropdownOpen)}
                 className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 bg-white text-black min-w-[150px] justify-between"
               >
                 <span className="text-sm">{selectedMethod || 'All Methods'}</span>
@@ -350,30 +338,6 @@ export default function DonorDonationsPage() {
                       key={opt.value}
                       onClick={() => { setSelectedMethod(opt.value); setMethodDropdownOpen(false); }}
                       className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors duration-150 ${selectedMethod === opt.value ? 'font-semibold text-[#0E0061]' : 'text-gray-700'}`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Status filter */}
-            <div className="relative">
-              <button
-                onClick={() => { setStatusDropdownOpen(!statusDropdownOpen); setMethodDropdownOpen(false); }}
-                className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 bg-white text-black min-w-[150px] justify-between"
-              >
-                <span className="text-sm capitalize">{selectedStatus || 'All Statuses'}</span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              </button>
-              {statusDropdownOpen && (
-                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1">
-                  {STATUS_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => { setSelectedStatus(opt.value); setStatusDropdownOpen(false); }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors duration-150 ${selectedStatus === opt.value ? 'font-semibold text-[#0E0061]' : 'text-gray-700'}`}
                     >
                       {opt.label}
                     </button>
@@ -507,7 +471,7 @@ export default function DonorDonationsPage() {
             <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Donations Found</h3>
             <p className="text-gray-600 mb-4">
-              {searchTerm || startDate || endDate || selectedMethod || selectedStatus
+              {searchTerm || startDate || endDate || selectedMethod
                 ? 'No donations match your current filters'
                 : "You haven't made any donations yet"}
             </p>
