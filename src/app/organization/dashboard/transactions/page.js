@@ -21,6 +21,10 @@ import {
 const TransactionsPage = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [cursor, setCursor] = useState(null);
+  const [orgId, setOrgId] = useState(null);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -32,35 +36,36 @@ const TransactionsPage = () => {
     fetchTransactions();
   }, []);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (startingAfter = null) => {
     try {
-      setLoading(true);
-      
-      // Get organization ID from sessionStorage
+      if (startingAfter) setLoadingMore(true);
+      else setLoading(true);
+
       const orgUser = sessionStorage.getItem('orgUser');
-      if (!orgUser) {
-        setError('Organization not found');
-        return;
-      }
-      
+      if (!orgUser) { setError('Organization not found'); return; }
+
       const userData = JSON.parse(orgUser);
       const organizationId = userData.id;
-      
-      // Fetch transactions from Stripe using the organization's connected account
-      const response = await fetch(`/api/organization/${organizationId}/stripe-transactions`);
+      setOrgId(organizationId);
+
+      const url = `/api/organization/${organizationId}/stripe-transactions?limit=200${startingAfter ? `&startingAfter=${startingAfter}` : ''}`;
+      const response = await fetch(url);
       const data = await response.json();
 
       if (data.success) {
-        setTransactions(data.transactions);
+        if (startingAfter) setTransactions(prev => [...prev, ...data.transactions]);
+        else setTransactions(data.transactions);
         setOrganizationInfo(data.organization);
+        setHasMore(data.hasMore ?? false);
+        setCursor(data.nextCursor ?? null);
       } else {
         setError(data.error || 'Failed to fetch transactions');
       }
     } catch (err) {
-      setError('Network error occurred');
-      console.error('Error fetching transactions:', err);
+      setError('Network error: ' + err.message);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -219,12 +224,20 @@ const TransactionsPage = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Transactions</h1>
           <p className="text-gray-600 mt-1">
-            {organizationInfo ? 
-              `View and track transactions for ${organizationInfo.name}` : 
-              'View and track your organization&apos;s transaction records'
+            {organizationInfo ?
+              `View and track transactions for ${organizationInfo.name}` :
+              'View and track your organization\'s transaction records'
             }
           </p>
         </div>
+        <button
+          onClick={() => fetchTransactions()}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors shadow-sm"
+        >
+          <Search className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
 
       {/* Stats Cards */}
@@ -452,6 +465,18 @@ const TransactionsPage = () => {
           </div>
         )}
       </div>
+
+      {hasMore && (
+        <div className="text-center">
+          <button
+            onClick={() => fetchTransactions(cursor)}
+            disabled={loadingMore}
+            className="px-6 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors shadow-sm"
+          >
+            {loadingMore ? 'Loading…' : `Load more transactions`}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -83,6 +83,10 @@ export default function PaymentProviderPage() {
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncResult,  setSyncResult]  = useState(null);
 
+  // Webhook registration
+  const [webhookLoading, setWebhookLoading] = useState(false);
+  const [webhookResult,  setWebhookResult]  = useState(null);
+
   // ── Init: fetch org connection info from DB ───────────────────────────────
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
@@ -300,6 +304,16 @@ export default function PaymentProviderPage() {
     finally { setProviderLoading(false); }
   }
   function registerProvider() { registerProviderFor(locationId); }
+  async function registerStripeWebhook() {
+    setWebhookLoading(true); setWebhookResult(null);
+    try {
+      const r = await fetch('/api/payment-provider/setup/register-stripe-webhook', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const d = await r.json();
+      setWebhookResult(d);
+      if (d.success) setStatusMsg(`Stripe webhook registered (${d.mode} mode). Donor accounts will now be created on payment.`);
+    } catch (e) { setWebhookResult({ success: false, error: e.message }); }
+    finally { setWebhookLoading(false); }
+  }
   async function createProduct() {
     if (!prodForm.name || !prodForm.price) { setProdError('Name and price are required.'); return; }
     setProdSaving(true); setProdError('');
@@ -630,9 +644,42 @@ export default function PaymentProviderPage() {
               </div>
             )}
           </div>
+        {/* ── Stripe Webhook Registration ────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4">
+            <div className="flex items-center gap-3">
+              <Zap className="w-4 h-4 text-gray-400" />
+              <div>
+                <span className="font-semibold text-gray-900 text-sm">Stripe Webhook (Donor Auto-Create)</span>
+                <p className="text-xs text-gray-400 mt-0.5">Registers the live Stripe Connect webhook so new donors get accounts + welcome emails on first payment.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {webhookResult && (
+                webhookResult.success
+                  ? <span className="flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full"><CheckCircle className="w-3 h-3" />Registered</span>
+                  : <span className="flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 px-2.5 py-1 rounded-full"><XCircle className="w-3 h-3" />Failed</span>
+              )}
+              <button
+                onClick={registerStripeWebhook}
+                disabled={webhookLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0E0061] text-white text-xs font-semibold rounded-lg hover:bg-[#0E0061]/90 disabled:opacity-50 transition-colors"
+              >
+                <Zap className={`w-3 h-3 ${webhookLoading ? 'animate-pulse' : ''}`} />
+                {webhookLoading ? 'Registering…' : 'Register Webhook'}
+              </button>
+            </div>
+          </div>
+          {webhookResult && (
+            <div className="px-5 pb-4">
+              <pre className="text-xs bg-gray-50 rounded-lg p-3 overflow-x-auto whitespace-pre-wrap text-gray-600">
+                {JSON.stringify(webhookResult, null, 2)}
+              </pre>
+            </div>
+          )}
         </div>
+      </div>
       )}
-
       {/* ── TRANSACTIONS TAB ─────────────────────────────────────────────────── */}
       {tab === 'transactions' && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

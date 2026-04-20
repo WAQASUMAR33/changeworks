@@ -1,77 +1,89 @@
-import { NextResponse } from "next/server";
-import { prisma } from "../../../../lib/prisma";
-import { getStripe } from "../../../../../lib/stripe";
+export const dynamic = 'force-dynamic';
+
+import { NextResponse } from 'next/server';
+import { prisma } from '../../../../lib/prisma';
+import { createStripeClient, getPaymentMode } from '@/app/lib/payment-mode';
 
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
-
-    if (!id) {
-        return NextResponse.json({ error: "Organization ID is required" }, { status: 400 });
-    }
+    if (!id) return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 });
 
     const organizationIdInt = parseInt(id);
-    if (isNaN(organizationIdInt)) {
-        return NextResponse.json({ error: "Invalid organization ID format" }, { status: 400 });
-    }
+    if (isNaN(organizationIdInt)) return NextResponse.json({ error: 'Invalid organization ID' }, { status: 400 });
 
     const organization = await prisma.organization.findUnique({
       where: { id: organizationIdInt },
-      select: { stripeAccountId: true, name: true }
+      select: { stripeAccountId: true, name: true },
     });
 
-    if (!organization) {
-      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
-    }
+    if (!organization) return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
 
     if (!organization.stripeAccountId) {
-      // Return empty list if no Stripe account is connected
-      return NextResponse.json({ 
-        success: true, 
-        transactions: [], 
-        organization: { name: organization.name },
-        message: "No Stripe account connected" 
-      });
+      return NextResponse.json({ success: true, transactions: [], organization: { name: organization.name }, message: 'No Stripe account connected' });
     }
 
-    const stripe = await getStripe();
+    const { searchParams } = new URL(request.url);
+    const limitParam  = parseInt(searchParams.get('limit')  ?? '200');
+    const startingAfter = searchParams.get('startingAfter') ?? undefined;
+    const limit = Math.min(Math.max(limitParam, 1), 200);
 
-    // Helper: treat empty/whitespace strings as missing
+    // Use the mode-appropriate platform key so it can access the connected account
+    const mode = await getPaymentMode();
+    const stripe = await createStripeClient(mode === 'live');
+
+    // Fetch payment intents from the connected account
+    // Expand customer so Link/wallet payments show the actual payer email (not just metadata)
+    const listParams = {
+      limit,
+      expand: ['data.latest_charge', 'data.customer'],
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
+    };
+
+    let piList;
+    try {
+      piList = await stripe.paymentIntents.list(listParams, { stripeAccount: organization.stripeAccountId });
+    } catch (stripeErr) {
+      console.error('[stripe-transactions] Stripe list error:', stripeErr.message);
+      // If live key fails (account in test mode), fall back to sandbox key
+      if (mode === 'live' && (stripeErr.message?.includes('No such payment') || stripeErr.code === 'account_invalid' || stripeErr.statusCode === 401)) {
+        const sandboxStripe = await createStripeClient(false);
+        piList = await sandboxStripe.paymentIntents.list(listParams, { stripeAccount: organization.stripeAccountId });
+      } else {
+        throw stripeErr;
+      }
+    }
+
     const val = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 
-    // Use paymentIntents.list so py_/Link payments are fully represented
-    const paymentIntents = await stripe.paymentIntents.list(
-      { limit: 100, expand: ['data.customer', 'data.latest_charge'] },
-      { stripeAccount: organization.stripeAccountId }
-    );
-
-    const transactions = paymentIntents.data
+    const transactions = piList.data
       .filter(pi => pi.status !== 'canceled')
       .map(pi => {
-        const customer = typeof pi.customer === 'object' && pi.customer ? pi.customer : null;
         const charge   = typeof pi.latest_charge === 'object' && pi.latest_charge ? pi.latest_charge : null;
+        const customer = typeof pi.customer === 'object' && pi.customer ? pi.customer : null;
         const billing  = charge?.billing_details ?? {};
 
+        // Priority: billing details (from card form) → Stripe Customer object (Link/wallet) → receipt → metadata (org-set, least reliable)
         const donorName =
-          val(billing.name)                  ||
-          val(pi.metadata?.customerName)     ||
-          val(pi.metadata?.donor_name)       ||
-          val(customer?.name)                ||
+          val(billing.name)               ||
+          val(customer?.name)             ||
+          val(pi.metadata?.customerName)  ||
+          val(pi.metadata?.donor_name)    ||
           null;
 
         const donorEmail =
-          val(billing.email)                 ||
-          val(charge?.receipt_email)         ||
-          val(pi.receipt_email)              ||
-          val(pi.metadata?.customerEmail)    ||
-          val(pi.metadata?.donor_email)      ||
-          val(customer?.email)               ||
+          val(billing.email)              ||
+          val(customer?.email)            ||
+          val(charge?.receipt_email)      ||
+          val(pi.receipt_email)           ||
+          val(pi.metadata?.customerEmail) ||
+          val(pi.metadata?.donor_email)   ||
           null;
 
-        const status = pi.status === 'succeeded' ? 'completed'
-          : pi.status === 'requires_payment_method' ? 'failed'
-          : pi.status === 'processing' ? 'pending'
-          : pi.status;
+        const status = pi.status === 'succeeded'               ? 'completed'
+                     : pi.status === 'requires_payment_method' ? 'failed'
+                     : pi.status === 'processing'              ? 'pending'
+                     : pi.status;
 
         return {
           id: pi.id,
@@ -83,24 +95,23 @@ export async function GET(request, { params }) {
           description: pi.description || charge?.description || charge?.statement_descriptor || 'Stripe Payment',
           donor: { name: donorName, email: donorEmail },
           method: 'stripe',
-          card_brand: charge?.payment_method_details?.card?.brand,
-          card_last4: charge?.payment_method_details?.card?.last4,
-          receipt_url: charge?.receipt_url,
-          ghl_id: pi.metadata?.ghl_id,
+          card_brand: charge?.payment_method_details?.card?.brand ?? null,
+          card_last4: charge?.payment_method_details?.card?.last4 ?? null,
+          receipt_url: charge?.receipt_url ?? null,
+          ghl_id: pi.metadata?.ghl_id ?? null,
         };
       });
 
     return NextResponse.json({
       success: true,
       transactions,
-      organization: { name: organization.name }
+      hasMore: piList.has_more,
+      nextCursor: piList.data.length > 0 ? piList.data[piList.data.length - 1].id : null,
+      organization: { name: organization.name },
     });
 
   } catch (error) {
-    console.error("Error fetching Stripe transactions:", error);
-    return NextResponse.json({ 
-        success: false, 
-        error: error.message || "Failed to fetch transactions" 
-    }, { status: 500 });
+    console.error('[stripe-transactions] Error:', error.message, error.code ?? '');
+    return NextResponse.json({ success: false, error: error.message ?? 'Failed to fetch transactions' }, { status: 500 });
   }
 }
