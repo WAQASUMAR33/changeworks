@@ -32,27 +32,30 @@ export async function GET(request) {
     await Promise.all(orgs.map(async (org) => {
       try {
         const piList = await stripe.paymentIntents.list(
-          { limit: limitParam, expand: ['data.latest_charge', 'data.customer'] },
+          { limit: limitParam, expand: ['data.latest_charge', 'data.latest_charge.customer', 'data.customer'] },
           { stripeAccount: org.stripeAccountId }
         );
 
         for (const pi of piList.data) {
           if (pi.status === 'canceled') continue;
 
-          const charge   = typeof pi.latest_charge === 'object' && pi.latest_charge ? pi.latest_charge : null;
-          const customer = typeof pi.customer     === 'object' && pi.customer       ? pi.customer       : null;
-          const billing  = charge?.billing_details ?? {};
+          const charge         = typeof pi.latest_charge === 'object' && pi.latest_charge ? pi.latest_charge : null;
+          const piCustomer     = typeof pi.customer === 'object' && pi.customer ? pi.customer : null;
+          const chargeCustomer = typeof charge?.customer === 'object' && charge?.customer ? charge.customer : null;
+          const billing        = charge?.billing_details ?? {};
 
           const donorName =
             val(billing.name)              ||
-            val(customer?.name)            ||
+            val(chargeCustomer?.name)      ||
+            val(piCustomer?.name)          ||
             val(pi.metadata?.customerName) ||
             val(pi.metadata?.donor_name)   ||
             'Unknown';
 
           const donorEmail =
             val(billing.email)              ||
-            val(customer?.email)            ||
+            val(chargeCustomer?.email)      ||
+            val(piCustomer?.email)          ||
             val(charge?.receipt_email)      ||
             val(pi.receipt_email)           ||
             val(pi.metadata?.customerEmail) ||

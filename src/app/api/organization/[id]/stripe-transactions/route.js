@@ -32,11 +32,11 @@ export async function GET(request, { params }) {
     const mode = await getPaymentMode();
     const stripe = await createStripeClient(mode === 'live');
 
-    // Fetch payment intents from the connected account
-    // Expand customer so Link/wallet payments show the actual payer email (not just metadata)
+    // Expand both PI-level customer AND charge-level customer.
+    // Link (py_) payments attach the customer to the Charge, not always to the PaymentIntent.
     const listParams = {
       limit,
-      expand: ['data.latest_charge', 'data.customer'],
+      expand: ['data.latest_charge', 'data.latest_charge.customer', 'data.customer'],
       ...(startingAfter ? { starting_after: startingAfter } : {}),
     };
 
@@ -59,21 +59,26 @@ export async function GET(request, { params }) {
     const transactions = piList.data
       .filter(pi => pi.status !== 'canceled')
       .map(pi => {
-        const charge   = typeof pi.latest_charge === 'object' && pi.latest_charge ? pi.latest_charge : null;
-        const customer = typeof pi.customer === 'object' && pi.customer ? pi.customer : null;
-        const billing  = charge?.billing_details ?? {};
+        const charge         = typeof pi.latest_charge === 'object' && pi.latest_charge ? pi.latest_charge : null;
+        const piCustomer     = typeof pi.customer === 'object' && pi.customer ? pi.customer : null;
+        // For Link (py_) charges, the customer is on the charge, not the PaymentIntent
+        const chargeCustomer = typeof charge?.customer === 'object' && charge?.customer ? charge.customer : null;
+        const customer       = piCustomer ?? chargeCustomer;
+        const billing        = charge?.billing_details ?? {};
 
-        // Priority: billing details (from card form) → Stripe Customer object (Link/wallet) → receipt → metadata (org-set, least reliable)
+        // Priority: billing_details → charge customer (Link) → PI customer → receipt → metadata (least reliable)
         const donorName =
           val(billing.name)               ||
-          val(customer?.name)             ||
+          val(chargeCustomer?.name)       ||
+          val(piCustomer?.name)           ||
           val(pi.metadata?.customerName)  ||
           val(pi.metadata?.donor_name)    ||
           null;
 
         const donorEmail =
           val(billing.email)              ||
-          val(customer?.email)            ||
+          val(chargeCustomer?.email)      ||
+          val(piCustomer?.email)          ||
           val(charge?.receipt_email)      ||
           val(pi.receipt_email)           ||
           val(pi.metadata?.customerEmail) ||
