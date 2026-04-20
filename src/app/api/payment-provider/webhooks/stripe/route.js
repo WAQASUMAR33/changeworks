@@ -202,6 +202,8 @@ export async function POST(request) {
   }
 
   const stripeAccountId = event.account;
+  const livemode = event.livemode ?? false;
+  console.log(`[Stripe Webhook] type=${event.type} livemode=${livemode} account=${stripeAccountId ?? 'platform'}`);
   const locationId = stripeAccountId ? await getLocationByStripeAccount(stripeAccountId) : null;
 
   await createWebhookLog({ source: 'STRIPE', eventId: event.id, eventType: event.type, locationId: locationId ?? undefined, payload: event });
@@ -214,7 +216,7 @@ export async function POST(request) {
         let customerEmail = intent.metadata?.customerEmail ?? intent.receipt_email ?? null;
         let customerPhone = intent.metadata?.customerPhone ?? null;
         try {
-          const full    = await getPaymentIntentWithCharge(intent.id, stripeAccountId);
+          const full    = await getPaymentIntentWithCharge(intent.id, stripeAccountId, livemode);
           const billing = full.latest_charge?.billing_details ?? {};
           const custObj = typeof full.customer === 'object' ? full.customer : null;
           customerName  = billing.name || custObj?.name || customerName;

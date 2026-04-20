@@ -57,8 +57,8 @@ export async function updatePaymentIntentMetadata(paymentIntentId, metadata, str
   return stripe.paymentIntents.update(paymentIntentId, { metadata }, { stripeAccount: stripeAccountId });
 }
 
-export async function getPaymentIntentWithCharge(paymentIntentId, stripeAccountId) {
-  const stripe = await createStripeClient();
+export async function getPaymentIntentWithCharge(paymentIntentId, stripeAccountId, livemode = null) {
+  const stripe = await createStripeClient(livemode);
   return stripe.paymentIntents.retrieve(
     paymentIntentId,
     { expand: ['latest_charge', 'customer'] },
