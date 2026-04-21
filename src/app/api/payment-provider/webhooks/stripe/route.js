@@ -220,6 +220,7 @@ export async function POST(request) {
         let customerName  = intent.metadata?.customerName  ?? null;
         let customerEmail = intent.metadata?.customerEmail ?? intent.receipt_email ?? null;
         let customerPhone = intent.metadata?.customerPhone ?? null;
+        console.log(`[Stripe Webhook] payment_intent.succeeded | id=${intent.id} | livemode=${livemode} | locationId=${locationId ?? intent.metadata?.locationId ?? 'none'} | emailFromMeta=${customerEmail ?? 'none'}`);
         try {
           const full    = await getPaymentIntentWithCharge(intent.id, stripeAccountId, livemode);
           const billing = full.latest_charge?.billing_details ?? {};
@@ -227,7 +228,11 @@ export async function POST(request) {
           customerName  = billing.name || custObj?.name || customerName;
           customerEmail = billing.email || custObj?.email || customerEmail;
           customerPhone = billing.phone || custObj?.phone || customerPhone;
-        } catch {}
+          console.log(`[Stripe Webhook] expanded billing | email=${customerEmail ?? 'none'} name=${customerName ?? 'none'}`);
+        } catch (expandErr) {
+          console.error(`[Stripe Webhook] getPaymentIntentWithCharge failed (livemode=${livemode}):`, expandErr.message);
+        }
+        console.log(`[Stripe Webhook] resolved customer | email=${customerEmail ?? 'MISSING — donor will NOT be created'}`);
         await upsertPaymentEvent({
           locationId: locationId ?? intent.metadata?.locationId, stripeAccountId: stripeAccountId ?? '',
           paymentIntentId: intent.id, entityId: intent.metadata?.entityId,
@@ -237,7 +242,9 @@ export async function POST(request) {
 
         // Auto-create donor account only for confirmed GHL payments
         if (intent.status === 'succeeded') {
-          await maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId: locationId ?? intent.metadata?.locationId, stripeAccountId, ghlTransactionId: intent.metadata?.ghlTransactionId ?? intent.metadata?.entityId ?? null });
+          const resolvedLocationId = locationId ?? intent.metadata?.locationId ?? null;
+          console.log(`[Stripe Webhook] calling maybeCreateDonorAccount | email=${customerEmail} locationId=${resolvedLocationId}`);
+          await maybeCreateDonorAccount({ customerEmail, customerName, customerPhone, locationId: resolvedLocationId, stripeAccountId, ghlTransactionId: intent.metadata?.ghlTransactionId ?? intent.metadata?.entityId ?? null });
         }
 
         if (locationId) {
