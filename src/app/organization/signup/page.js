@@ -260,27 +260,29 @@ export default function OrganizationSignupPage() {
     setErrorMsg('');
 
     try {
-      // Create preview
+      // Create preview immediately
       const previewUrl = URL.createObjectURL(file);
       setLogoPreview(previewUrl);
 
-      // Convert to base64 and store for later upload
+      // Convert to base64
       const base64Data = await convertToBase64(file);
 
-      // Update form with base64 data (will upload on submit)
-      setForm(prev => ({
-        ...prev,
-        logo: base64Data,
-        logoUrl: '' // Will be set during upload on submit
-      }));
-
-      // Clear any stale logo validation error
+      // Store base64 right away and clear stale error
+      setForm(prev => ({ ...prev, logo: base64Data, logoUrl: '' }));
       setErrors(prev => ({ ...prev, logo: '' }));
 
+      // Upload immediately so logoUrl is ready before the user submits
+      setLogoUploading(true);
+      const uploadedUrl = await uploadLogoToAPI(base64Data);
+      if (uploadedUrl) {
+        setForm(prev => ({ ...prev, logoUrl: uploadedUrl }));
+      }
     } catch (error) {
       console.error('Logo processing error:', error);
       setErrorMsg('Failed to process logo. Please try again.');
       setLogoPreview(null);
+    } finally {
+      setLogoUploading(false);
     }
   };
 
@@ -314,37 +316,8 @@ export default function OrganizationSignupPage() {
     setErrorMsg('');
 
     try {
-      // Upload logo if present
-      let logoUrl = form.logoUrl;
-      console.log('Submit - Logo check:', {
-        hasLogo: !!form.logo,
-        hasLogoUrl: !!form.logoUrl,
-        logoLength: form.logo?.length
-      });
-
-      if (form.logo && !form.logoUrl) {
-        console.log('Starting logo upload...');
-        setLogoUploading(true);
-        try {
-          logoUrl = await uploadLogoToAPI(form.logo);
-          if (logoUrl) {
-            console.log('Logo uploaded successfully:', logoUrl);
-          } else {
-            console.warn('Logo upload failed, proceeding without logo URL');
-          }
-        } catch (uploadError) {
-          console.error('Logo upload error:', uploadError);
-          // Continue with registration even if logo upload fails
-        } finally {
-          setLogoUploading(false);
-        }
-      }
-
-      // Prepare form data with logo URL
-      const formData = {
-        ...form,
-        logoUrl: logoUrl || form.logoUrl
-      };
+      // Prepare form data — logo was already uploaded during selection
+      const formData = { ...form };
 
       const res = await fetch('/api/organization', {
         method: 'POST',
