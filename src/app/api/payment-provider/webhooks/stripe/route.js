@@ -182,8 +182,13 @@ async function maybeCreateDonorAccount({ customerEmail, customerName, customerPh
 }
 
 export async function POST(request) {
-  const rawBody   = Buffer.from(await request.arrayBuffer());
+  const rawBody   = await request.text();
   const signature = request.headers.get('stripe-signature');
+
+  // Diagnostic: log sig header prefix and body snippet to help diagnose secret mismatches
+  const sigTs = signature?.match(/t=(\d+)/)?.[1] ?? 'none';
+  const sigV1 = signature?.match(/v1=([^,]+)/)?.[1]?.slice(0, 16) ?? 'none';
+  console.log(`[Stripe Webhook] bodyLen=${rawBody.length} sigT=${sigTs} sigV1prefix=${sigV1}`);
 
   if (!signature) {
     return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
