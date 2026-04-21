@@ -108,24 +108,28 @@ export async function getStripeConnectClientId() {
 }
 
 /** Returns the mode-appropriate Stripe Connect webhook secret (payment provider).
- *  DB (AppSetting) takes precedence over env vars so the secret can be
- *  auto-registered without a server restart. */
+ *  Live mode always reads from env (STRIPE_CONNECT_WEBHOOK_SECRET_LIVE) to avoid
+ *  stale DB values overriding the correct secret.
+ *  Sandbox mode reads from DB first (auto-registered), falls back to env. */
 export async function getStripeConnectWebhookSecret() {
   const mode = await loadMode();
-  const dbKey = mode === 'live'
-    ? 'stripe_connect_webhook_secret_live'
-    : 'stripe_connect_webhook_secret_sandbox';
+
+  if (mode === 'live') {
+    const secret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET_LIVE ?? '';
+    console.log(`[getStripeConnectWebhookSecret] mode=live source=ENV prefix=${secret ? secret.slice(0, 14) + '...' : 'MISSING'}`);
+    return secret;
+  }
+
+  // Sandbox: DB takes precedence so the secret can be auto-registered without a restart
   try {
-    const row = await prisma.appSetting.findUnique({ where: { key: dbKey } });
+    const row = await prisma.appSetting.findUnique({ where: { key: 'stripe_connect_webhook_secret_sandbox' } });
     if (row?.value) {
-      console.log(`[getStripeConnectWebhookSecret] source=DB key=${dbKey} prefix=${row.value.slice(0, 14)}...`);
+      console.log(`[getStripeConnectWebhookSecret] mode=sandbox source=DB prefix=${row.value.slice(0, 14)}...`);
       return row.value;
     }
   } catch {}
-  const envSecret = mode === 'live'
-    ? (process.env.STRIPE_CONNECT_WEBHOOK_SECRET_LIVE ?? '')
-    : (process.env.STRIPE_CONNECT_WEBHOOK_SECRET_SANDBOX ?? '');
-  console.log(`[getStripeConnectWebhookSecret] source=ENV mode=${mode} prefix=${envSecret ? envSecret.slice(0, 14) + '...' : 'MISSING'}`);
+  const envSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET_SANDBOX ?? '';
+  console.log(`[getStripeConnectWebhookSecret] mode=sandbox source=ENV prefix=${envSecret ? envSecret.slice(0, 14) + '...' : 'MISSING'}`);
   return envSecret;
 }
 
