@@ -85,10 +85,18 @@ export async function GET(request, { params }) {
           val(pi.metadata?.donor_email)   ||
           null;
 
-        const status = pi.status === 'succeeded'               ? 'completed'
-                     : pi.status === 'requires_payment_method' ? 'failed'
-                     : pi.status === 'processing'              ? 'pending'
-                     : pi.status;
+        let status = pi.status === 'succeeded'               ? 'completed'
+                   : pi.status === 'requires_payment_method' ? 'failed'
+                   : pi.status === 'processing'              ? 'pending'
+                   : pi.status;
+
+        if (status === 'completed' && charge) {
+          if (charge.refunded || charge.amount_refunded > 0) {
+            status = 'refunded';
+          } else if (charge.reversed) {
+            status = 'reversed';
+          }
+        }
 
         return {
           id: pi.id,

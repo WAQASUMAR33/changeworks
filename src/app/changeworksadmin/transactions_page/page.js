@@ -166,7 +166,7 @@ export default function TransactionManagementPage() {
       if (!Array.isArray(data.transactions)) {
         throw new Error('Unexpected response format');
       }
-      setTransactions(data.transactions.filter(t => t.status === 'completed'));
+      setTransactions(data.transactions.filter(t => ['completed', 'refunded', 'reversed'].includes(t.status)));
     } catch (err) {
       setError(`Failed to load transactions: ${err.message}`);
       setTransactions([]);
@@ -754,6 +754,10 @@ export default function TransactionManagementPage() {
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             transaction.status === 'completed'
                               ? 'bg-green-100 text-green-800'
+                              : transaction.status === 'refunded'
+                              ? 'bg-blue-100 text-blue-800'
+                              : transaction.status === 'reversed'
+                              ? 'bg-orange-100 text-orange-800'
                               : transaction.status === 'pending'
                               ? 'bg-yellow-100 text-yellow-800'
                               : 'bg-red-100 text-red-800'

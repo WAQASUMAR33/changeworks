@@ -62,10 +62,18 @@ export async function GET(request) {
             val(pi.metadata?.donor_email)   ||
             '';
 
-          const status = pi.status === 'succeeded'               ? 'completed'
-                       : pi.status === 'requires_payment_method' ? 'failed'
-                       : pi.status === 'processing'              ? 'pending'
-                       : 'pending';
+          let status = pi.status === 'succeeded'               ? 'completed'
+                     : pi.status === 'requires_payment_method' ? 'failed'
+                     : pi.status === 'processing'              ? 'pending'
+                     : 'pending';
+
+          if (status === 'completed' && charge) {
+            if (charge.refunded || charge.amount_refunded > 0) {
+              status = 'refunded';
+            } else if (charge.reversed) {
+              status = 'reversed';
+            }
+          }
 
           const paymentMethodType = charge?.payment_method_details?.type ?? 'stripe';
           const paymentMethod = paymentMethodType === 'link' ? 'stripe'
