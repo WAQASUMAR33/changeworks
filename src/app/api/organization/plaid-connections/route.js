@@ -15,7 +15,7 @@ function getPlaidBaseUrl(env) {
 
 export const dynamic = 'force-dynamic';
 
-async function fetchPlaidAccounts(accessToken) {
+async function fetchPlaidAccounts(accessToken, plaid) {
   try {
     const response = await fetch(`${plaid.baseUrl}/accounts/get`, {
       method: 'POST',
@@ -47,7 +47,7 @@ async function fetchPlaidAccounts(accessToken) {
   }
 }
 
-async function fetchPlaidInstitution(institutionId) {
+async function fetchPlaidInstitution(institutionId, plaid) {
   if (!institutionId) return null;
   try {
     const response = await fetch(`${plaid.baseUrl}/institutions/get_by_id`, {
@@ -75,7 +75,7 @@ async function fetchPlaidInstitution(institutionId) {
   }
 }
 
-async function checkFundingSource(accessToken) {
+async function checkFundingSource(accessToken, plaid) {
   try {
     const response = await fetch(`${plaid.baseUrl}/auth/get`, {
       method: 'POST',
@@ -149,11 +149,11 @@ export async function GET(req) {
 
     await Promise.all(
       connections.map(async (conn) => {
-        const accountsData = await fetchPlaidAccounts(conn.access_token);
+        const accountsData = await fetchPlaidAccounts(conn.access_token, plaid);
 
         const [institutionData, fundingSource] = await Promise.all([
-          fetchPlaidInstitution(conn.institution_id),
-          checkFundingSource(conn.access_token),
+          fetchPlaidInstitution(conn.institution_id, plaid),
+          checkFundingSource(conn.access_token, plaid),
         ]);
 
         enrichedConnections.push({
