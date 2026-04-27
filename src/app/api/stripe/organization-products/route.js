@@ -40,6 +40,8 @@ export async function GET(request) {
             }, { status: 404 });
         }
 
+        const stripe = await createStripeClient();
+
         console.log(`🏢 Stripe Account: ${stripeAccountId}`);
 
         let productIds = [];
