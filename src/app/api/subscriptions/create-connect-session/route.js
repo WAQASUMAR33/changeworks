@@ -47,6 +47,8 @@ export async function POST(request) {
             );
         }
 
+        const stripe = await createStripeClient();
+
         // Determine base URL
         const requestUrl = new URL(request.url);
         const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
