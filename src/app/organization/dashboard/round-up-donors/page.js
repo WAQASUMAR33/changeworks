@@ -17,6 +17,8 @@ import {
   ShieldAlert,
   Loader2,
   Link2,
+  Trash2,
+  X,
 } from 'lucide-react';
 
 const formatCurrency = (amount, iso_currency_code = 'USD') =>
@@ -35,6 +37,8 @@ export default function RoundUpDonorsPage() {
   const [expandedDonor, setExpandedDonor] = useState(null);
   const [search, setSearch] = useState('');
   const [cleaning, setCleaning] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(new Set());
+  const [confirmDisconnect, setConfirmDisconnect] = useState(null); // { donorId, donorName }
 
   const fetchConnections = async () => {
     try {
@@ -92,6 +96,33 @@ export default function RoundUpDonorsPage() {
       alert('Cleanup failed: ' + err.message);
     } finally {
       setCleaning(false);
+    }
+  };
+
+  const disconnectDonor = async (donorId) => {
+    const token = sessionStorage.getItem('orgToken');
+    setDisconnecting((prev) => new Set(prev).add(donorId));
+    setConfirmDisconnect(null);
+    try {
+      const res = await fetch('/api/plaid/disconnect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ donor_id: donorId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Disconnect failed');
+      fetchConnections();
+    } catch (err) {
+      alert('Failed to remove connection: ' + err.message);
+    } finally {
+      setDisconnecting((prev) => {
+        const next = new Set(prev);
+        next.delete(donorId);
+        return next;
+      });
     }
   };
 
@@ -321,6 +352,21 @@ export default function RoundUpDonorsPage() {
                         )}
                       </div>
 
+                      {/* Remove Connection */}
+                      <div className="flex justify-end pt-1">
+                        <button
+                          onClick={() => setConfirmDisconnect({ donorId: conn.donor?.id, donorName: conn.donor?.name || conn.donor?.email || 'this donor' })}
+                          disabled={disconnecting.has(conn.donor?.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {disconnecting.has(conn.donor?.id) ? (
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                          {disconnecting.has(conn.donor?.id) ? 'Removing...' : 'Remove Connection'}
+                        </button>
+                      </div>
 
                     </div>
                   </motion.div>
@@ -330,6 +376,55 @@ export default function RoundUpDonorsPage() {
           ))}
         </div>
       )}
+
+      {/* Disconnect Confirmation Modal */}
+      <AnimatePresence>
+        {confirmDisconnect && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setConfirmDisconnect(null); }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Trash2 className="w-5 h-5 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Remove Bank Connection</h3>
+                </div>
+                <button onClick={() => setConfirmDisconnect(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-gray-600 text-sm mb-6">
+                Are you sure you want to remove the bank connection for <strong>{confirmDisconnect.donorName}</strong>? They will need to reconnect their bank account to continue round-up donations.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmDisconnect(null)}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  Keep Connection
+                </button>
+                <button
+                  onClick={() => disconnectDonor(confirmDisconnect.donorId)}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors"
+                >
+                  Yes, Remove
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

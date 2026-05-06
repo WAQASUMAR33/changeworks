@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, CreditCard, User, AlertCircle, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, CreditCard, User, AlertCircle, RefreshCw, CheckCircle, XCircle, Trash2, X } from 'lucide-react';
 
 export default function SubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [cancelling, setCancelling] = useState(new Set());
+  const [confirmSub, setConfirmSub] = useState(null); // { id, customerName }
 
   const fetchSubscriptions = async () => {
     try {
@@ -43,6 +45,33 @@ export default function SubscriptionsPage() {
     fetchSubscriptions();
   }, []);
 
+  const cancelSubscription = async (stripeSubId, cancelImmediately = true) => {
+    const token = sessionStorage.getItem('orgToken');
+    setCancelling((prev) => new Set(prev).add(stripeSubId));
+    setConfirmSub(null);
+    try {
+      const res = await fetch('/api/organization/subscriptions/cancel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ stripe_subscription_id: stripeSubId, cancel_immediately: cancelImmediately }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Cancel failed');
+      await fetchSubscriptions();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCancelling((prev) => {
+        const next = new Set(prev);
+        next.delete(stripeSubId);
+        return next;
+      });
+    }
+  };
+
   const formatDate = (timestamp) => {
     return new Date(timestamp * 1000).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -67,6 +96,8 @@ export default function SubscriptionsPage() {
       default: return 'bg-yellow-100 text-yellow-800';
     }
   };
+
+  const isCancellable = (status) => ['active', 'trialing', 'past_due'].includes(status);
 
   return (
     <div className="space-y-6">
@@ -116,6 +147,7 @@ export default function SubscriptionsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period End</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -154,6 +186,27 @@ export default function SubscriptionsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(sub.current_period_end)}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {isCancellable(sub.status) ? (
+                        <button
+                          onClick={() => setConfirmSub({
+                            id: sub.id,
+                            customerName: sub.customer?.name || sub.customer?.email || 'this donor',
+                          })}
+                          disabled={cancelling.has(sub.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {cancelling.has(sub.id) ? (
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                          {cancelling.has(sub.id) ? 'Cancelling...' : 'Cancel'}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -161,6 +214,55 @@ export default function SubscriptionsPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <AnimatePresence>
+        {confirmSub && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setConfirmSub(null); }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Trash2 className="w-5 h-5 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Cancel Subscription</h3>
+                </div>
+                <button onClick={() => setConfirmSub(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-gray-600 text-sm mb-6">
+                Are you sure you want to cancel the subscription for <strong>{confirmSub.customerName}</strong>? This will stop future billing.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmSub(null)}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  Keep Active
+                </button>
+                <button
+                  onClick={() => cancelSubscription(confirmSub.id, true)}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors"
+                >
+                  Yes, Cancel
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

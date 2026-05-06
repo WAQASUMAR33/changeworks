@@ -1597,6 +1597,71 @@ Your trusted platform partner for charitable giving
     });
   }
 
+  // Send auto-created account credentials to a new donor (iroundup flow)
+  async sendDonorCredentialsEmail({ donor, organization, password, loginLink }) {
+    const orgName = organization?.name || 'ChangeWorks Fund';
+    const subject = `Your ${orgName} donor account has been created`;
+
+    const content = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        ${organization?.imageUrl
+          ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 120px; max-width: 250px; height: auto;">`
+          : `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>`}
+      </div>
+
+      <p style="font-size: 18px; font-weight: 500; color: #212529; margin-bottom: 25px;">Hello ${donor.name},</p>
+
+      <p>A donor account has been created for you on <strong>ChangeWorks</strong>, the giving platform for <strong>${orgName}</strong>. Use the credentials below to log in and complete your round-up setup.</p>
+
+      <div style="background-color: #f8f9fa; border-left: 4px solid #302E56; padding: 20px 24px; border-radius: 6px; margin: 24px 0;">
+        <p style="margin: 0 0 10px 0; font-size: 15px;"><strong>Email:</strong> ${donor.email}</p>
+        <p style="margin: 0; font-size: 15px;"><strong>Password:</strong> <span style="font-family: monospace; font-size: 16px; letter-spacing: 1px;">${password}</span></p>
+      </div>
+
+      <p>We recommend changing your password after your first login from your profile settings.</p>
+
+      <div style="text-align: center; margin: 28px 0;">
+        <a href="${loginLink}" class="button">Log In to Your Donor Portal</a>
+      </div>
+
+      <p>If you have any questions, reach us at <a href="mailto:support@changeworksfund.org" style="color: #302E56;">support@changeworksfund.org</a>.</p>
+
+      <div style="margin-top: 30px; font-style: italic; color: #495057;">
+        <p>With gratitude,<br><strong>${orgName} &amp; The ChangeWorks Team</strong></p>
+      </div>
+
+      ${this.getFooterHtml()}
+    `;
+
+    const html = this.generateEmailHtml(content, null, subject, false, false);
+
+    const text = `
+Hello ${donor.name},
+
+A donor account has been created for you on ChangeWorks, the giving platform for ${orgName}.
+
+Email: ${donor.email}
+Password: ${password}
+
+Log in here: ${loginLink}
+
+We recommend changing your password after your first login.
+
+With gratitude,
+${orgName} & The ChangeWorks Team
+
+Contact: support@changeworksfund.org
+    `.trim();
+
+    return await this.sendEmail({
+      to: donor.email,
+      subject,
+      html,
+      text,
+      from: `"${orgName}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
+    });
+  }
+
   // Send monthly donation summary email to donor (last day of month)
   async sendMonthlyDonationSummaryEmail({ donor, organization, month, totalAmount, donations, dashboardLink }) {
     const orgName = organization?.name || 'ChangeWorks';

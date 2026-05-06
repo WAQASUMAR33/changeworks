@@ -31,7 +31,7 @@ function calcRoundUp(amount) {
 }
 
 // Fetch transactions from Plaid (spending source — used only for round-up calculation)
-async function fetchTransactions(accessToken, startDate, endDate) {
+async function fetchTransactions(accessToken, startDate, endDate, plaid) {
   const response = await fetch(`${plaid.baseUrl}/transactions/get`, {
     method: 'POST',
     headers: {
@@ -131,7 +131,7 @@ export async function POST(req) {
     const { stripe_customer_id, stripe_payment_method_id, label: cardLabel } = pmRows[0];
 
     // ── Step 1: Calculate round-up total from Plaid transactions ─────────────
-    const transactions = await fetchTransactions(connection.access_token, start_date, end_date);
+    const transactions = await fetchTransactions(connection.access_token, start_date, end_date, plaid);
     const purchases    = transactions.filter((t) => t.amount > 0); // debits only
     const totalRoundUpDollars = parseFloat(
       purchases.reduce((sum, t) => sum + calcRoundUp(t.amount), 0).toFixed(2)
