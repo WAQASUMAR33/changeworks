@@ -135,7 +135,6 @@ class EmailService {
         <div style="text-align: center; font-size: 12px; color: #333;">
             <p style="font-weight: bold; margin-bottom: 10px; color: #302E56;">Contact Information</p>
             <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #0056b3; text-decoration: none;">support@changeworksfund.org</a></p>
-            <p style="margin-bottom: 5px;">Email: <a href="mailto:elizabethm@changeworksfund.org" style="color: #0056b3; text-decoration: none;">elizabethm@changeworksfund.org</a></p>
             <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
             <p style="margin-bottom: 20px;">Casper, WY 82609</p>
             <p><a href="#" style="color: #0056b3; text-decoration: none;">Unsubscribe</a></p>
@@ -1773,7 +1772,6 @@ The ${orgName} Team
 
 Contact Information
 Email: support@changeworksfund.org
-Email: elizabethm@changeworksfund.org
 5830 E 2nd St. STE 7000 #29896
 Casper, WY 82609
     `.trim();
