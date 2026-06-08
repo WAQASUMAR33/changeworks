@@ -1,4 +1,3 @@
-import Stripe from 'stripe';
 import { createStripeClient, getStripePublishableKey } from '@/app/lib/payment-mode';
 
 /**
