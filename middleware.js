@@ -1,21 +1,21 @@
 import { NextResponse } from 'next/server';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Max-Age': '86400',
+};
+
 export function middleware(request) {
-  // Handle preflight OPTIONS request
+  const { pathname } = request.nextUrl;
+
+  // Handle CORS preflight — must respond before any other logic
   if (request.method === 'OPTIONS') {
-    return new NextResponse(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Max-Age': '86400',
-      },
-    });
+    return new NextResponse(null, { status: 204, headers: corsHeaders });
   }
 
   // Admin route authentication check
-  const { pathname } = request.nextUrl;
   if (pathname.startsWith('/changeworksadmin') &&
       !pathname.startsWith('/changeworksadmin/login')) {
 
@@ -27,18 +27,14 @@ export function middleware(request) {
     }
   }
 
-  // Add CORS headers to every API response
+  // Attach CORS headers to every response so actual requests also pass
   const response = NextResponse.next();
-  response.headers.set('Access-Control-Allow-Origin', '*');
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
   return response;
 }
 
 export const config = {
-  matcher: [
-    '/api/:path*',
-    '/changeworksadmin',
-    '/changeworksadmin/((?!login).)*',
-  ],
+  matcher: ['/(api)(.*)', '/changeworksadmin', '/changeworksadmin/((?!login).)*'],
 };
