@@ -1,38 +1,47 @@
 import { NextResponse } from 'next/server';
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
 export function middleware(request) {
-  console.log('🔍 Middleware executing for:', request.nextUrl.pathname);
-  
-  // Only apply to admin routes (except login)
-  if (request.nextUrl.pathname.startsWith('/changeworksadmin') && 
-      !request.nextUrl.pathname.startsWith('/changeworksadmin/login')) {
-    
-    console.log('🔍 Admin route detected, checking authentication...');
-    
-    // Check for admin token in cookies or headers
-    const adminToken = request.cookies.get('adminToken')?.value || 
+  const { pathname } = request.nextUrl;
+
+  // Handle CORS preflight for all API routes
+  if (pathname.startsWith('/api/') && request.method === 'OPTIONS') {
+    return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+  }
+
+  // Admin route authentication check
+  if (pathname.startsWith('/changeworksadmin') &&
+      !pathname.startsWith('/changeworksadmin/login')) {
+
+    const adminToken = request.cookies.get('adminToken')?.value ||
                       request.headers.get('authorization')?.replace('Bearer ', '');
-    
-    console.log('🔍 Admin token found:', !!adminToken);
-    console.log('🔍 Cookies:', request.cookies.getAll());
-    console.log('🔍 Headers:', request.headers.get('authorization'));
-    
-    // For client-side navigation, let the admin layout handle authentication
-    // Only redirect server-side requests without tokens
+
     if (!adminToken && request.headers.get('accept')?.includes('text/html')) {
-      console.log('❌ No admin token found for server-side request, redirecting to login');
       return NextResponse.redirect(new URL('/changeworksadmin/login', request.url));
     }
-    
-    console.log('✅ Admin token found or client-side navigation, allowing access');
   }
-  
-  return NextResponse.next();
+
+  const response = NextResponse.next();
+
+  // Attach CORS headers to all API responses
+  if (pathname.startsWith('/api/')) {
+    Object.entries(CORS_HEADERS).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+  }
+
+  return response;
 }
 
 export const config = {
   matcher: [
+    '/api/:path*',
     '/changeworksadmin',
-    '/changeworksadmin/((?!login).)*'
-  ]
+    '/changeworksadmin/((?!login).)*',
+  ],
 };
