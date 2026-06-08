@@ -17,7 +17,6 @@ import {
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Package, Download, FileSpreadsheet, FileText, Printer, Filter, DollarSign, CheckCircle, Clock } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -240,11 +239,21 @@ export default function TransactionManagementPage() {
       'Payment Method': transaction.payment_method,
       'Created At': formatDate(transaction.created_at)
     }));
-    
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
-    XLSX.writeFile(wb, `transactions_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+    const headers = Object.keys(exportData[0]);
+    const csvRows = [
+      headers.join(','),
+      ...exportData.map(row =>
+        headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`).join(',')
+      )
+    ];
+    const blob = new Blob(['﻿' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
     handleExportClose();
   };
   

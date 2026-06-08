@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getPlaidConfig } from '@/app/lib/payment-mode';
 import { PrismaClient } from '@prisma/client';
+import emailService from '@/app/lib/email-service';
 
 const prisma = new PrismaClient();
 
@@ -40,10 +41,14 @@ export async function POST(request) {
 
     console.log(`🔍 Looking for Plaid connection for donor ${donorId}`);
 
-    // Find the Plaid connection(s) for this donor
+    // Find the Plaid connection(s) for this donor (include donor + org for the email)
     const connections = await prisma.plaidConnection.findMany({
       where: {
         donor_id: donorId
+      },
+      include: {
+        donor: true,
+        organization: true
       }
     });
 
@@ -105,6 +110,19 @@ export async function POST(request) {
     });
 
     console.log(`✅ Deleted ${deletedConnection.count} Plaid connection(s) from database for donor ${donorId}`);
+
+    // Send disconnect notification email to the donor
+    if (connections.length > 0 && connections[0].donor?.email) {
+      const donor = connections[0].donor;
+      const organization = connections[0].organization;
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+      const dashboardLink = `${appUrl}/donor/dashboard`;
+      emailService.sendPlaidDisconnectEmail({ donor, organization, dashboardLink })
+        .then(result => {
+          if (!result.success) console.warn('⚠️ Plaid disconnect email failed:', result.error);
+        })
+        .catch(err => console.warn('⚠️ Plaid disconnect email error:', err.message));
+    }
 
     // Prepare response
     const response = {
