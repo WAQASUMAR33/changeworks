@@ -1,20 +1,21 @@
 import { NextResponse } from 'next/server';
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
-
 export function middleware(request) {
-  const { pathname } = request.nextUrl;
-
-  // Handle CORS preflight for all API routes
-  if (pathname.startsWith('/api/') && request.method === 'OPTIONS') {
-    return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+  // Handle preflight OPTIONS request
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Max-Age': '86400',
+      },
+    });
   }
 
   // Admin route authentication check
+  const { pathname } = request.nextUrl;
   if (pathname.startsWith('/changeworksadmin') &&
       !pathname.startsWith('/changeworksadmin/login')) {
 
@@ -26,15 +27,11 @@ export function middleware(request) {
     }
   }
 
+  // Add CORS headers to every API response
   const response = NextResponse.next();
-
-  // Attach CORS headers to all API responses
-  if (pathname.startsWith('/api/')) {
-    Object.entries(CORS_HEADERS).forEach(([key, value]) => {
-      response.headers.set(key, value);
-    });
-  }
-
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   return response;
 }
 
