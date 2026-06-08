@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPlaidConfig } from '@/app/lib/payment-mode';
 import jwt from "jsonwebtoken";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Plaid configuration
 
@@ -131,4 +132,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

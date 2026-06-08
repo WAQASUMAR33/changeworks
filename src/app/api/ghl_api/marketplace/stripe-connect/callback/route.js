@@ -1,3 +1,4 @@
+import { corsHeaders } from '@/app/lib/cors';
 
 
 /**
@@ -78,4 +79,8 @@ export async function GET(req) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

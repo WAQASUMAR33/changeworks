@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
+import { corsHeaders } from '@/app/lib/cors';
 
 /**
  * GET /api/payment-provider/admin/debug-env
@@ -33,4 +34,8 @@ export async function GET() {
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? 'MISSING',
     },
   });
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

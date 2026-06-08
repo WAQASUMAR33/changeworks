@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { getPaymentMode, getStripePublishableKey, createStripeClient } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 /**
  * GET /api/payment-provider/admin/debug-checkout?locationId=xxx
@@ -93,4 +94,8 @@ export async function GET(request) {
   result.verdict = allOk ? 'ALL CHECKS PASSED — checkout should work' : 'ONE OR MORE CHECKS FAILED — see steps above';
 
   return NextResponse.json(result, { space: 2 });
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

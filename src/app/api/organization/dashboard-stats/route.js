@@ -3,6 +3,7 @@ import { prisma } from "../../../lib/prisma";
 import { getStripeConnectAccount } from "../../../lib/stripe-connect";
 import { getStripe } from "../../../../lib/stripe";
 import { getStripeAccount } from "../../../lib/payment-provider/tokenStore";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request) {
   try {
@@ -220,4 +221,8 @@ function formatTimeAgo(date) {
   } else {
     return `${days} day${days > 1 ? 's' : ''} ago`;
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

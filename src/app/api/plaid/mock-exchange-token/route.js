@@ -3,6 +3,7 @@ import { getPlaidConfig } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
 import jwt from "jsonwebtoken";
 import emailService from "@/app/lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(request) {
   const plaid = await getPlaidConfig();
@@ -135,4 +136,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

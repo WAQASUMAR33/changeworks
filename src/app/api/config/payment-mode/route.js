@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getPaymentMode, getStripePublishableKey, getPlaidConfig } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 /**
  * GET /api/config/payment-mode
@@ -20,4 +21,8 @@ export async function GET() {
     stripePublishableKey,                   // pk_test_... or pk_live_...
     plaidEnv: plaid.env,                    // 'sandbox' | 'production'
   });
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

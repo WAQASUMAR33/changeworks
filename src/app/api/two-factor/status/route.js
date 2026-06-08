@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import jwt from 'jsonwebtoken';
+import { corsHeaders } from '@/app/lib/cors';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,6 +78,6 @@ export async function GET(request) {
   }
 }
 
-
-
-
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

@@ -3,6 +3,7 @@ import { prisma } from "../../../lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { emailService } from "../../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 // POST /api/donor/signup - Create a new donor account
 export async function POST(request) {
@@ -227,4 +228,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

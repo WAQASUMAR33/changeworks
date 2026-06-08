@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import emailService from '@/app/lib/email-service';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request) {
   try {
@@ -36,4 +37,8 @@ export async function GET(request) {
     console.error('❌ Error testing Round-Up Welcome Email:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

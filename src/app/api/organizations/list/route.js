@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { corsHeaders } from '@/app/lib/cors';
 
 const prisma = new PrismaClient();
 // Last updated: 2026-01-20T20:54:27
@@ -73,4 +74,8 @@ export async function GET() {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

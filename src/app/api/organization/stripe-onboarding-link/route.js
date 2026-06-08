@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStripeAccountOnboardingLink } from "../../../lib/stripe-connect";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(request) {
   try {
@@ -27,4 +28,8 @@ export async function POST(request) {
       error: 'Failed to generate onboarding link'
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

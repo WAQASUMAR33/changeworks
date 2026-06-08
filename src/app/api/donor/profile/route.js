@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import jwt from "jsonwebtoken";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request) {
   try {
@@ -54,4 +55,8 @@ export async function GET(request) {
     
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

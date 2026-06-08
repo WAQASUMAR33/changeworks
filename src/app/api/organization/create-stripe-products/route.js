@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { createStripeProductDirect, createStripePriceDirect } from "../../../lib/stripe-direct-api";
 import { isStripeConfigured } from "../../../../lib/stripe";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(request) {
   try {
@@ -131,4 +132,8 @@ export async function POST(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

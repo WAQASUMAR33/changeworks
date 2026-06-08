@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../lib/prisma";
 import { z } from "zod";
 import { emailService } from "../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 const transactionSchema = z.object({
   donor_id: z.number().int().positive("Donor ID is required"),
@@ -156,4 +157,8 @@ export async function GET(request) {
     console.error('Error fetching transactions:', error);
     return NextResponse.json({ error: error.message || 'Failed to fetch transactions' }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

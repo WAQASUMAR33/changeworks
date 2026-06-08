@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 const schema = z.object({
   payment_intent_id: z.string().min(1)
@@ -69,4 +70,6 @@ export async function POST(request) {
   }
 }
 
-
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

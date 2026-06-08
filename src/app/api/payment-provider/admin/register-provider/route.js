@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { ghlClient, getValidAccessToken } from '@/app/lib/payment-provider/ghl';
 import { getStripeAccount } from '@/app/lib/payment-provider/tokenStore';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(request) {
   const { locationId } = await request.json();
@@ -83,4 +84,8 @@ export async function POST(request) {
   }
 
   return NextResponse.json(results, { status: 200 });
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

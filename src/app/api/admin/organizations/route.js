@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { verifyAdminToken } from '../../../lib/admin-auth';
+import { corsHeaders } from '@/app/lib/cors';
 
 // GET - Fetch organizations with pagination for admin
 export async function GET(req) {
@@ -97,4 +98,8 @@ export async function GET(req) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

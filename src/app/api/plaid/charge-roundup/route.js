@@ -4,6 +4,7 @@ import { createStripeClient } from '@/app/lib/payment-mode';
 import { z } from 'zod';
 import { prisma } from '../../../lib/prisma';
 import jwt from 'jsonwebtoken';
+import { corsHeaders } from '@/app/lib/cors';
 
 
 function getPlaidBaseUrl(env) {
@@ -267,4 +268,8 @@ export async function POST(req) {
     console.error('charge-roundup error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

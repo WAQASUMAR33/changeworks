@@ -5,6 +5,7 @@ import { z } from "zod";
 import crypto from "crypto";
 import GHLClient from "../../lib/ghl-client";
 import emailService from "../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 const donorSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -309,4 +310,8 @@ export async function GET(request) {
     console.error('Error fetching donors:', error);
     return NextResponse.json({ error: 'Failed to fetch donors' }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

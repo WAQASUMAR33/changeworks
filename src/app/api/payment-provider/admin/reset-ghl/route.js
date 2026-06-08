@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
+import { corsHeaders } from '@/app/lib/cors';
 
 /**
  * DELETE /api/payment-provider/admin/reset-ghl
@@ -31,4 +32,8 @@ export async function DELETE(request) {
     console.error('[reset-ghl] Error:', err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

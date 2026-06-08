@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { getConnectedAccount } from '@/app/lib/payment-provider/stripe';
 import { saveStripeAccount } from '@/app/lib/payment-provider/tokenStore';
 import { connectGHLPaymentProvider } from '@/app/lib/payment-provider/ghl';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(request) {
   try {
@@ -61,4 +62,8 @@ export async function POST(request) {
     console.error('[connect/direct]', err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

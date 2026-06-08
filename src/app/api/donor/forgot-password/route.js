@@ -3,6 +3,7 @@ import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
 import crypto from "crypto";
 import { emailService } from "../../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -145,4 +146,8 @@ export async function POST(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

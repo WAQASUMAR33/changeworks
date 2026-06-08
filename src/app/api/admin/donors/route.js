@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { verifyAdminToken } from '../../../lib/admin-auth';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request) {
   try {
@@ -70,4 +71,8 @@ export async function GET(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -4,6 +4,7 @@ import { prisma } from "../../../lib/prisma";
 import { emailService } from "../../../lib/email-service";
 
 import { createStripeClient } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 const schema = z.object({
   payment_intent_id: z.string().min(1),
@@ -171,4 +172,8 @@ export async function POST(request) {
     console.error('confirm-and-record error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

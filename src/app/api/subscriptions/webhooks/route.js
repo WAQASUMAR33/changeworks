@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createStripeClient, getStripeWebhookSecret } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 // POST /api/subscriptions/webhooks - Handle subscription-specific webhooks
 export async function POST(request) {
@@ -437,4 +438,8 @@ async function handleChargeDisputeCreated(dispute) {
   } catch (error) {
     console.error('Error handling charge dispute created:', error);
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

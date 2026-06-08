@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import emailService from '@/app/lib/email-service';
+import { corsHeaders } from '@/app/lib/cors';
 
 const prisma = new PrismaClient();
 
@@ -122,4 +123,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

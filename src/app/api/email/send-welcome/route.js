@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma.jsx";
 import { emailService } from "../../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 // POST /api/email/send-welcome - Send welcome email to donor
 export async function POST(request) {
@@ -149,4 +150,8 @@ export async function GET(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

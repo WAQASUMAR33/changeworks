@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import GHLClient from "../../../../lib/ghl-client";
 import { prisma } from "../../../../lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Validation schema for bulk contact creation
 const bulkContactSchema = z.object({
@@ -163,4 +164,8 @@ export async function POST(request) {
       error: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

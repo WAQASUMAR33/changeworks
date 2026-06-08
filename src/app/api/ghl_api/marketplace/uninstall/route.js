@@ -1,4 +1,5 @@
 import { prisma } from '../../../../lib/prisma';
+import { corsHeaders } from '@/app/lib/cors';
 
 /**
  * GHL Marketplace App - Uninstall Webhook
@@ -34,4 +35,8 @@ export async function POST(req) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { verifyAdminToken } from "../../../lib/admin-auth";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request) {
   try {
@@ -104,4 +105,8 @@ export async function GET(request) {
     console.error('admin dashboard-stats error:', error);
     return NextResponse.json({ success: false, error: 'Failed to load dashboard stats' }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

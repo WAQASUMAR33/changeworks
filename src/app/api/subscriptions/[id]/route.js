@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { getStripe, isStripeConfigured, handleStripeError } from "@/lib/stripe";
+import { corsHeaders } from '@/app/lib/cors';
 
 // GET /api/subscriptions/[id] - Get specific subscription
 export async function GET(request, { params }) {
@@ -383,4 +384,8 @@ export async function DELETE(request, { params }) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 
 // GET /api/subscriptions/check-customer - Check if customer has active subscription
@@ -491,4 +492,8 @@ export async function POST(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

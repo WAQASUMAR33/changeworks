@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import emailService from "../../../lib/email-service";
 import { createStripeClient, getStripeWebhookSecret } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(request) {
   const stripe = await createStripeClient();
@@ -288,4 +289,8 @@ async function sendMonthlyImpactEmail(donorId, organizationId, amount) {
 
 async function sendCardFailureAlertEmail(donorId, organizationId) {
     // Mock implementation
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

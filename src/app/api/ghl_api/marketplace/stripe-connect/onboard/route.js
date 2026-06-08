@@ -1,3 +1,4 @@
+import { corsHeaders } from '@/app/lib/cors';
 
 
 /**
@@ -109,4 +110,8 @@ async function getExistingStripeAccount(locationId) {
   // TODO: e.g. const record = await db.stripeConnections.findOne({ locationId });
   // return record?.stripeAccountId ?? null;
   return null;
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

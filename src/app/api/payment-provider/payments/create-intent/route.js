@@ -9,6 +9,7 @@ import { getStripeAccount, saveStripeAccount, upsertPaymentEvent, getPriceSync }
 import { getTransaction } from '@/app/lib/payment-provider/ghl';
 import { getPaymentMode, getStripePublishableKey } from '@/app/lib/payment-mode';
 import { prisma } from '@/app/lib/prisma';
+import { corsHeaders } from '@/app/lib/cors';
 // Donor account creation is handled exclusively in the Stripe webhook (payment_intent.succeeded)
 
 export async function POST(request) {
@@ -274,4 +275,8 @@ export async function POST(request) {
     clientSecret: intent.client_secret, paymentIntentId: intent.id,
     publishableKey: effectivePubKey, stripeAccountId: stripeAccount.stripeAccountId, mode: 'payment',
   });
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

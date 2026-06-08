@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Validation schema for PUT requests
 const updateOrganizationSchema = z.object({
@@ -251,4 +252,8 @@ export async function DELETE(req, { params }) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

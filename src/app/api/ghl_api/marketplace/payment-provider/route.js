@@ -1,5 +1,6 @@
 import { headers } from 'next/headers';
 import { createStripeClient } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 
 /**
@@ -150,4 +151,8 @@ async function getStripeAccountForLocation(locationId) {
   // e.g. const record = await db.stripeConnections.findOne({ locationId });
   // return record?.stripeAccountId ?? null;
   return null;
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

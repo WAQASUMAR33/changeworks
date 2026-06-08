@@ -11,6 +11,7 @@ import {
 import { postPaymentUpdateToGHL, postSubscriptionUpdateToGHL, getContactByEmail, getTransaction } from '@/app/lib/payment-provider/ghl';
 import { prisma } from '@/app/lib/prisma';
 import { emailService } from '@/app/lib/email-service';
+import { corsHeaders } from '@/app/lib/cors';
 
 /**
  * After a successful GHL payment, auto-create a donor account (status=false until
@@ -322,4 +323,8 @@ export async function POST(request) {
   }
 
   return NextResponse.json({ received: true });
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

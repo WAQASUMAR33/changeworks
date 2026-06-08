@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { emailService } from '@/app/lib/email-service';
+import { corsHeaders } from '@/app/lib/cors';
 
 function generatePassword(length = 10) {
   // Use alphanumeric only so the password is easy to type
@@ -111,4 +112,8 @@ export async function POST(request) {
     console.error('iroundup init error:', error);
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

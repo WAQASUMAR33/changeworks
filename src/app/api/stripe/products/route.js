@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createStripeClient } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 // GET /api/stripe/products - Get all Stripe products
 export async function GET(request) {
@@ -202,4 +203,8 @@ export async function POST(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

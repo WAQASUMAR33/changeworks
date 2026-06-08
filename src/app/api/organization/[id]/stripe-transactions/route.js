@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../../lib/prisma';
 import { createStripeClient, getPaymentMode } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request, { params }) {
   try {
@@ -127,4 +128,8 @@ export async function GET(request, { params }) {
     console.error('[stripe-transactions] Error:', error.message, error.code ?? '');
     return NextResponse.json({ success: false, error: error.message ?? 'Failed to fetch transactions' }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

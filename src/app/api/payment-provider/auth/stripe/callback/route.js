@@ -6,6 +6,7 @@ import { saveStripeAccount } from '@/app/lib/payment-provider/tokenStore';
 import { verifyStateToken } from '@/app/lib/payment-provider/crypto';
 import { connectGHLPaymentProvider } from '@/app/lib/payment-provider/ghl';
 import { prisma } from '@/app/lib/prisma';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -87,4 +88,8 @@ export async function GET(request) {
   }
 
   return NextResponse.redirect(`${dashboardUrl}?locationId=${locationId}&connected=stripe`);
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

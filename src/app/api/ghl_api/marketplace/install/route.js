@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { prisma } from '../../../../lib/prisma';
+import { corsHeaders } from '@/app/lib/cors';
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
 const GHL_API  = 'https://services.leadconnectorhq.com';
@@ -159,4 +160,8 @@ export async function GET(req) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

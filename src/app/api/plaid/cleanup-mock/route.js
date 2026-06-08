@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import jwt from 'jsonwebtoken';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function DELETE(req) {
   try {
@@ -29,4 +30,8 @@ export async function DELETE(req) {
     console.error('Cleanup error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

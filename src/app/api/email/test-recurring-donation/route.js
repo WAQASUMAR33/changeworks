@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import emailService from "@/app/lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 // POST /api/email/test-recurring-donation
 // Test the recurring donation email functionality
@@ -76,4 +77,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createRefund } from '@/app/lib/payment-provider/stripe';
 import { getStripeAccount } from '@/app/lib/payment-provider/tokenStore';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(request) {
   const { locationId, paymentIntentId, amount, reason } = await request.json();
@@ -19,4 +20,8 @@ export async function POST(request) {
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

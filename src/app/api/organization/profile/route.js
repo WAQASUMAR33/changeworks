@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Validation schema for profile update
 const updateProfileSchema = z.object({
@@ -166,4 +167,8 @@ export async function PUT(req) {
     console.error("Error updating profile:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -5,6 +5,7 @@ import { getConnectedAccount } from '@/app/lib/payment-provider/stripe';
 import { getStripeAccount, saveStripeAccount } from '@/app/lib/payment-provider/tokenStore';
 import { prisma } from '@/app/lib/prisma';
 import { createStripeClient, getPaymentMode, getStripePublishableKey } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 const getStripe = () => createStripeClient();
 
 export async function GET(request) {
@@ -144,4 +145,8 @@ export async function GET(request) {
     succeededTxCount,
     hasMore,
   });
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { verifyAdminToken } from '../../../lib/admin-auth';
 import { clearPaymentModeCache } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 // Default settings seeded when not in DB yet
 const DEFAULTS = {
@@ -132,4 +133,8 @@ export async function PUT(request) {
     console.error('admin settings PUT error:', error);
     return NextResponse.json({ success: false, error: 'Failed to update setting' }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

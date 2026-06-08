@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -54,4 +55,8 @@ export async function GET(request) {
     console.error('Verification error:', error);
     return NextResponse.redirect(new URL('/verify/error?reason=server_error', request.url));
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

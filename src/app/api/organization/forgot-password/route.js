@@ -4,6 +4,7 @@ import { z } from "zod";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { emailService } from "../../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -135,3 +136,6 @@ export async function POST(request) {
   }
 }
 
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

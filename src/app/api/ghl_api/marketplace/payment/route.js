@@ -1,5 +1,6 @@
 import { prisma } from '../../../../lib/prisma';
 import { createStripeClient } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 /**
  * GHL Marketplace – Server-side Payment (no checkout form)
@@ -328,4 +329,8 @@ function calcPlatformFee(amountInCents) {
   const platformBudget     = Math.round(amountInCents * 0.10);
   const estimatedStripeFee = Math.round(amountInCents * 0.029) + 30;
   return Math.max(0, platformBudget - estimatedStripeFee);
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

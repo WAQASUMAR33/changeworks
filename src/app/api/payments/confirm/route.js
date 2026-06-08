@@ -4,6 +4,7 @@ import { prisma } from "../../../lib/prisma";
 import emailService from "../../../lib/email-service";
 
 import { createStripeClient } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 const schema = z.object({
   payment_intent_id: z.string().min(1),
@@ -204,4 +205,8 @@ export async function POST(request) {
       error: error.message || 'Internal server error' 
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

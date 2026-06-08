@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 
 // POST /api/subscriptions/cancel-by-donor - Cancel subscription by donor ID
@@ -410,4 +411,8 @@ export async function GET(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

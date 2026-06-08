@@ -12,6 +12,7 @@ import {
 } from '@/app/lib/payment-provider/tokenStore';
 import { prisma } from '@/app/lib/prisma';
 import { getPaymentMode, getStripePublishableKey } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 const GHL_CLIENT_SECRET = process.env.GHL_APP_CLIENT_SECRET;
 // GHL signs webhooks with the Shared Secret key (separate from the OAuth Client Secret)
@@ -310,4 +311,8 @@ export async function POST(request) {
     await updateWebhookLog(eventId, 'FAILED', err.message);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createStripeAccountDirect, createStripeAccountLinkDirect } from "../../lib/stripe-direct-api";
 import emailService from "../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 // POST endpoint to test Stripe account creation and onboarding link
 export async function POST(request) {
@@ -220,4 +221,8 @@ export async function GET() {
       "SE", "NO", "DK", "FI", "PL", "PT", "CH", "NZ", "SG", "HK", "JP"
     ]
   });
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

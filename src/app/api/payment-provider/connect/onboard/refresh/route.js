@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createAccountLink } from '@/app/lib/payment-provider/stripe';
 import { getStripeAccount } from '@/app/lib/payment-provider/tokenStore';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -26,4 +27,8 @@ export async function GET(request) {
     console.error('[onboard/refresh]', err.message);
     return NextResponse.redirect(`${dashboardUrl}?error=onboard_refresh_failed`);
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

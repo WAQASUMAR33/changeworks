@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getPlaidConfig } from '@/app/lib/payment-mode';
 import { PrismaClient } from '@prisma/client';
 import emailService from '@/app/lib/email-service';
+import { corsHeaders } from '@/app/lib/cors';
 
 const prisma = new PrismaClient();
 
@@ -174,4 +175,8 @@ export async function POST(request) {
   } finally {
     await prisma.$disconnect();
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

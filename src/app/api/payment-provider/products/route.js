@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createProduct, createPrice, listProducts } from '@/app/lib/payment-provider/stripe';
 import { getStripeAccount } from '@/app/lib/payment-provider/tokenStore';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -39,4 +40,8 @@ export async function POST(request) {
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

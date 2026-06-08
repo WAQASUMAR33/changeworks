@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma"; // Adjust this import based on your structure
 import { NextResponse } from "next/server";
 import emailService from "../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Helper function to create HTML response
 function createHtmlResponse(title, message, isSuccess = true, email = null, note = null) {
@@ -188,4 +189,8 @@ export async function GET(req) {
       false
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

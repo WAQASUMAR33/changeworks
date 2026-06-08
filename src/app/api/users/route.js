@@ -4,6 +4,7 @@ import { hash } from "bcryptjs";
 import { z } from "zod";
 import emailService from "../../lib/email-service";
 import crypto from "crypto";
+import { corsHeaders } from '@/app/lib/cors';
 
 const signupSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -174,4 +175,8 @@ export async function DELETE(request) {
     console.error('Error deleting user:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createStripeClient, getPlaidConfig } from '@/app/lib/payment-mode';
 import { prisma } from "@/app/lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 export const dynamic = 'force-dynamic';
 
@@ -221,4 +222,8 @@ export async function GET(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

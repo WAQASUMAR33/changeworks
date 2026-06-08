@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { corsHeaders } from '@/app/lib/cors';
 
 const resetPasswordSchema = z.object({
   token: z.string(),
@@ -98,3 +99,6 @@ export async function POST(request) {
   }
 }
 
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

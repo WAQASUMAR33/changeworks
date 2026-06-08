@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../../../lib/prisma";
 import jwt from "jsonwebtoken";
 import { getStripe, isStripeConfigured, handleStripeError } from "@/lib/stripe";
+import { corsHeaders } from '@/app/lib/cors';
 
 // POST /api/donor/subscriptions/[id]/[action] - Handle subscription actions (pause, resume, cancel)
 export async function POST(request, { params }) {
@@ -336,4 +337,8 @@ export async function POST(request, { params }) {
       details: error.message 
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

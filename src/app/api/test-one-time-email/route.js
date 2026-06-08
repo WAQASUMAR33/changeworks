@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { emailService } from '../../lib/email-service';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request) {
   try {
@@ -51,4 +52,8 @@ export async function GET(request) {
       error: error.message 
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

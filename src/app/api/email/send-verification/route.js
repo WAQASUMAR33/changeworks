@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma.jsx";
 import emailService from "../../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 // GET /api/email/send-verification - Check email configuration
 export async function GET() {
@@ -102,4 +103,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 
 // GET /api/subscriptions/payment-methods - List payment methods for a customer
@@ -217,4 +218,8 @@ export async function DELETE(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

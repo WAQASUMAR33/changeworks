@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { createStripeClient, getPaymentMode } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 /**
  * GET /api/admin/stripe-transactions
@@ -122,4 +123,8 @@ export async function GET(request) {
     console.error('[admin/stripe-transactions] Error:', err.message);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

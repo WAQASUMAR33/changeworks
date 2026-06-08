@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { clearPaymentModeCache } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 /**
  * POST /api/payment-provider/admin/set-mode
@@ -50,4 +51,8 @@ export async function POST(request) {
     syncedRows: count,
     pubKeyPrefix: pubKey.slice(0, 12) + '...',
   });
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

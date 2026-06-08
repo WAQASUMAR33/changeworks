@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../../lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 // GET - Get subscription invoices
 export async function GET(request, { params }) {
@@ -186,4 +187,8 @@ export async function POST(request, { params }) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

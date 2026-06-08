@@ -5,6 +5,7 @@ import { z } from "zod";
 import GHLClient from "../../lib/ghl-client";
 import { createStripeAccountDirect, createStripeAccountLinkDirect } from "../../lib/stripe-direct-api";
 import emailService from "../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Validation schema
 const organizationSchema = z.object({
@@ -626,4 +627,8 @@ export async function GET() {
     console.error("Error fetching organizations:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

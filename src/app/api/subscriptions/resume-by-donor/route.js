@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma.jsx";
+import { corsHeaders } from '@/app/lib/cors';
 
 
 // POST /api/subscriptions/resume-by-donor - Resume/reactivate subscription by donor ID
@@ -242,4 +243,8 @@ export async function GET(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

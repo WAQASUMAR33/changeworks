@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import GHLClient from "../../../lib/ghl-client";
 import { prisma } from "../../../lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Validation schema for contact creation
 const contactSchema = z.object({
@@ -169,4 +170,8 @@ export async function GET(request) {
       error: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

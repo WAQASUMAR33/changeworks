@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { corsHeaders } from '@/app/lib/cors';
 
 // POST /api/email/test-email - Send a test email
 export async function POST(request) {
@@ -329,8 +330,6 @@ export async function GET(request) {
   }
 }
 
-
-
-
-
-
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

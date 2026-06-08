@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from '../../../lib/prisma';
 import { verifyAdminToken } from '../../../lib/admin-auth';
+import { corsHeaders } from '@/app/lib/cors';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,4 +67,8 @@ export async function GET(req) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

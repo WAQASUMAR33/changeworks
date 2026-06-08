@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma.jsx";
+import { corsHeaders } from '@/app/lib/cors';
 
 
 // GET /api/subscriptions/membership-status - Get comprehensive membership status and payment records
@@ -506,4 +507,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

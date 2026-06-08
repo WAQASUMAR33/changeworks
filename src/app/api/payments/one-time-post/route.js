@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../../../lib/prisma";
 
 import { createStripeClient } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 // Validation schema
 // amount is expected in cents
@@ -152,4 +153,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

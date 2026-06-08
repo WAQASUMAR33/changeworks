@@ -7,6 +7,7 @@ import { verifyStateToken } from '@/app/lib/payment-provider/crypto';
 import { getConnectedAccount } from '@/app/lib/payment-provider/stripe';
 import { getStripePublishableKey, getPaymentMode } from '@/app/lib/payment-mode';
 import { prisma } from '@/app/lib/prisma';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request) {
   const reqUrl  = new URL(request.url);
@@ -127,4 +128,8 @@ export async function GET(request) {
     console.error('[GHL callback] Unhandled error:', err.message);
     return NextResponse.redirect(`${successUrl}?error=ghl_callback_error&detail=${encodeURIComponent(err.message)}`);
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

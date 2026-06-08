@@ -1,4 +1,5 @@
 import GHLClient from '../../../../lib/ghl-client';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(req) {
   const { accounts } = await req.json();
@@ -64,4 +65,8 @@ export async function POST(req) {
       failed: errors
     }
   }, { status: 200 });
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

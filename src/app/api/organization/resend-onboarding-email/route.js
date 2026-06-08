@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { createStripeAccountLinkDirect } from "../../../lib/stripe-direct-api";
 import emailService from "../../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 /**
  * POST /api/organization/resend-onboarding-email
@@ -238,4 +239,8 @@ export async function GET(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

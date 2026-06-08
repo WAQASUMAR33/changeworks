@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma.jsx';
 import emailService from '../../../lib/email-service';
+import { corsHeaders } from '@/app/lib/cors';
 
 // Helper: is today the last day of the current month?
 function isLastDayOfMonth() {
@@ -163,4 +164,8 @@ export async function GET(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

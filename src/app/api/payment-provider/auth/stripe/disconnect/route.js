@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { deauthorizeStripeAccount } from '@/app/lib/payment-provider/stripe';
 import { getStripeAccount, saveStripeAccount } from '@/app/lib/payment-provider/tokenStore';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(request) {
   const { locationId } = await request.json();
@@ -26,4 +27,8 @@ export async function POST(request) {
 
   await saveStripeAccount(locationId, null);
   return NextResponse.json({ success: true });
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

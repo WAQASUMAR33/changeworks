@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { getStripeAccount } from '@/app/lib/payment-provider/tokenStore';
 import { prisma } from '@/app/lib/prisma';
 import { createStripeClient } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 const getStripe = () => createStripeClient();
 
 export async function GET(request) {
@@ -57,4 +58,8 @@ export async function GET(request) {
     console.error('[transactions] Stripe list failed:', err.message);
     return NextResponse.json({ error: err.message, transactions: [], hasMore: false, nextCursor: null }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -1,4 +1,5 @@
 import GHLClient from '../../../lib/ghl-client';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(req) {
   // Initialize GHL client
@@ -157,4 +158,8 @@ export async function DELETE(req) {
       error: result.error
     }, { status: result.statusCode || 400 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

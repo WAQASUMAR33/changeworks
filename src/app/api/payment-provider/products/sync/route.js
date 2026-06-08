@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { ghlClient } from '@/app/lib/payment-provider/ghl';
 import { getStripeAccount, saveProductSync } from '@/app/lib/payment-provider/tokenStore';
 import { listProducts, createProduct, createPrice } from '@/app/lib/payment-provider/stripe';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(request) {
   let body;
@@ -69,4 +70,8 @@ export async function POST(request) {
   }
 
   return NextResponse.json({ synced, skipped, errors, total: ghlProducts.length });
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

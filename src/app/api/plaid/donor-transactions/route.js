@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getPlaidConfig } from '@/app/lib/payment-mode';
 import { prisma } from '../../../lib/prisma';
 import jwt from 'jsonwebtoken';
+import { corsHeaders } from '@/app/lib/cors';
 
 
 function getPlaidBaseUrl(env) {
@@ -213,4 +214,8 @@ export async function GET(req) {
     console.error('Error fetching donor Plaid transactions:', error);
     return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

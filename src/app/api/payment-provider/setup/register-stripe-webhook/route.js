@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createStripeClient, getPaymentMode } from '@/app/lib/payment-mode';
 import { prisma } from '@/app/lib/prisma';
+import { corsHeaders } from '@/app/lib/cors';
 
 const WEBHOOK_EVENTS = [
   'payment_intent.succeeded',
@@ -86,4 +87,8 @@ export async function POST(request) {
     console.error('[register-webhook] Error:', err.message);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }
