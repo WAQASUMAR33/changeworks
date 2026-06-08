@@ -111,6 +111,7 @@ model Donor {
   postal_code       String?            @db.VarChar(20)
   twoFactorSecret   String?            @db.VarChar(255) @map("two_factor_secret")
   twoFactorEnabled  Boolean           @default(false) @map("two_factor_enabled")
+  mustResetPassword Boolean           @default(false) @map("must_reset_password")
   transactions      DonorTransaction[] @relation("DonorTransactions")
   organization      Organization?      @relation(fields: [organization_id], references: [id])
   saveTrRecords     SaveTrRecord[]     @relation("DonorTransactions")

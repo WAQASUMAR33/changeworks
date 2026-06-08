@@ -82,29 +82,39 @@ export async function POST(request) {
       }
     }
 
-    // Create JWT payload
-    const tokenPayload = {
+    const userPayload = {
       id: donor.id,
       email: donor.email,
+      name: donor.name,
       role: 'DONOR',
-      userType: 'donor'
+      organization: donor.organization
     };
 
-    // Sign token
-    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    // If account was system-created, force a password reset before entering the app
+    if (donorRaw.must_reset_password) {
+      const resetToken = jwt.sign(
+        { id: donor.id, email: donor.email, role: 'DONOR', userType: 'donor', mustResetPassword: true },
+        process.env.JWT_SECRET,
+        { expiresIn: '15m' }
+      );
+      return NextResponse.json({
+        requiresPasswordReset: true,
+        token: resetToken,
+        user: userPayload,
+      });
+    }
+
+    // Normal login — issue full 7-day token
+    const token = jwt.sign(
+      { id: donor.id, email: donor.email, role: 'DONOR', userType: 'donor' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     return NextResponse.json({
       message: "Donor login successful",
       token,
-      user: {
-        id: donor.id,
-        email: donor.email,
-        name: donor.name,
-        role: 'DONOR',
-        organization: donor.organization
-      },
+      user: userPayload,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

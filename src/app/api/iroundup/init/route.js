@@ -59,9 +59,9 @@ export async function POST(request) {
     const plainPassword = generatePassword(10);
     const hashedPassword = await bcrypt.hash(plainPassword, 12);
 
-    // Create donor with status=1 (verified — no email verification needed for this flow)
+    // Create donor with status=1 (verified) and must_reset_password=1 (force reset on first login)
     await prisma.$queryRaw`
-      INSERT INTO donors (name, email, password, phone, country, organization_id, status, created_at, updated_at)
+      INSERT INTO donors (name, email, password, phone, country, organization_id, status, must_reset_password, created_at, updated_at)
       VALUES (
         ${name},
         ${normalizedEmail},
@@ -69,6 +69,7 @@ export async function POST(request) {
         ${phone?.trim() || null},
         'US',
         ${organization.id},
+        1,
         1,
         ${new Date()},
         ${new Date()}

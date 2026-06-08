@@ -105,7 +105,13 @@ export default function DonorLoginPage() {
       // Store donor data
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      
+
+      // Account was system-created — force password reset before dashboard
+      if (data.requiresPasswordReset) {
+        router.push('/donor/force-reset-password');
+        return;
+      }
+
       // Redirect to donor dashboard
       router.push('/donor/dashboard');
       
