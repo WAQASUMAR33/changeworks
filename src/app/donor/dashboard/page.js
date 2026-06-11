@@ -580,7 +580,7 @@ export default function DonorDashboard() {
                         <CheckCircle className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1 w-full">
-                        <h4 className="text-lg font-bold text-white leading-tight">Join Our Round-Up Program</h4>
+                        <h4 className="text-lg font-bold text-white leading-tight">Your Round-Up Program Is Active</h4>
                         <p className="text-sm text-green-100 mt-1">
                           {plaidConnectionStatus.connections.length > 0
                             ? `Connected to ${plaidConnectionStatus.connections[0].institution_name || 'Bank'}`
